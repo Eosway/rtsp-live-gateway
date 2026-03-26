@@ -1,0 +1,25 @@
+{
+  "name": "rtsp-live-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -ws --if-present build",
+    "typecheck": "npm run -ws --if-present typecheck",
+    "test": "npm run -ws --if-present test",
+    "lint": "npm run -ws --if-present lint",
+    "clean": "npm run -ws --if-present clean"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
+

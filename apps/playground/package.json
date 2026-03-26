@@ -1,0 +1,12 @@
+{
+  "name": "@rtsp-gateway/playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo playground build placeholder",
+    "typecheck": "echo playground typecheck placeholder",
+    "clean": "echo playground clean placeholder"
+  }
+}
+
