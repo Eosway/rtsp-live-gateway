@@ -16,4 +16,5 @@ services:
       MAX_SOURCES: "64"
       MAX_VIEWERS_PER_SOURCE: "256"
       SSRF_ALLOW_PRIVATE_IP: "false"
-
+      RTSP_HOST_DENYLIST: "localhost,127.0.0.1,::1"
+      RTSP_PORT_ALLOWLIST: "554"

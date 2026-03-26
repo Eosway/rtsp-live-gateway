@@ -11,10 +11,13 @@ export function buildFfmpegCommand(
   ffmpegPath: string,
   req: NormalizedStreamCreateRequest
 ): FFmpegCommand {
+  const connectTimeoutUs = req.connectTimeoutMs * 1000;
   const args: string[] = [
     "-hide_banner",
     "-loglevel",
     "warning",
+    "-rw_timeout",
+    String(connectTimeoutUs),
     "-rtsp_transport",
     req.transport,
     "-timeout",
@@ -58,4 +61,3 @@ export function buildFfmpegCommand(
     safePreview: [ffmpegPath, ...args.map((part) => maskRtspUrl(part))].join(" ")
   };
 }
-

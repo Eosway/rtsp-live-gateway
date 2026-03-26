@@ -1,0 +1,8 @@
+**/node_modules
+**/.pnpm-store
+**/dist
+.git
+.github
+.local
+apps/playground
+

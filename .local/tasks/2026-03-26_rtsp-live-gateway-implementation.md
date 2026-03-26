@@ -2,7 +2,7 @@
 
 ## 目标
 
-- 基于 ` .local/tasks/RTSPLiveGateway.md ` 蓝图，完成可运行的 RTSP -> HTTP-FLV 网关与网页端闭环。
+- 基于 `.local/tasks/RTSPLiveGateway.md` 蓝图，完成可运行的 RTSP -> HTTP-FLV 网关与网页端闭环。
 - 交付 monorepo：服务端、SDK、Vue 播放组件、playground、Docker、CI。
 
 ## 分步实施
@@ -53,14 +53,14 @@
 
 - 改动内容：
   - Docker：
-    - ` deploy/docker/server/Dockerfile `（Debian slim 默认）
-    - ` deploy/docker/server/Dockerfile.alpine `（实验）
-    - ` deploy/docker/server/compose.yaml `
-    - ` deploy/docker/server/.dockerignore `
+    - `deploy/docker/server/Dockerfile`（Debian slim 默认）
+    - `deploy/docker/server/Dockerfile.alpine`（实验）
+    - `deploy/docker/server/compose.yaml`
+    - `deploy/docker/server/.dockerignore`
   - CI：
-    - ` .github/workflows/ci.yaml `（类型检查、构建、FFmpeg 能力检查）
+    - `.github/workflows/ci.yaml`（类型检查、构建、FFmpeg 能力检查）
   - 文档：
-    - ` README.md `
+    - `README.md`
 - 改动原因：
   - 满足蓝图对容器化与 CI 的一等公民要求。
 - 验证方式：
@@ -73,3 +73,23 @@
 - 已形成可构建的 RTSP Live Gateway V1 全链路工程骨架与核心实现。
 - 关键能力已覆盖：懒启动、单源复用、HTTP-FLV 分发、前端播放器封装、容器化、CI 能力检查。
 
+## 后续修复（2026-03-26）
+
+### Step 5：蓝图审计差距修复 + 运行时版本升级
+
+- 改动内容：
+  - 修复空闲回收后无法再次懒启动的问题（`idle_stop` 不再标记为删除态）。
+  - 让 `connectTimeoutMs` 生效到 FFmpeg 参数（`-rw_timeout`，微秒）。
+  - SSRF 加固：新增 denylist 与 RTSP 端口白名单校验。
+  - CI 增加 `libx264` 编码器能力检查。
+  - 镜像与运行时升级：
+    - Node `22 -> 24`
+    - Debian `12(bookworm) -> 13(trixie)`
+    - 新增仓库根 `.dockerignore`，匹配根 build context。
+- 改动原因：
+  - 对齐 `.local/tasks/RTSPLiveGateway.md` 蓝图要求与审计发现（1-5）。
+- 验证方式：
+  - `pnpm install`
+  - `pnpm run typecheck`
+  - `pnpm run build`
+  - `pnpm run test`

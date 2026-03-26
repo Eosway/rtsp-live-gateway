@@ -48,8 +48,10 @@ export class StreamSource {
 
   private runner?: FFmpegRunner;
   private startPromise?: Promise<void>;
+  private stopPromise?: Promise<void>;
   private idleTimer?: NodeJS.Timeout;
-  private stopped = false;
+  private stopInProgress = false;
+  private deleted = false;
 
   private startedAt?: string;
   private lastActiveAt?: string;
@@ -103,7 +105,7 @@ export class StreamSource {
   }
 
   scheduleIdleStop(): void {
-    if (this.stopped) {
+    if (this.deleted) {
       return;
     }
     this.clearIdleTimer();
@@ -118,8 +120,14 @@ export class StreamSource {
   }
 
   async ensureStarted(trigger: "first_viewer" | "manual"): Promise<void> {
-    if (this.stopped) {
+    if (this.deleted) {
       throw new ApiError("STREAM_DELETED", "Stream has been deleted");
+    }
+    if (this.stopPromise) {
+      await this.stopPromise;
+      if (this.deleted) {
+        throw new ApiError("STREAM_DELETED", "Stream has been deleted");
+      }
     }
     if (this.state === "running") {
       return;
@@ -222,7 +230,7 @@ export class StreamSource {
           );
           return;
         }
-        if (!this.stopped) {
+        if (!this.stopInProgress && !this.deleted) {
           this.state = "error";
           this.lastErrorAt = nowIso();
           this.recentError = {
@@ -270,19 +278,33 @@ export class StreamSource {
   }
 
   async stop(reason: string): Promise<void> {
-    this.stopped = true;
-    this.clearIdleTimer();
-    this.state = "stopping";
-    this.fanout.closeAll(reason);
-    for (const [sessionId, session] of this.sessions) {
-      session.close(reason);
-      this.sessions.delete(sessionId);
+    if (this.stopPromise) {
+      return this.stopPromise;
     }
-    if (this.runner) {
-      await this.runner.stop(this.stopGraceMs);
-      this.runner = undefined;
-    }
-    this.state = "idle";
+
+    this.stopPromise = (async () => {
+      this.stopInProgress = true;
+      if (reason === "deleted") {
+        this.deleted = true;
+      }
+      this.clearIdleTimer();
+      this.state = "stopping";
+      this.fanout.closeAll(reason);
+      for (const [sessionId, session] of this.sessions) {
+        session.close(reason);
+        this.sessions.delete(sessionId);
+      }
+      if (this.runner) {
+        await this.runner.stop(this.stopGraceMs);
+        this.runner = undefined;
+      }
+      this.state = "idle";
+    })().finally(() => {
+      this.stopInProgress = false;
+      this.stopPromise = undefined;
+    });
+
+    await this.stopPromise;
   }
 
   snapshotStatus(): StreamStatusResponse {
@@ -317,4 +339,3 @@ export class StreamSource {
     this.idleTimer = undefined;
   }
 }
-

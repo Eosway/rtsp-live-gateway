@@ -5,6 +5,8 @@ import { ApiError } from "../errors.js";
 interface SsrfGuardOptions {
   allowPrivateIp: boolean;
   allowlist: string[];
+  denylist: string[];
+  portAllowlist: number[];
   requestAllowPrivateIp: boolean;
 }
 
@@ -56,10 +58,13 @@ function isPrivateIp(ip: string): boolean {
   return isIP(ip) === 4 ? isPrivateIPv4(ip) : isPrivateIPv6(ip);
 }
 
-function isHostMatched(host: string, allowlist: string[]): boolean {
+function isHostMatched(host: string, rules: string[]): boolean {
   const target = host.toLowerCase();
-  return allowlist.some((item) => {
+  return rules.some((item) => {
     const normalized = item.toLowerCase();
+    if (normalized.includes("/") || isIP(normalized) !== 0) {
+      return false;
+    }
     if (normalized.startsWith(".")) {
       return target.endsWith(normalized);
     }
@@ -67,18 +72,37 @@ function isHostMatched(host: string, allowlist: string[]): boolean {
   });
 }
 
-function isIpAllowedByCidr(ip: string, allowlist: string[]): boolean {
+function isIpAllowedByCidr(ip: string, rules: string[]): boolean {
   if (isIP(ip) !== 4) {
     return false;
   }
   const value = ipv4ToInt(ip);
-  return allowlist.some((item) => {
+  return rules.some((item) => {
     const cidr = parseCidrV4(item);
     if (!cidr) {
       return false;
     }
     return (value & cidr.mask) === cidr.network;
   });
+}
+
+function isIpMatchedByRules(ip: string, rules: string[]): boolean {
+  return rules.some((item) => {
+    if (item.includes("/")) {
+      return isIpAllowedByCidr(ip, [item]);
+    }
+    if (isIP(item) !== 0) {
+      return item === ip;
+    }
+    return false;
+  });
+}
+
+function getRtspPort(parsed: URL): number {
+  if (parsed.port) {
+    return Number.parseInt(parsed.port, 10);
+  }
+  return parsed.protocol === "rtsps:" ? 322 : 554;
 }
 
 export async function assertRtspTargetAllowed(
@@ -97,11 +121,32 @@ export async function assertRtspTargetAllowed(
   }
 
   const host = parsed.hostname;
+  const port = getRtspPort(parsed);
+  if (
+    options.portAllowlist.length > 0 &&
+    !options.portAllowlist.includes(port)
+  ) {
+    throw new ApiError("SSRF_BLOCKED", "RTSP port is not in allowlist", {
+      port
+    });
+  }
+
+  if (isHostMatched(host, options.denylist)) {
+    throw new ApiError("SSRF_BLOCKED", "RTSP host is denylisted", {
+      host
+    });
+  }
+
   const hostAllowlisted = isHostMatched(host, options.allowlist);
   const explicitAllowed =
     options.allowPrivateIp || options.requestAllowPrivateIp || hostAllowlisted;
 
   if (isIP(host)) {
+    if (isIpMatchedByRules(host, options.denylist)) {
+      throw new ApiError("SSRF_BLOCKED", "RTSP IP is denylisted", {
+        host
+      });
+    }
     if (isPrivateIp(host) && !explicitAllowed && !isIpAllowedByCidr(host, options.allowlist)) {
       throw new ApiError("SSRF_BLOCKED", "Private target is blocked");
     }
@@ -113,6 +158,12 @@ export async function assertRtspTargetAllowed(
   });
 
   for (const record of records) {
+    if (isIpMatchedByRules(record.address, options.denylist)) {
+      throw new ApiError("SSRF_BLOCKED", "Resolved address is denylisted", {
+        host,
+        address: record.address
+      });
+    }
     if (
       isPrivateIp(record.address) &&
       !explicitAllowed &&
@@ -122,4 +173,3 @@ export async function assertRtspTargetAllowed(
     }
   }
 }
-

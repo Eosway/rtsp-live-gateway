@@ -12,6 +12,8 @@ export interface ServerConfig {
   maxViewersPerSource: number;
   ssrfAllowPrivateIp: boolean;
   rtspHostAllowlist: string[];
+  rtspHostDenylist: string[];
+  rtspPortAllowlist: number[];
   corsAllowOrigin: string;
   logger: Logger;
 }
@@ -31,6 +33,24 @@ function parseBoolValue(value: string | undefined, fallback: boolean): boolean {
   return value.toLowerCase() === "true";
 }
 
+function parseNumberList(value: string | undefined, fallback: number[]): number[] {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = value
+    .split(",")
+    .map((entry) => Number.parseInt(entry.trim(), 10))
+    .filter((entry) => Number.isInteger(entry) && entry > 0 && entry <= 65535);
+  return parsed.length > 0 ? parsed : fallback;
+}
+
+function parseStringList(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 export function loadServerConfig(): ServerConfig {
   const logLevel =
     (process.env.LOG_LEVEL as ServerConfig["logLevel"] | undefined) ?? "info";
@@ -46,12 +66,10 @@ export function loadServerConfig(): ServerConfig {
     maxSources: parseIntValue(process.env.MAX_SOURCES, 64),
     maxViewersPerSource: parseIntValue(process.env.MAX_VIEWERS_PER_SOURCE, 256),
     ssrfAllowPrivateIp: parseBoolValue(process.env.SSRF_ALLOW_PRIVATE_IP, false),
-    rtspHostAllowlist: (process.env.RTSP_HOST_ALLOWLIST ?? "")
-      .split(",")
-      .map((entry) => entry.trim())
-      .filter(Boolean),
+    rtspHostAllowlist: parseStringList(process.env.RTSP_HOST_ALLOWLIST),
+    rtspHostDenylist: parseStringList(process.env.RTSP_HOST_DENYLIST),
+    rtspPortAllowlist: parseNumberList(process.env.RTSP_PORT_ALLOWLIST, [554]),
     corsAllowOrigin: process.env.CORS_ALLOW_ORIGIN ?? "*",
     logger: createConsoleLogger()
   };
 }
-

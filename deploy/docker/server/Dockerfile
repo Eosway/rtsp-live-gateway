@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS builder
+FROM node:24-trixie-slim AS builder
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -24,7 +24,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
 
-FROM node:22-bookworm-slim AS runner
+FROM node:24-trixie-slim AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -42,4 +42,3 @@ EXPOSE 3000
 
 ENTRYPOINT ["tini","--"]
 CMD ["node","apps/server/dist/index.js"]
-

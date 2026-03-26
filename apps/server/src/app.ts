@@ -96,6 +96,8 @@ export function createApp(options: CreateAppOptions) {
     await assertRtspTargetAllowed(req.url, {
       allowPrivateIp: options.config.ssrfAllowPrivateIp,
       allowlist: options.config.rtspHostAllowlist,
+      denylist: options.config.rtspHostDenylist,
+      portAllowlist: options.config.rtspPortAllowlist,
       requestAllowPrivateIp: req.allowPrivateIp
     });
 

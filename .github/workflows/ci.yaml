@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -48,3 +48,5 @@ jobs:
       - name: FFmpeg FLV Muxer Check
         run: ffmpeg -h muxer=flv | grep no_duration_filesize
 
+      - name: FFmpeg libx264 Encoder Check
+        run: ffmpeg -encoders | grep libx264

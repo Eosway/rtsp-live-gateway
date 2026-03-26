@@ -15,6 +15,11 @@ pnpm run typecheck
 pnpm run build
 ```
 
+Runtime baseline:
+
+- Node.js `24+`
+- Default container base: `node:24-trixie-slim` (Debian 13)
+
 ### Run server locally
 
 ```bash
@@ -40,4 +45,3 @@ Alpine (experimental):
 ```bash
 docker build -f deploy/docker/server/Dockerfile.alpine -t rtsp-live-gateway:alpine .
 ```
-
