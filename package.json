@@ -8,11 +8,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run -ws --if-present build",
-    "typecheck": "npm run -ws --if-present typecheck",
-    "test": "npm run -ws --if-present test",
-    "lint": "npm run -ws --if-present lint",
-    "clean": "npm run -ws --if-present clean"
+    "build": "npm run -w @rtsp-gateway/protocol build && npm run -w @rtsp-gateway/shared build && npm run --workspaces --if-present build",
+    "typecheck": "npm run -w @rtsp-gateway/protocol build && npm run -w @rtsp-gateway/shared build && npm run --workspaces --if-present typecheck",
+    "test": "npm run --workspaces --if-present test",
+    "lint": "npm run --workspaces --if-present lint",
+    "clean": "npm run --workspaces --if-present clean"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
@@ -22,4 +22,3 @@
     "node": ">=22"
   }
 }
-
