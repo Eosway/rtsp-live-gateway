@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",
-    "@rtsp-gateway/protocol": "0.1.0",
-    "@rtsp-gateway/shared": "0.1.0",
+    "@rtsp-gateway/protocol": "workspace:*",
+    "@rtsp-gateway/shared": "workspace:*",
     "hono": "^4.8.3"
   },
   "optionalDependencies": {

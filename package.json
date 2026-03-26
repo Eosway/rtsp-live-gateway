@@ -8,11 +8,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run -w @rtsp-gateway/protocol build && npm run -w @rtsp-gateway/shared build && npm run --workspaces --if-present build",
-    "typecheck": "npm run -w @rtsp-gateway/protocol build && npm run -w @rtsp-gateway/shared build && npm run --workspaces --if-present typecheck",
-    "test": "npm run --workspaces --if-present test",
-    "lint": "npm run --workspaces --if-present lint",
-    "clean": "npm run --workspaces --if-present clean"
+    "build": "pnpm --filter @rtsp-gateway/protocol build && pnpm --filter @rtsp-gateway/shared build && pnpm --filter @rtsp-gateway/sdk build && pnpm --filter @rtsp-gateway/vue-player build && pnpm -r --if-present build",
+    "typecheck": "pnpm --filter @rtsp-gateway/protocol build && pnpm --filter @rtsp-gateway/shared build && pnpm --filter @rtsp-gateway/sdk build && pnpm --filter @rtsp-gateway/vue-player build && pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint",
+    "clean": "pnpm -r --if-present clean"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",

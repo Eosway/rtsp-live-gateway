@@ -11,8 +11,9 @@
     "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
   },
   "dependencies": {
-    "@rtsp-gateway/protocol": "0.1.0",
-    "@rtsp-gateway/sdk": "0.1.0"
+    "@rtsp-gateway/protocol": "workspace:*",
+    "@rtsp-gateway/sdk": "workspace:*",
+    "mpegts.js": "^1.8.0",
+    "vue": "^3.5.13"
   }
 }
-

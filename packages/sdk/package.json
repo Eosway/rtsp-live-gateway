@@ -11,7 +11,6 @@
     "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
   },
   "dependencies": {
-    "@rtsp-gateway/protocol": "0.1.0"
+    "@rtsp-gateway/protocol": "workspace:*"
   }
 }
-

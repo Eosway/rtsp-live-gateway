@@ -4,9 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo playground build placeholder",
-    "typecheck": "echo playground typecheck placeholder",
-    "clean": "echo playground clean placeholder"
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
+  },
+  "dependencies": {
+    "@rtsp-gateway/protocol": "workspace:*",
+    "@rtsp-gateway/vue-player": "workspace:*",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.14",
+    "vue-tsc": "^2.2.10"
   }
 }
-
