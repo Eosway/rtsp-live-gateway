@@ -1,0 +1,19 @@
+services:
+  server:
+    build:
+      context: ../../..
+      dockerfile: deploy/docker/server/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      LOG_LEVEL: "info"
+      FFMPEG_PATH: "ffmpeg"
+      STREAM_STARTUP_TIMEOUT_MS: "8000"
+      STREAM_IDLE_GRACE_MS: "15000"
+      STOP_GRACE_MS: "1500"
+      MAX_QUEUE_BYTES: "2097152"
+      MAX_SOURCES: "64"
+      MAX_VIEWERS_PER_SOURCE: "256"
+      SSRF_ALLOW_PRIVATE_IP: "false"
+
