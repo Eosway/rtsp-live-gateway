@@ -27,7 +27,7 @@
 统一从 `src/index.ts` 导出，业务侧直接：
 
 ```ts
-import type { StreamCreateRequest, ApiErrorCode } from "@rtsp-gateway/protocol";
+import type { StreamCreateRequest, ApiErrorCode } from '@rtsp-gateway/protocol'
 ```
 
 ## 开发命令
@@ -36,4 +36,3 @@ import type { StreamCreateRequest, ApiErrorCode } from "@rtsp-gateway/protocol";
 pnpm --filter @rtsp-gateway/protocol typecheck
 pnpm --filter @rtsp-gateway/protocol build
 ```
-

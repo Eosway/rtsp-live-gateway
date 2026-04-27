@@ -1,12 +1,11 @@
 export function maskRtspUrl(input: string): string {
   try {
-    const url = new URL(input);
+    const url = new URL(input)
     if (url.password) {
-      url.password = "***";
+      url.password = '***'
     }
-    return url.toString();
+    return url.toString()
   } catch {
-    return input;
+    return input
   }
 }
-

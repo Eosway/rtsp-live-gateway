@@ -34,25 +34,25 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 ### 2.2 Props
 
-| Prop | 类型 | 必填 | 默认值 | 说明 |
-|---|---|---|---|---|
-| `baseUrl` | `string` | 是 | - | 网关服务地址，例如 `http://localhost:3000` |
-| `mode` | `'streamId' \| 'create'` | 是 | - | 数据源模式 |
-| `streamId` | `string` | 否 | - | `streamId` 模式使用 |
-| `createRequest` | `StreamCreateRequest` | 否 | - | `create` 模式使用 |
-| `autoplay` | `boolean` | 否 | `true` | 自动播放 |
-| `muted` | `boolean` | 否 | `true` | 视频元素静音属性 |
-| `stashBuffer` | `boolean` | 否 | `false` | 传给 mpegts `enableStashBuffer` |
-| `destroyOnUnmount` | `boolean` | 否 | `false` | 组件卸载时，若由组件创建流则自动删除 |
+| Prop               | 类型                     | 必填 | 默认值  | 说明                                       |
+| ------------------ | ------------------------ | ---- | ------- | ------------------------------------------ |
+| `baseUrl`          | `string`                 | 是   | -       | 网关服务地址，例如 `http://localhost:3000` |
+| `mode`             | `'streamId' \| 'create'` | 是   | -       | 数据源模式                                 |
+| `streamId`         | `string`                 | 否   | -       | `streamId` 模式使用                        |
+| `createRequest`    | `StreamCreateRequest`    | 否   | -       | `create` 模式使用                          |
+| `autoplay`         | `boolean`                | 否   | `true`  | 自动播放                                   |
+| `muted`            | `boolean`                | 否   | `true`  | 视频元素静音属性                           |
+| `stashBuffer`      | `boolean`                | 否   | `false` | 传给 mpegts `enableStashBuffer`            |
+| `destroyOnUnmount` | `boolean`                | 否   | `false` | 组件卸载时，若由组件创建流则自动删除       |
 
 ### 2.3 Events
 
-| 事件 | 载荷 | 说明 |
-|---|---|---|
-| `created` | `streamId: string` | 成功拿到 streamId（复用或新建） |
-| `statechange` | `{ state: string }` | `starting/running/error/idle` 状态变化 |
-| `error` | `{ code: string; message: string }` | 启动或播放失败 |
-| `closed` | `reason: string` | 组件主动停止或卸载关闭 |
+| 事件          | 载荷                                | 说明                                   |
+| ------------- | ----------------------------------- | -------------------------------------- |
+| `created`     | `streamId: string`                  | 成功拿到 streamId（复用或新建）        |
+| `statechange` | `{ state: string }`                 | `starting/running/error/idle` 状态变化 |
+| `error`       | `{ code: string; message: string }` | 启动或播放失败                         |
+| `closed`      | `reason: string`                    | 组件主动停止或卸载关闭                 |
 
 ## 3. 使用示例
 
@@ -60,7 +60,7 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 ```vue
 <script setup lang="ts">
-import { RtspFlvPlayer } from "@rtsp-gateway/player-vue";
+import { RtspFlvPlayer } from '@rtsp-gateway/player-vue'
 </script>
 
 <template>
@@ -71,8 +71,7 @@ import { RtspFlvPlayer } from "@rtsp-gateway/player-vue";
     :autoplay="true"
     :muted="true"
     :stash-buffer="false"
-    :destroy-on-unmount="true"
-  />
+    :destroy-on-unmount="true" />
 </template>
 ```
 
@@ -80,16 +79,12 @@ import { RtspFlvPlayer } from "@rtsp-gateway/player-vue";
 
 ```vue
 <script setup lang="ts">
-import { RtspFlvPlayer } from "@rtsp-gateway/player-vue";
-const streamId = "st_xxx";
+import { RtspFlvPlayer } from '@rtsp-gateway/player-vue'
+const streamId = 'st_xxx'
 </script>
 
 <template>
-  <RtspFlvPlayer
-    base-url="http://localhost:3000"
-    mode="streamId"
-    :stream-id="streamId"
-  />
+  <RtspFlvPlayer base-url="http://localhost:3000" mode="streamId" :stream-id="streamId" />
 </template>
 ```
 

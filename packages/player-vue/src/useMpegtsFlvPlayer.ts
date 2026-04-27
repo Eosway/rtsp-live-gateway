@@ -1,81 +1,81 @@
-import mpegtsModule from "mpegts.js";
+import mpegtsModule from 'mpegts.js'
 
 export interface MpegtsPlayerState {
-  attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean): Promise<void>;
-  play(): Promise<void>;
-  destroy(): void;
+  attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean): Promise<void>
+  play(): Promise<void>
+  destroy(): void
 }
 
 export function createMpegtsPlayer(): MpegtsPlayerState {
   const mpegts = mpegtsModule as unknown as {
-    isSupported(): boolean;
+    isSupported(): boolean
     createPlayer(
       source: {
-        type: string;
-        isLive: boolean;
-        url: string;
-        hasAudio: boolean;
-        hasVideo: boolean;
+        type: string
+        isLive: boolean
+        url: string
+        hasAudio: boolean
+        hasVideo: boolean
       },
       config: { enableStashBuffer: boolean; liveBufferLatencyChasing: boolean }
     ): {
-      attachMediaElement(mediaElement: HTMLMediaElement): void;
-      load(): void;
-      play(): Promise<void> | void;
-      pause(): void;
-      unload(): void;
-      detachMediaElement(): void;
-      destroy(): void;
-    };
-  };
+      attachMediaElement(mediaElement: HTMLMediaElement): void
+      load(): void
+      play(): Promise<void> | void
+      pause(): void
+      unload(): void
+      detachMediaElement(): void
+      destroy(): void
+    }
+  }
 
-  let player: ReturnType<typeof mpegts.createPlayer> | undefined;
+  let player: ReturnType<typeof mpegts.createPlayer> | undefined
 
   async function attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean) {
     if (!mpegts.isSupported()) {
-      throw new Error("mpegts.js is not supported in this browser");
+      throw new Error('mpegts.js is not supported in this browser')
     }
-    destroy();
+    destroy()
 
     player = mpegts.createPlayer(
       {
-        type: "flv",
+        type: 'flv',
         isLive: true,
         url,
         hasAudio: false,
-        hasVideo: true
+        hasVideo: true,
       },
       {
         enableStashBuffer: stashBuffer,
-        liveBufferLatencyChasing: true
+        liveBufferLatencyChasing: true,
       }
-    );
+    )
 
-    player.attachMediaElement(videoEl);
-    player.load();
+    player.attachMediaElement(videoEl)
+    player.load()
   }
 
   async function play() {
     if (!player) {
-      return;
+      return
     }
-    await player.play();
+    await player.play()
   }
 
   function destroy() {
     if (!player) {
-      return;
+      return
     }
-    player.pause();
-    player.unload();
-    player.detachMediaElement();
-    player.destroy();
-    player = undefined;
+    player.pause()
+    player.unload()
+    player.detachMediaElement()
+    player.destroy()
+    player = undefined
   }
 
   return {
     attach,
     play,
-    destroy
-  };
+    destroy,
+  }
 }

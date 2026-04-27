@@ -1,5 +1,4 @@
 import type { ApiErrorBody, StreamCreateRequest, StreamCreateResponse, StreamStatusResponse } from '@rtsp-gateway/protocol'
-
 class ClientError extends Error {
   readonly status: number
   readonly code?: string
