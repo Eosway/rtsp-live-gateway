@@ -1,6 +1,6 @@
-# @rtsp-gateway/sdk
+# @rtsp-gateway/client
 
-`@rtsp-gateway/sdk` 是网关控制面 API 的轻量封装，不包含播放器逻辑。
+`@rtsp-gateway/client` 是网关控制面 API 的轻量封装，不包含播放器逻辑。
 
 ## 导出 API
 
@@ -9,28 +9,28 @@
 - `listStreams(baseUrl)`
 - `deleteStream(baseUrl, streamId)`
 - `buildLiveUrl(baseUrl, streamId)`
-- `SdkError`
+- `ClientError`
 
 ## 使用示例
 
 ```ts
-import { createStream, buildLiveUrl, deleteStream } from "@rtsp-gateway/sdk";
+import { createStream, buildLiveUrl, deleteStream } from '@rtsp-gateway/client'
 
-const baseUrl = "http://localhost:3000";
+const baseUrl = 'http://localhost:3000'
 const created = await createStream(baseUrl, {
-  url: "rtsp://camera/live",
-  transport: "tcp"
-});
+  url: 'rtsp://camera/live',
+  transport: 'tcp',
+})
 
-const playUrl = buildLiveUrl(baseUrl, created.streamId);
-console.log(playUrl);
+const playUrl = buildLiveUrl(baseUrl, created.streamId)
+console.log(playUrl)
 
-await deleteStream(baseUrl, created.streamId);
+await deleteStream(baseUrl, created.streamId)
 ```
 
 ## 错误处理
 
-请求失败会抛出 `SdkError`：
+请求失败会抛出 `ClientError`：
 
 - `status`：HTTP 状态码
 - `code`：服务端 `ApiErrorCode`（若有）
@@ -44,8 +44,7 @@ await deleteStream(baseUrl, created.streamId);
 ## 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/sdk typecheck
-pnpm --filter @rtsp-gateway/sdk build
-pnpm --filter @rtsp-gateway/sdk test
+pnpm --filter @rtsp-gateway/client typecheck
+pnpm --filter @rtsp-gateway/client build
+pnpm --filter @rtsp-gateway/client test
 ```
-

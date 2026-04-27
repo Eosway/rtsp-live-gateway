@@ -3,6 +3,6 @@
 **/dist
 .git
 .github
-apps/playground
+playground
 .local
 

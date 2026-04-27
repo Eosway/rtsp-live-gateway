@@ -10,8 +10,8 @@
     "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
   },
   "dependencies": {
-    "@rtsp-gateway/protocol": "workspace:*",
-    "@rtsp-gateway/vue-player": "workspace:*",
+    "@rtsp-gateway/client": "workspace:*",
+    "@rtsp-gateway/player-vue": "workspace:*",
     "vue": "^3.5.13"
   },
   "devDependencies": {

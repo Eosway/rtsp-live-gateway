@@ -1,270 +1,265 @@
-import type { ApiErrorBody, StreamState, StreamStatusResponse } from "@rtsp-gateway/protocol";
-import { nowIso } from "@rtsp-gateway/shared";
-import { ApiError } from "../errors.js";
-import { buildFfmpegCommand } from "../infra/ffmpeg/FFmpegCommandBuilder.js";
-import { FFmpegRunner } from "../infra/ffmpeg/FFmpegRunner.js";
-import {
-  FFmpegStderrParser,
-  type FFmpegDiagEvent
-} from "../infra/ffmpeg/FFmpegStderrParser.js";
-import type { NormalizedStreamCreateRequest } from "../types.js";
-import { FanoutHub } from "./FanoutHub.js";
-import { PlaybackSession } from "./PlaybackSession.js";
+import type { ApiErrorBody, StreamState, StreamStatusResponse } from '@rtsp-gateway/protocol'
+import { ApiError } from '../errors.js'
+import { nowIso } from '../lib/index.js'
+import { buildFfmpegCommand } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
+import { FFmpegStderrParser, type FFmpegDiagEvent } from '../infra/ffmpeg/FFmpegStderrParser.js'
+import type { NormalizedStreamCreateRequest } from '../types.js'
+import { FanoutHub } from './FanoutHub.js'
+import { PlaybackSession } from './PlaybackSession.js'
 
 interface StreamSourceOptions {
-  streamId: string;
-  sourceKey: string;
-  req: NormalizedStreamCreateRequest;
-  ffmpegPath: string;
-  startupTimeoutMs: number;
-  idleGraceMs: number;
-  stopGraceMs: number;
-  maxStartAttempts: number;
+  streamId: string
+  sourceKey: string
+  req: NormalizedStreamCreateRequest
+  ffmpegPath: string
+  startupTimeoutMs: number
+  idleGraceMs: number
+  stopGraceMs: number
+  maxStartAttempts: number
   logger: {
-    info(message: string, detail?: Record<string, unknown>): void;
-    warn(message: string, detail?: Record<string, unknown>): void;
-    error(message: string, detail?: Record<string, unknown>): void;
-  };
+    info(message: string, detail?: Record<string, unknown>): void
+    warn(message: string, detail?: Record<string, unknown>): void
+    error(message: string, detail?: Record<string, unknown>): void
+  }
 }
 
 export class StreamSource {
-  readonly streamId: string;
-  readonly sourceKey: string;
-  readonly createdAt: string;
-  readonly req: NormalizedStreamCreateRequest;
+  readonly streamId: string
+  readonly sourceKey: string
+  readonly createdAt: string
+  readonly req: NormalizedStreamCreateRequest
 
-  private readonly ffmpegPath: string;
-  private readonly startupTimeoutMs: number;
-  private readonly idleGraceMs: number;
-  private readonly stopGraceMs: number;
-  private readonly maxStartAttempts: number;
-  private readonly logger: StreamSourceOptions["logger"];
+  private readonly ffmpegPath: string
+  private readonly startupTimeoutMs: number
+  private readonly idleGraceMs: number
+  private readonly stopGraceMs: number
+  private readonly maxStartAttempts: number
+  private readonly logger: StreamSourceOptions['logger']
 
-  private state: StreamState = "idle";
-  private readonly sessions = new Map<string, PlaybackSession>();
-  private readonly fanout = new FanoutHub();
-  private readonly stderrParser = new FFmpegStderrParser();
-  private stderrRing: string[] = [];
+  private state: StreamState = 'idle'
+  private readonly sessions = new Map<string, PlaybackSession>()
+  private readonly fanout = new FanoutHub()
+  private readonly stderrParser = new FFmpegStderrParser()
+  private stderrRing: string[] = []
 
-  private runner?: FFmpegRunner;
-  private startPromise?: Promise<void>;
-  private stopPromise?: Promise<void>;
-  private idleTimer?: NodeJS.Timeout;
-  private stopInProgress = false;
-  private deleted = false;
+  private runner?: FFmpegRunner
+  private startPromise?: Promise<void>
+  private stopPromise?: Promise<void>
+  private idleTimer?: NodeJS.Timeout
+  private stopInProgress = false
+  private deleted = false
 
-  private startedAt?: string;
-  private lastActiveAt?: string;
-  private bytesOut = 0;
-  private startAttempts = 0;
-  private startLatencyMs?: number;
-  private lastErrorAt?: string;
-  private recentError?: ApiErrorBody;
+  private startedAt?: string
+  private lastActiveAt?: string
+  private bytesOut = 0
+  private startAttempts = 0
+  private startLatencyMs?: number
+  private lastErrorAt?: string
+  private recentError?: ApiErrorBody
 
   constructor(options: StreamSourceOptions) {
-    this.streamId = options.streamId;
-    this.sourceKey = options.sourceKey;
-    this.req = options.req;
-    this.ffmpegPath = options.ffmpegPath;
-    this.startupTimeoutMs = options.startupTimeoutMs;
-    this.idleGraceMs = options.idleGraceMs;
-    this.stopGraceMs = options.stopGraceMs;
-    this.maxStartAttempts = options.maxStartAttempts;
-    this.logger = options.logger;
-    this.createdAt = nowIso();
-    this.lastActiveAt = this.createdAt;
+    this.streamId = options.streamId
+    this.sourceKey = options.sourceKey
+    this.req = options.req
+    this.ffmpegPath = options.ffmpegPath
+    this.startupTimeoutMs = options.startupTimeoutMs
+    this.idleGraceMs = options.idleGraceMs
+    this.stopGraceMs = options.stopGraceMs
+    this.maxStartAttempts = options.maxStartAttempts
+    this.logger = options.logger
+    this.createdAt = nowIso()
+    this.lastActiveAt = this.createdAt
   }
 
   getState(): StreamState {
-    return this.state;
+    return this.state
   }
 
   viewerCount(): number {
-    return this.sessions.size;
+    return this.sessions.size
   }
 
   addViewer(session: PlaybackSession): void {
-    this.clearIdleTimer();
-    this.sessions.set(session.sessionId, session);
-    this.fanout.subscribe(session);
-    this.lastActiveAt = nowIso();
+    this.clearIdleTimer()
+    this.sessions.set(session.sessionId, session)
+    this.fanout.subscribe(session)
+    this.lastActiveAt = nowIso()
   }
 
   removeViewer(sessionId: string, reason: string): void {
-    const session = this.sessions.get(sessionId);
+    const session = this.sessions.get(sessionId)
     if (!session) {
-      return;
+      return
     }
-    session.close(reason);
-    this.fanout.unsubscribe(sessionId, reason);
-    this.sessions.delete(sessionId);
-    this.lastActiveAt = nowIso();
+    session.close(reason)
+    this.fanout.unsubscribe(sessionId, reason)
+    this.sessions.delete(sessionId)
+    this.lastActiveAt = nowIso()
     if (this.sessions.size === 0) {
-      this.scheduleIdleStop();
+      this.scheduleIdleStop()
     }
   }
 
   scheduleIdleStop(): void {
     if (this.deleted) {
-      return;
+      return
     }
-    this.clearIdleTimer();
+    this.clearIdleTimer()
     this.idleTimer = setTimeout(() => {
-      void this.stop("idle_timeout").catch((error) => {
-        this.logger.error("stream_idle_stop_failed", {
+      void this.stop('idle_timeout').catch((error) => {
+        this.logger.error('stream_idle_stop_failed', {
           streamId: this.streamId,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      });
-    }, this.idleGraceMs);
+          error: error instanceof Error ? error.message : String(error),
+        })
+      })
+    }, this.idleGraceMs)
   }
 
-  async ensureStarted(trigger: "first_viewer" | "manual"): Promise<void> {
+  async ensureStarted(trigger: 'first_viewer' | 'manual'): Promise<void> {
     if (this.deleted) {
-      throw new ApiError("STREAM_DELETED", "Stream has been deleted");
+      throw new ApiError('STREAM_DELETED', 'Stream has been deleted')
     }
     if (this.stopPromise) {
-      await this.stopPromise;
+      await this.stopPromise
       if (this.deleted) {
-        throw new ApiError("STREAM_DELETED", "Stream has been deleted");
+        throw new ApiError('STREAM_DELETED', 'Stream has been deleted')
       }
     }
-    if (this.state === "running") {
-      return;
+    if (this.state === 'running') {
+      return
     }
     if (this.startPromise) {
-      return this.startPromise;
+      return this.startPromise
     }
 
-    this.startPromise = this.startWithRetry(trigger);
+    this.startPromise = this.startWithRetry(trigger)
     try {
-      await this.startPromise;
+      await this.startPromise
     } finally {
-      this.startPromise = undefined;
+      this.startPromise = undefined
     }
   }
 
-  private async startWithRetry(trigger: "first_viewer" | "manual"): Promise<void> {
-    let lastError: unknown;
+  private async startWithRetry(trigger: 'first_viewer' | 'manual'): Promise<void> {
+    let lastError: unknown
     for (let attempt = 1; attempt <= this.maxStartAttempts; attempt += 1) {
       try {
-        await this.startOnce(trigger, attempt);
-        return;
+        await this.startOnce(trigger, attempt)
+        return
       } catch (error) {
-        lastError = error;
+        lastError = error
         if (attempt < this.maxStartAttempts) {
-          this.logger.warn("ffmpeg_start_retry", { streamId: this.streamId, attempt });
+          this.logger.warn('ffmpeg_start_retry', { streamId: this.streamId, attempt })
         }
       }
     }
-    throw lastError instanceof Error
-      ? lastError
-      : new ApiError("FFMPEG_EXITED", "FFmpeg exited before media output");
+    throw lastError instanceof Error ? lastError : new ApiError('FFMPEG_EXITED', 'FFmpeg exited before media output')
   }
 
-  private startOnce(trigger: "first_viewer" | "manual", attempt: number): Promise<void> {
+  private startOnce(trigger: 'first_viewer' | 'manual', attempt: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.startAttempts += 1;
-      this.state = "starting";
-      const startedAt = Date.now();
-      const runner = new FFmpegRunner();
-      this.runner = runner;
-      const command = buildFfmpegCommand(this.ffmpegPath, this.req);
-      let firstChunkSeen = false;
-      let settled = false;
+      this.startAttempts += 1
+      this.state = 'starting'
+      const startedAt = Date.now()
+      const runner = new FFmpegRunner()
+      this.runner = runner
+      const command = buildFfmpegCommand(this.ffmpegPath, this.req)
+      let firstChunkSeen = false
+      let settled = false
 
       const settleReject = (error: ApiError) => {
         if (settled) {
-          return;
+          return
         }
-        settled = true;
-        this.recentError = error.toBody();
-        this.lastErrorAt = nowIso();
-        this.state = "error";
-        reject(error);
-      };
+        settled = true
+        this.recentError = error.toBody()
+        this.lastErrorAt = nowIso()
+        this.state = 'error'
+        reject(error)
+      }
 
       const settleResolve = () => {
         if (settled) {
-          return;
+          return
         }
-        settled = true;
-        this.state = "running";
-        this.startedAt = nowIso();
-        this.startLatencyMs = Date.now() - startedAt;
-        resolve();
-      };
+        settled = true
+        this.state = 'running'
+        this.startedAt = nowIso()
+        this.startLatencyMs = Date.now() - startedAt
+        resolve()
+      }
 
       const startupTimer = setTimeout(() => {
         void runner.stop(this.stopGraceMs).finally(() => {
-          settleReject(new ApiError("STREAM_START_TIMEOUT", "Stream startup timeout"));
-        });
-      }, this.startupTimeoutMs);
+          settleReject(new ApiError('STREAM_START_TIMEOUT', 'Stream startup timeout'))
+        })
+      }, this.startupTimeoutMs)
 
       runner.onStdout((chunk) => {
         if (!firstChunkSeen) {
-          firstChunkSeen = true;
-          clearTimeout(startupTimer);
-          settleResolve();
+          firstChunkSeen = true
+          clearTimeout(startupTimer)
+          settleResolve()
         }
-        this.bytesOut += chunk.byteLength;
-        this.fanout.publish(chunk);
-      });
+        this.bytesOut += chunk.byteLength
+        this.fanout.publish(chunk)
+      })
 
       runner.onStderrLine((line) => {
-        this.pushStderr(line);
-        const diag = this.stderrParser.parse(line);
+        this.pushStderr(line)
+        const diag = this.stderrParser.parse(line)
         if (diag) {
-          this.applyDiagEvent(diag);
+          this.applyDiagEvent(diag)
         }
-      });
+      })
 
       runner.onExit((code, signal) => {
-        clearTimeout(startupTimer);
+        clearTimeout(startupTimer)
         if (!firstChunkSeen) {
           settleReject(
-            new ApiError("FFMPEG_EXITED", "FFmpeg exited before first media chunk", {
+            new ApiError('FFMPEG_EXITED', 'FFmpeg exited before first media chunk', {
               code,
-              signal
+              signal,
             })
-          );
-          return;
+          )
+          return
         }
         if (!this.stopInProgress && !this.deleted) {
-          this.state = "error";
-          this.lastErrorAt = nowIso();
+          this.state = 'error'
+          this.lastErrorAt = nowIso()
           this.recentError = {
-            code: "FFMPEG_EXITED",
-            message: "FFmpeg exited while running",
-            detail: { code, signal }
-          };
-          this.fanout.closeAll("ffmpeg_exited");
+            code: 'FFMPEG_EXITED',
+            message: 'FFmpeg exited while running',
+            detail: { code, signal },
+          }
+          this.fanout.closeAll('ffmpeg_exited')
         }
-      });
+      })
 
       try {
-        runner.start(command);
-        this.logger.info("ffmpeg_spawned", {
+        runner.start(command)
+        this.logger.info('ffmpeg_spawned', {
           streamId: this.streamId,
           trigger,
           attempt,
-          command: command.safePreview
-        });
+          command: command.safePreview,
+        })
       } catch (error) {
-        clearTimeout(startupTimer);
+        clearTimeout(startupTimer)
         settleReject(
-          new ApiError("FFMPEG_NOT_FOUND", "Failed to spawn ffmpeg process", {
-            error: error instanceof Error ? error.message : String(error)
+          new ApiError('FFMPEG_NOT_FOUND', 'Failed to spawn ffmpeg process', {
+            error: error instanceof Error ? error.message : String(error),
           })
-        );
+        )
       }
-    });
+    })
   }
 
   private pushStderr(line: string): void {
-    this.stderrRing.push(line);
+    this.stderrRing.push(line)
     if (this.stderrRing.length > 50) {
-      this.stderrRing = this.stderrRing.slice(-50);
+      this.stderrRing = this.stderrRing.slice(-50)
     }
   }
 
@@ -272,39 +267,39 @@ export class StreamSource {
     this.recentError = {
       code: event.code,
       message: event.line.slice(0, 300),
-      detail: { ts: event.ts, level: event.level }
-    };
-    this.lastErrorAt = nowIso();
+      detail: { ts: event.ts, level: event.level },
+    }
+    this.lastErrorAt = nowIso()
   }
 
   async stop(reason: string): Promise<void> {
     if (this.stopPromise) {
-      return this.stopPromise;
+      return this.stopPromise
     }
 
     this.stopPromise = (async () => {
-      this.stopInProgress = true;
-      if (reason === "deleted") {
-        this.deleted = true;
+      this.stopInProgress = true
+      if (reason === 'deleted') {
+        this.deleted = true
       }
-      this.clearIdleTimer();
-      this.state = "stopping";
-      this.fanout.closeAll(reason);
+      this.clearIdleTimer()
+      this.state = 'stopping'
+      this.fanout.closeAll(reason)
       for (const [sessionId, session] of this.sessions) {
-        session.close(reason);
-        this.sessions.delete(sessionId);
+        session.close(reason)
+        this.sessions.delete(sessionId)
       }
       if (this.runner) {
-        await this.runner.stop(this.stopGraceMs);
-        this.runner = undefined;
+        await this.runner.stop(this.stopGraceMs)
+        this.runner = undefined
       }
-      this.state = "idle";
+      this.state = 'idle'
     })().finally(() => {
-      this.stopInProgress = false;
-      this.stopPromise = undefined;
-    });
+      this.stopInProgress = false
+      this.stopPromise = undefined
+    })
 
-    await this.stopPromise;
+    await this.stopPromise
   }
 
   snapshotStatus(): StreamStatusResponse {
@@ -318,24 +313,24 @@ export class StreamSource {
       config: {
         transport: this.req.transport,
         video: this.req.video,
-        audio: this.req.audio
+        audio: this.req.audio,
       },
       stats: {
         bytesOut: this.bytesOut,
         ffmpegPid: this.runner?.pid(),
         startAttempts: this.startAttempts,
         startLatencyMs: this.startLatencyMs,
-        lastErrorAt: this.lastErrorAt
+        lastErrorAt: this.lastErrorAt,
       },
-      recentError: this.recentError
-    };
+      recentError: this.recentError,
+    }
   }
 
   private clearIdleTimer(): void {
     if (!this.idleTimer) {
-      return;
+      return
     }
-    clearTimeout(this.idleTimer);
-    this.idleTimer = undefined;
+    clearTimeout(this.idleTimer)
+    this.idleTimer = undefined
   }
 }

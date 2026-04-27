@@ -1,4 +1,4 @@
-import type { StreamCreateRequest } from "@rtsp-gateway/protocol";
+import type { StreamCreateRequest } from "@rtsp-gateway/client";
 
 export type PlayerSourceMode = "streamId" | "create";
 

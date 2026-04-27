@@ -1,5 +1,5 @@
-import type { StreamCreateRequest } from "@rtsp-gateway/protocol";
-import { createStream, deleteStream } from "@rtsp-gateway/sdk";
+import type { StreamCreateRequest } from "@rtsp-gateway/client";
+import { createStream, deleteStream } from "@rtsp-gateway/client";
 
 export async function ensureStreamId(options: {
   baseUrl: string;

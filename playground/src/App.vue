@@ -11,10 +11,7 @@
         </label>
         <label>
           RTSP URL
-          <input
-            v-model="form.url"
-            placeholder="rtsp://user:password@camera-host:554/Streaming/Channels/101"
-          />
+          <input v-model="form.url" placeholder="rtsp://user:password@camera-host:554/Streaming/Channels/101" />
         </label>
         <label>
           Transport
@@ -52,66 +49,65 @@
         @created="onCreated"
         @statechange="onStateChange"
         @error="onError"
-        @closed="onClosed"
-      />
-      <p class="stream-id">当前 Stream ID: {{ currentStreamId || "-" }}</p>
+        @closed="onClosed" />
+      <p class="stream-id">当前 Stream ID: {{ currentStreamId || '-' }}</p>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import type { StreamCreateRequest } from "@rtsp-gateway/protocol";
-import { RtspFlvPlayer } from "@rtsp-gateway/vue-player";
-import { computed, reactive, ref } from "vue";
+import type { StreamCreateRequest } from '@rtsp-gateway/client'
+import { RtspFlvPlayer } from '@rtsp-gateway/player-vue'
+import { computed, reactive, ref } from 'vue'
 
-const baseUrl = ref("http://localhost:3000");
-const status = ref("等待创建流");
-const currentStreamId = ref("");
-const showPlayer = ref(false);
+const baseUrl = ref('http://localhost:3000')
+const status = ref('等待创建流')
+const currentStreamId = ref('')
+const showPlayer = ref(false)
 
 const form = reactive({
-  url: "",
-  transport: "tcp" as StreamCreateRequest["transport"],
-  allowPrivateIp: false
-});
+  url: '',
+  transport: 'tcp' as StreamCreateRequest['transport'],
+  allowPrivateIp: false,
+})
 
 const createRequest = computed<StreamCreateRequest>(() => ({
   url: form.url,
   transport: form.transport,
   allowPrivateIp: form.allowPrivateIp,
   video: {
-    mode: "auto"
+    mode: 'auto',
   },
   audio: {
-    enabled: false
-  }
-}));
+    enabled: false,
+  },
+}))
 
 function openPlayer() {
-  showPlayer.value = true;
-  status.value = "正在创建流并启动播放...";
+  showPlayer.value = true
+  status.value = '正在创建流并启动播放...'
 }
 
 function closePlayer() {
-  showPlayer.value = false;
-  currentStreamId.value = "";
-  status.value = "播放器已关闭";
+  showPlayer.value = false
+  currentStreamId.value = ''
+  status.value = '播放器已关闭'
 }
 
 function onCreated(streamId: string) {
-  currentStreamId.value = streamId;
+  currentStreamId.value = streamId
 }
 
 function onStateChange(payload: { state: string }) {
-  status.value = `播放器状态: ${payload.state}`;
+  status.value = `播放器状态: ${payload.state}`
 }
 
 function onError(payload: { code: string; message: string }) {
-  status.value = `错误(${payload.code}): ${payload.message}`;
+  status.value = `错误(${payload.code}): ${payload.message}`
 }
 
 function onClosed(reason: string) {
-  status.value = `连接关闭: ${reason}`;
+  status.value = `连接关闭: ${reason}`
 }
 </script>
 
@@ -122,7 +118,7 @@ function onClosed(reason: string) {
   padding: 24px;
   display: grid;
   gap: 16px;
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: #12212f;
 }
 
@@ -201,4 +197,3 @@ button:disabled {
   }
 }
 </style>
-

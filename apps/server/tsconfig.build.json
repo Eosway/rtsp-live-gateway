@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@rtsp-gateway/protocol": ["../../packages/protocol/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

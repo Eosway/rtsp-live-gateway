@@ -1,19 +1,31 @@
 {
-  "name": "@rtsp-gateway/vue-player",
+  "name": "@rtsp-gateway/player-vue",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
   },
   "dependencies": {
-    "@rtsp-gateway/protocol": "workspace:*",
-    "@rtsp-gateway/sdk": "workspace:*",
-    "mpegts.js": "^1.8.0",
+    "@rtsp-gateway/client": "workspace:*",
+    "mpegts.js": "^1.8.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
     "vue": "^3.5.13"
   }
 }

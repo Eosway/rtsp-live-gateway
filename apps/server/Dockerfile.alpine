@@ -10,11 +10,10 @@ RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/server/package.json apps/server/package.json
-COPY apps/playground/package.json apps/playground/package.json
+COPY playground/package.json playground/package.json
 COPY packages/protocol/package.json packages/protocol/package.json
-COPY packages/shared/package.json packages/shared/package.json
-COPY packages/sdk/package.json packages/sdk/package.json
-COPY packages/vue-player/package.json packages/vue-player/package.json
+COPY packages/client/package.json packages/client/package.json
+COPY packages/player-vue/package.json packages/player-vue/package.json
 
 RUN pnpm install --frozen-lockfile
 

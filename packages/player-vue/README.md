@@ -1,8 +1,8 @@
-# @rtsp-gateway/vue-player
+# @rtsp-gateway/player-vue
 
-`@rtsp-gateway/vue-player` 提供 Vue 3 播放组件与播放辅助逻辑，封装了：
+`@rtsp-gateway/player-vue` 提供 Vue 3 播放组件与播放辅助逻辑，封装了：
 
-- `@rtsp-gateway/sdk` 的流创建/删除能力
+- `@rtsp-gateway/client` 的流创建/删除能力
 - `mpegts.js` 的 HTTP-FLV 播放生命周期
 
 适用于浏览器端播放 `/v1/live/:streamId`。
@@ -12,7 +12,7 @@
 工作区内依赖：
 
 ```bash
-pnpm --filter @rtsp-gateway/vue-player build
+pnpm --filter @rtsp-gateway/player-vue build
 ```
 
 导出：
@@ -60,7 +60,7 @@ pnpm --filter @rtsp-gateway/vue-player build
 
 ```vue
 <script setup lang="ts">
-import { RtspFlvPlayer } from "@rtsp-gateway/vue-player";
+import { RtspFlvPlayer } from "@rtsp-gateway/player-vue";
 </script>
 
 <template>
@@ -80,7 +80,7 @@ import { RtspFlvPlayer } from "@rtsp-gateway/vue-player";
 
 ```vue
 <script setup lang="ts">
-import { RtspFlvPlayer } from "@rtsp-gateway/vue-player";
+import { RtspFlvPlayer } from "@rtsp-gateway/player-vue";
 const streamId = "st_xxx";
 </script>
 
@@ -123,6 +123,6 @@ const streamId = "st_xxx";
 ## 7. 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/vue-player typecheck
-pnpm --filter @rtsp-gateway/vue-player build
+pnpm --filter @rtsp-gateway/player-vue typecheck
+pnpm --filter @rtsp-gateway/player-vue build
 ```

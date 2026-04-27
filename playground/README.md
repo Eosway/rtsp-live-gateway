@@ -4,7 +4,7 @@
 
 - 输入 RTSP 参数
 - 调用网关创建流
-- 使用 `@rtsp-gateway/vue-player` 直接播放 HTTP-FLV
+- 使用 `@rtsp-gateway/player-vue` 直接播放 HTTP-FLV
 
 ## 启动方式
 
@@ -27,8 +27,8 @@ pnpm --filter @rtsp-gateway/playground dev
 
 ## 依赖关系
 
-- `@rtsp-gateway/protocol`
-- `@rtsp-gateway/vue-player`
+- `@rtsp-gateway/client`
+- `@rtsp-gateway/player-vue`
 
 ## 构建与检查
 
@@ -36,4 +36,3 @@ pnpm --filter @rtsp-gateway/playground dev
 pnpm --filter @rtsp-gateway/playground typecheck
 pnpm --filter @rtsp-gateway/playground build
 ```
-

@@ -15,14 +15,51 @@ importers:
         specifier: ^5.8.3
         version: 5.9.3
 
-  apps/playground:
+  apps/server:
     dependencies:
+      '@hono/node-server':
+        specifier: ^1.14.4
+        version: 1.19.11(hono@4.12.9)
       '@rtsp-gateway/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
-      '@rtsp-gateway/vue-player':
+      hono:
+        specifier: ^4.8.3
+        version: 4.12.9
+    optionalDependencies:
+      '@ffmpeg-installer/ffmpeg':
+        specifier: ^1.1.0
+        version: 1.1.0
+
+  packages/client:
+    dependencies:
+      '@rtsp-gateway/protocol':
         specifier: workspace:*
-        version: link:../../packages/vue-player
+        version: link:../protocol
+
+  packages/player-vue:
+    dependencies:
+      '@rtsp-gateway/client':
+        specifier: workspace:*
+        version: link:../client
+      mpegts.js:
+        specifier: ^1.8.0
+        version: 1.8.0
+    devDependencies:
+      vue:
+        specifier: ^3.5.13
+        version: 3.5.31(typescript@5.9.3)
+
+  packages/protocol: {}
+
+  playground:
+    dependencies:
+      '@rtsp-gateway/client':
+        specifier: workspace:*
+        version: link:../packages/client
+      '@rtsp-gateway/player-vue':
+        specifier: workspace:*
+        version: link:../packages/player-vue
       vue:
         specifier: ^3.5.13
         version: 3.5.31(typescript@5.9.3)
@@ -39,50 +76,6 @@ importers:
       vue-tsc:
         specifier: ^2.2.10
         version: 2.2.12(typescript@5.9.3)
-
-  apps/server:
-    dependencies:
-      '@hono/node-server':
-        specifier: ^1.14.4
-        version: 1.19.11(hono@4.12.9)
-      '@rtsp-gateway/protocol':
-        specifier: workspace:*
-        version: link:../../packages/protocol
-      '@rtsp-gateway/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
-      hono:
-        specifier: ^4.8.3
-        version: 4.12.9
-    optionalDependencies:
-      '@ffmpeg-installer/ffmpeg':
-        specifier: ^1.1.0
-        version: 1.1.0
-
-  packages/protocol: {}
-
-  packages/sdk:
-    dependencies:
-      '@rtsp-gateway/protocol':
-        specifier: workspace:*
-        version: link:../protocol
-
-  packages/shared: {}
-
-  packages/vue-player:
-    dependencies:
-      '@rtsp-gateway/protocol':
-        specifier: workspace:*
-        version: link:../protocol
-      '@rtsp-gateway/sdk':
-        specifier: workspace:*
-        version: link:../sdk
-      mpegts.js:
-        specifier: ^1.8.0
-        version: 1.8.0
-      vue:
-        specifier: ^3.5.13
-        version: 3.5.31(typescript@5.9.3)
 
 packages:
 

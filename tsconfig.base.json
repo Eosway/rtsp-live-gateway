@@ -3,10 +3,8 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": [
-      "ES2022",
-      "DOM"
-    ],
+    "baseUrl": ".",
+    "lib": ["ES2022", "DOM"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
@@ -15,6 +13,11 @@
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@rtsp-gateway/protocol": ["packages/protocol/src/index.ts"],
+      "@rtsp-gateway/client": ["packages/client/src/index.ts"],
+      "@rtsp-gateway/player-vue": ["packages/player-vue/src/index.ts"]
+    }
   }
 }
