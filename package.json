@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm --filter @rtsp-gateway/protocol build && pnpm --filter @rtsp-gateway/client build && pnpm --filter @rtsp-gateway/server build && pnpm --filter @rtsp-gateway/player-vue build",
     "build:all": "pnpm run build && pnpm --filter @rtsp-gateway/playground build",
-    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm --filter @rtsp-gateway/playground typecheck",
+    "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "clean": "pnpm -r --if-present clean",
     "dev:playground": "pnpm --filter @rtsp-gateway/playground dev",
@@ -17,9 +17,13 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "typescript": "^5.8.3"
+    "@vitejs/plugin-vue": "^6.0.6",
+    "tsdown": "^0.16.6",
+    "typescript": "^5.8.3",
+    "vite": "^8.0.9"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=24",
+    "pnpm": ">=10.0.0"
   }
 }

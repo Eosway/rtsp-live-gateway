@@ -1,4 +1,12 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src/**/*.ts"]
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "paths": {
+      "@rtsp-gateway/client": ["../../packages/client/src/index.ts"],
+      "@rtsp-gateway/protocol": ["../../packages/protocol/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }
