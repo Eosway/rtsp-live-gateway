@@ -5,7 +5,7 @@
 - `@rtsp-gateway/sdk` 的流创建/删除能力
 - `mpegts.js` 的 HTTP-FLV 播放生命周期
 
-适用于浏览器端播放 `/v1/live/:streamId.flv`。
+适用于浏览器端播放 `/v1/live/:streamId`。
 
 ## 1. 安装与导出
 
@@ -97,7 +97,7 @@ const streamId = "st_xxx";
 
 1. `onMounted` 触发 `startPlayback`
 2. 根据 `mode` 解析/创建 `streamId`
-3. 通过 `buildLiveUrl` 组装 `.flv` 地址
+3. 通过 `buildLiveUrl` 组装直播地址
 4. `mpegts.createPlayer` -> `attachMediaElement` -> `load` -> `play`
 5. `onBeforeUnmount` 执行 `stopPlayback`
 6. 若 `destroyOnUnmount=true` 且流由组件创建，则调用 `deleteStream`
@@ -126,4 +126,3 @@ const streamId = "st_xxx";
 pnpm --filter @rtsp-gateway/vue-player typecheck
 pnpm --filter @rtsp-gateway/vue-player build
 ```
-

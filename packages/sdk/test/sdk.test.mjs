@@ -11,7 +11,7 @@ import {
 
 test("buildLiveUrl should format expected flv endpoint", () => {
   const url = buildLiveUrl("http://localhost:3000/", "st_demo");
-  assert.equal(url, "http://localhost:3000/v1/live/st_demo.flv");
+  assert.equal(url, "http://localhost:3000/v1/live/st_demo");
 });
 
 test("createStream should POST and return parsed payload", async () => {
@@ -23,7 +23,7 @@ test("createStream should POST and return parsed payload", async () => {
       JSON.stringify({
         streamId: "st_1",
         state: "idle",
-        playUrl: "http://localhost:3000/v1/live/st_1.flv",
+        playUrl: "http://localhost:3000/v1/live/st_1",
         reused: false,
         createdAt: "2026-03-26T00:00:00.000Z"
       }),
@@ -116,4 +116,3 @@ test("failed response should throw SdkError", async () => {
     globalThis.fetch = originalFetch;
   }
 });
-

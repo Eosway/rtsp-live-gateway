@@ -3,7 +3,7 @@
 `@rtsp-gateway/server` 是 RTSP Live Gateway 的服务端实现，负责：
 
 - 控制面 API（创建、查询、删除流）
-- 媒体面 HTTP-FLV 输出（`/v1/live/:streamId.flv`）
+- 媒体面 HTTP-FLV 输出（`/v1/live/:streamId`）
 - FFmpeg 进程管理（懒启动、超时、退出处理）
 - 单源复用（`sourceKey`）
 - SSRF 防护与基础指标输出
@@ -43,7 +43,7 @@ node apps/server/dist/index.js
 
 ### 3.2 媒体面
 
-- `GET /v1/live/:streamId.flv`
+- `GET /v1/live/:streamId`
   - 首个观众触发懒启动
   - 输出 `video/x-flv` 持续字节流
 
@@ -58,7 +58,7 @@ node apps/server/dist/index.js
 
 1. `POST /v1/streams` 时计算 `sourceKey`。
 2. 已存在相同 `sourceKey` 则复用已有 `StreamSource`。
-3. 第一个观众访问 `/live/*.flv` 时才启动 FFmpeg。
+3. 第一个观众访问 `/live/:streamId` 时才启动 FFmpeg。
 
 ### 4.2 观众与回收
 
@@ -130,4 +130,3 @@ SSRF：
 pnpm --filter @rtsp-gateway/server typecheck
 pnpm --filter @rtsp-gateway/server build
 ```
-

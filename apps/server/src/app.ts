@@ -20,7 +20,7 @@ interface CreateAppOptions {
 
 function buildPlayUrl(requestUrl: string, streamId: string): string {
   const url = new URL(requestUrl);
-  url.pathname = `/v1/live/${streamId}.flv`;
+  url.pathname = `/v1/live/${streamId}`;
   url.search = "";
   url.hash = "";
   return url.toString();
@@ -136,7 +136,7 @@ export function createApp(options: CreateAppOptions) {
     return c.body(null, 204);
   });
 
-  app.get("/v1/live/:streamId.flv", async (c) => {
+  app.get("/v1/live/:streamId", async (c) => {
     const streamId = c.req.param("streamId");
     if (!streamId) {
       throw new ApiError("INVALID_ARGUMENT", "streamId is required");

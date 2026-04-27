@@ -88,7 +88,7 @@ export async function deleteStream(baseUrl: string, streamId: string): Promise<v
 }
 
 export function buildLiveUrl(baseUrl: string, streamId: string): string {
-  return `${normalizeBaseUrl(baseUrl)}/v1/live/${encodeURIComponent(streamId)}.flv`;
+  return `${normalizeBaseUrl(baseUrl)}/v1/live/${encodeURIComponent(streamId)}`;
 }
 
 export { SdkError };
