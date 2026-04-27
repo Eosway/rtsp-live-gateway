@@ -118,6 +118,6 @@ const streamId = 'st_xxx'
 ## 7. 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/player-vue typecheck
+pnpm --filter @rtsp-gateway/player-vue tsc
 pnpm --filter @rtsp-gateway/player-vue build
 ```

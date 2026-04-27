@@ -44,7 +44,7 @@ await deleteStream(baseUrl, created.streamId)
 ## 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/client typecheck
+pnpm --filter @rtsp-gateway/client tsc
 pnpm --filter @rtsp-gateway/client build
 pnpm --filter @rtsp-gateway/client test
 ```

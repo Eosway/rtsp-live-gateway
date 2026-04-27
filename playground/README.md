@@ -33,6 +33,6 @@ pnpm --filter @rtsp-gateway/playground dev
 ## 构建与检查
 
 ```bash
-pnpm --filter @rtsp-gateway/playground typecheck
+pnpm --filter @rtsp-gateway/playground tsc
 pnpm --filter @rtsp-gateway/playground build
 ```

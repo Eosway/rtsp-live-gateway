@@ -127,6 +127,6 @@ SSRF：
 ## 8. 开发验证
 
 ```bash
-pnpm --filter @rtsp-gateway/server typecheck
+pnpm --filter @rtsp-gateway/server tsc
 pnpm --filter @rtsp-gateway/server build
 ```

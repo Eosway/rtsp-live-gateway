@@ -11,7 +11,7 @@ Monorepo implementation of RTSP -> HTTP-FLV gateway:
 
 ```bash
 pnpm install
-pnpm run typecheck
+pnpm run tsc
 pnpm run build
 ```
 

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm --filter @rtsp-gateway/protocol build && pnpm --filter @rtsp-gateway/client build && pnpm --filter @rtsp-gateway/server build && pnpm --filter @rtsp-gateway/player-vue build",
     "build:all": "pnpm run build && pnpm --filter @rtsp-gateway/playground build",
-    "typecheck": "pnpm -r --if-present typecheck",
+    "tsc": "pnpm -r --if-present tsc",
     "test": "pnpm -r --if-present test",
     "clean": "pnpm -r --if-present clean",
     "lint": "eslint .",

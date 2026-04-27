@@ -33,6 +33,6 @@ import type { StreamCreateRequest, ApiErrorCode } from '@rtsp-gateway/protocol'
 ## 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/protocol typecheck
+pnpm --filter @rtsp-gateway/protocol tsc
 pnpm --filter @rtsp-gateway/protocol build
 ```

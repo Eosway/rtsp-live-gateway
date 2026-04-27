@@ -15,8 +15,8 @@
   ],
   "scripts": {
     "build": "vite build",
-    "typecheck": "vue-tsc --noEmit",
-    "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
+    "tsc": "vue-tsc --noEmit",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@rtsp-gateway/client": "workspace:*",
