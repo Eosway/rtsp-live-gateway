@@ -5,10 +5,7 @@ import { resolveFfmpegPath } from './infra/ffmpeg/resolveFfmpegPath.js'
 
 const config = loadServerConfig()
 const ffmpegPath = await resolveFfmpegPath(config.nodeEnv)
-const app = createApp({
-  config,
-  ffmpegPath,
-})
+const app = createApp({ config, ffmpegPath })
 
 serve(
   {

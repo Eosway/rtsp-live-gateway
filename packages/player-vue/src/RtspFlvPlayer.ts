@@ -1,4 +1,4 @@
-import { buildLiveUrl } from '@rtsp-gateway/client'
+import { ClientError, buildLiveUrl } from '@rtsp-gateway/client'
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
 import { createMpegtsPlayer } from './useMpegtsFlvPlayer.js'
 import { cleanupStream, ensureStreamId } from './useRtspStream.js'
@@ -25,7 +25,7 @@ export const RtspFlvPlayer = defineComponent({
   emits: {
     created: (_streamId: string) => true,
     statechange: (_state: { state: string }) => true,
-    error: (_error: { code: string; message: string }) => true,
+    error: (_error: { code: string; message: string; status?: number; detail?: Record<string, unknown> }) => true,
     closed: (_reason: string) => true,
   },
   setup(props, { emit }) {
@@ -59,9 +59,12 @@ export const RtspFlvPlayer = defineComponent({
         emit('statechange', { state: 'running' })
       } catch (error) {
         emit('statechange', { state: 'error' })
+        const clientError = error instanceof ClientError ? error : undefined
         emit('error', {
-          code: 'PLAYER_START_FAILED',
+          code: clientError?.code ?? 'PLAYER_START_FAILED',
           message: error instanceof Error ? error.message : String(error),
+          status: clientError?.status,
+          detail: clientError?.detail,
         })
       }
     }

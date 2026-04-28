@@ -150,7 +150,11 @@ export class StreamSource {
       } catch (error) {
         lastError = error
         if (attempt < this.maxStartAttempts) {
-          this.logger.warn('ffmpeg_start_retry', { streamId: this.streamId, attempt })
+          this.logger.warn('ffmpeg_start_retry', {
+            streamId: this.streamId,
+            attempt,
+            error: error instanceof ApiError ? error.toBody() : { message: error instanceof Error ? error.message : String(error) },
+          })
         }
       }
     }
@@ -193,7 +197,11 @@ export class StreamSource {
 
       const startupTimer = setTimeout(() => {
         void runner.stop(this.stopGraceMs).finally(() => {
-          settleReject(new ApiError('STREAM_START_TIMEOUT', 'Stream startup timeout'))
+          settleReject(
+            new ApiError('STREAM_START_TIMEOUT', 'Stream startup timeout', {
+              stderrTail: this.stderrRing.slice(-10),
+            })
+          )
         })
       }, this.startupTimeoutMs)
 
@@ -222,6 +230,7 @@ export class StreamSource {
             new ApiError('FFMPEG_EXITED', 'FFmpeg exited before first media chunk', {
               code,
               signal,
+              stderrTail: this.stderrRing.slice(-10),
             })
           )
           return
@@ -236,6 +245,16 @@ export class StreamSource {
           }
           this.fanout.closeAll('ffmpeg_exited')
         }
+      })
+
+      runner.onError((error) => {
+        clearTimeout(startupTimer)
+        settleReject(
+          new ApiError('FFMPEG_NOT_FOUND', 'FFmpeg process error before media output', {
+            error: error.message,
+            stderrTail: this.stderrRing.slice(-10),
+          })
+        )
       })
 
       try {

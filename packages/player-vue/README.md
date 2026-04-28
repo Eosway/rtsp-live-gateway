@@ -47,12 +47,12 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 ### 2.3 Events
 
-| 事件          | 载荷                                | 说明                                   |
-| ------------- | ----------------------------------- | -------------------------------------- |
-| `created`     | `streamId: string`                  | 成功拿到 streamId（复用或新建）        |
-| `statechange` | `{ state: string }`                 | `starting/running/error/idle` 状态变化 |
-| `error`       | `{ code: string; message: string }` | 启动或播放失败                         |
-| `closed`      | `reason: string`                    | 组件主动停止或卸载关闭                 |
+| 事件          | 载荷                                                                                   | 说明                                   |
+| ------------- | -------------------------------------------------------------------------------------- | -------------------------------------- |
+| `created`     | `streamId: string`                                                                     | 成功拿到 streamId（复用或新建）        |
+| `statechange` | `{ state: string }`                                                                    | `starting/running/error/idle` 状态变化 |
+| `error`       | `{ code: string; message: string; status?: number; detail?: Record<string, unknown> }` | 启动或播放失败                         |
+| `closed`      | `reason: string`                                                                       | 组件主动停止或卸载关闭                 |
 
 ## 3. 使用示例
 
@@ -113,7 +113,7 @@ const streamId = 'st_xxx'
 
 - 必须确保服务端 CORS 配置正确。
 - 浏览器自动播放策略可能要求静音后才允许自动播放，建议默认 `muted=true`。
-- `error` 事件用于 UI 层展示与重试控制。
+- `error` 事件会透传服务端 `code/status/detail`，便于直接展示或排障。
 
 ## 7. 开发命令
 

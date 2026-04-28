@@ -16,4 +16,6 @@ export interface RtspFlvPlayerProps {
 export interface RtspFlvPlayerError {
   code: string
   message: string
+  status?: number
+  detail?: Record<string, unknown>
 }
