@@ -19,8 +19,6 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 - `RtspFlvPlayer`
 - `createMpegtsPlayer`
-- `ensureStreamId`
-- `cleanupStream`
 - 类型：`RtspFlvPlayerProps`、`RtspFlvPlayerError`、`PlayerSourceMode`
 
 ## 2. 组件能力

@@ -1,8 +1,45 @@
-import { ClientError, buildLiveUrl } from '@rtsp-gateway/client'
+import { ClientError, buildLiveUrl, createStream, deleteStream } from '@rtsp-gateway/client'
+import type { StreamCreateRequest } from '@rtsp-gateway/client'
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue'
-import { createMpegtsPlayer } from './useMpegtsFlvPlayer.js'
-import { cleanupStream, ensureStreamId } from './useRtspStream.js'
-import type { RtspFlvPlayerProps } from './types.js'
+import { createMpegtsPlayer } from '../adapters/mpegtsPlayerAdapter.js'
+import type { RtspFlvPlayerProps } from '../types.js'
+
+async function ensureStreamId(options: {
+  baseUrl: string
+  mode: 'streamId' | 'create'
+  streamId?: string
+  createRequest?: StreamCreateRequest
+}): Promise<{ streamId: string; createdByComponent: boolean }> {
+  if (options.mode === 'streamId') {
+    if (!options.streamId) {
+      throw new Error('streamId is required in streamId mode')
+    }
+    return {
+      streamId: options.streamId,
+      createdByComponent: false,
+    }
+  }
+
+  if (!options.createRequest) {
+    throw new Error('createRequest is required in create mode')
+  }
+  const response = await createStream(options.baseUrl, options.createRequest)
+  return {
+    streamId: response.streamId,
+    createdByComponent: true,
+  }
+}
+
+async function cleanupStream(baseUrl: string, streamId: string, enabled: boolean): Promise<void> {
+  if (!enabled) {
+    return
+  }
+  try {
+    await deleteStream(baseUrl, streamId)
+  } catch {
+    // 卸载清理失败时不抛出，避免影响页面生命周期。
+  }
+}
 
 export const RtspFlvPlayer = defineComponent({
   name: 'RtspFlvPlayer',
