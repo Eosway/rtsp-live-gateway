@@ -64,10 +64,10 @@ export function loadServerConfig(): ServerConfig {
     maxQueueBytes: parseIntValue(process.env.MAX_QUEUE_BYTES, 2 * 1024 * 1024),
     maxSources: parseIntValue(process.env.MAX_SOURCES, 64),
     maxViewersPerSource: parseIntValue(process.env.MAX_VIEWERS_PER_SOURCE, 256),
-    ssrfAllowPrivateIp: parseBoolValue(process.env.SSRF_ALLOW_PRIVATE_IP, false),
+    ssrfAllowPrivateIp: parseBoolValue(process.env.SSRF_ALLOW_PRIVATE_IP, true),
     rtspHostAllowlist: parseStringList(process.env.RTSP_HOST_ALLOWLIST),
     rtspHostDenylist: parseStringList(process.env.RTSP_HOST_DENYLIST),
-    rtspPortAllowlist: parseNumberList(process.env.RTSP_PORT_ALLOWLIST, [554]),
+    rtspPortAllowlist: parseNumberList(process.env.RTSP_PORT_ALLOWLIST, [554, 8554]),
     corsAllowOrigin: process.env.CORS_ALLOW_ORIGIN ?? '*',
     logger: createConsoleLogger(),
   }

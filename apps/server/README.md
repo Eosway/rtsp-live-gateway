@@ -109,10 +109,10 @@ node apps/server/dist/index.js
 
 SSRF：
 
-- `SSRF_ALLOW_PRIVATE_IP`（默认 `false`）
+- `SSRF_ALLOW_PRIVATE_IP`（默认 `true`）
 - `RTSP_HOST_ALLOWLIST`（逗号分隔）
 - `RTSP_HOST_DENYLIST`（逗号分隔）
-- `RTSP_PORT_ALLOWLIST`（逗号分隔，默认 `554`）
+- `RTSP_PORT_ALLOWLIST`（逗号分隔，默认 `554,8554`）
 
 ## 7. 代码结构
 
