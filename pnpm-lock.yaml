@@ -71,13 +71,13 @@ importers:
       '@hono/node-server':
         specifier: ^1.14.4
         version: 1.19.11(hono@4.12.9)
-      '@rtsp-gateway/protocol':
-        specifier: workspace:*
-        version: link:../../packages/protocol
       hono:
         specifier: ^4.8.3
         version: 4.12.9
-    optionalDependencies:
+    devDependencies:
+      '@rtsp-gateway/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       '@ffmpeg-installer/ffmpeg':
         specifier: ^1.1.0
         version: 1.1.0

@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-IMAGE_TAG="${1:-rtsp-gateway-server:local}"
-OUTPUT_PATH="${2:-rtsp-gateway-server.tar.gz}"
+IMAGE_TAG="${1:-rtsp-live-gateway-alpine:latest}"
+OUTPUT_PATH="${2:-rtsp-live-gateway-alpine.tar.gz}"
 
 docker build -f apps/server/Dockerfile -t "${IMAGE_TAG}" .
 docker save "${IMAGE_TAG}" | gzip > "${OUTPUT_PATH}"

@@ -23,6 +23,7 @@ Runtime baseline:
 ### Run server locally
 
 ```bash
+pnpm run build:server
 node apps/server/dist/index.js
 ```
 

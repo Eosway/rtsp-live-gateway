@@ -1,24 +1,24 @@
 FROM node:24-alpine AS builder
 
 WORKDIR /app
-ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-RUN apk add --no-cache gcompat ffmpeg ca-certificates tini
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/server/package.json apps/server/package.json
-COPY playground/package.json playground/package.json
 COPY packages/protocol/package.json packages/protocol/package.json
-COPY packages/client/package.json packages/client/package.json
-COPY packages/player-vue/package.json packages/player-vue/package.json
 
+RUN npm config set registry https://registry.npmmirror.com
 RUN pnpm install --frozen-lockfile
 
-COPY . .
-RUN pnpm run build
+COPY tsconfig.json tsconfig.json
+COPY apps/server apps/server
+COPY packages/protocol packages/protocol
+
+RUN pnpm run build:server
+RUN pnpm --filter @rtsp-gateway/server deploy --legacy --prod /prod/apps/server
 
 FROM node:24-alpine AS runner
 
@@ -26,14 +26,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories
 RUN apk add --no-cache gcompat ffmpeg ca-certificates tini \
   && addgroup -S app -g 1001 \
   && adduser -S app -u 1001 -G app
 
-COPY --from=builder /app /app
+COPY --from=builder /prod/apps/server /app
 
 USER app
 EXPOSE 3000
 
 ENTRYPOINT ["tini","--"]
-CMD ["node","apps/server/dist/index.js"]
+CMD ["node","dist/index.js"]

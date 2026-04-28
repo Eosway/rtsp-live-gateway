@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm --filter @rtsp-gateway/protocol build && pnpm --filter @rtsp-gateway/client build && pnpm --filter @rtsp-gateway/server build && pnpm --filter @rtsp-gateway/player-vue build",
     "build:all": "pnpm run build && pnpm --filter @rtsp-gateway/playground build",
+    "build:server": "pnpm --filter @rtsp-gateway/protocol build && pnpm --filter @rtsp-gateway/server build",
     "tsc": "pnpm -r --if-present tsc",
     "test": "pnpm -r --if-present test",
     "clean": "pnpm -r --if-present clean",
@@ -15,8 +16,8 @@
     "format:check": "prettier --check .",
     "dev:playground": "pnpm --filter @rtsp-gateway/playground dev",
     "pack:player": "pnpm --filter @rtsp-gateway/player-vue pack",
-    "docker:server": "docker build -f apps/server/Dockerfile -t rtsp-gateway-server:local .",
-    "docker:server:alpine": "docker build -f apps/server/Dockerfile.alpine -t rtsp-gateway-server:alpine .",
+    "docker:server": "docker build -f apps/server/Dockerfile -t rtsp-live-gateway:latest .",
+    "docker:server:alpine": "docker build -f apps/server/Dockerfile.alpine -t rtsp-live-gateway-alpine:latest .",
     "export:server-image": "bash scripts/export-server-image.sh",
     "prepare": "husky"
   },
