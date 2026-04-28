@@ -14,11 +14,11 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.4",
-    "hono": "^4.8.3"
+    "@hono/node-server": "^1.19.14",
+    "hono": "^4.12.15"
   },
   "devDependencies": {
-    "@rtsp-gateway/protocol": "workspace:*",
-    "@ffmpeg-installer/ffmpeg": "^1.1.0"
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@rtsp-gateway/protocol": "workspace:*"
   }
 }
