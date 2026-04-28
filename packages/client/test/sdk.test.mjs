@@ -51,11 +51,6 @@ test('get/list/delete should hit expected paths', async () => {
             video: {
               mode: 'auto',
               codec: 'libx264',
-              width: 0,
-              height: 0,
-              fps: 0,
-              bitrateKbps: 0,
-              gop: 0,
             },
             audio: { enabled: false, mode: 'drop', codec: 'aac', bitrateKbps: 0 },
           },

@@ -7,16 +7,10 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
   return {
     url: 'rtsp://admin:secret@example.com/live',
     transport: 'tcp',
-    connectTimeoutMs: 5000,
     ioTimeoutUs: 5_000_000,
     video: {
       mode: 'auto',
       codec: 'libx264',
-      width: 0,
-      height: 0,
-      fps: 0,
-      bitrateKbps: 0,
-      gop: 0,
     },
     audio: {
       enabled: false,
@@ -36,22 +30,6 @@ test('auto mode should copy on first attempt and transcode on retry', () => {
   assert.equal(resolveVideoPlan(req, 2), 'transcode')
 })
 
-test('auto mode should transcode immediately when resize or bitrate controls are set', () => {
-  const req = createRequest({
-    video: {
-      mode: 'auto',
-      codec: 'libx264',
-      width: 1280,
-      height: 720,
-      fps: 0,
-      bitrateKbps: 0,
-      gop: 0,
-    },
-  })
-
-  assert.equal(resolveVideoPlan(req, 1), 'transcode')
-})
-
 test('copy mode should preserve video bitstream copy', () => {
   const command = buildFfmpegCommand(
     '/usr/bin/ffmpeg',
@@ -59,11 +37,6 @@ test('copy mode should preserve video bitstream copy', () => {
       video: {
         mode: 'copy',
         codec: 'libx265',
-        width: 0,
-        height: 0,
-        fps: 0,
-        bitrateKbps: 0,
-        gop: 0,
       },
     }),
     'copy'
@@ -81,11 +54,6 @@ test('transcode mode should select libx264 or libx265 from video.codec', () => {
       video: {
         mode: 'transcode',
         codec: 'libx265',
-        width: 0,
-        height: 0,
-        fps: 0,
-        bitrateKbps: 0,
-        gop: 0,
       },
     }),
     'transcode'

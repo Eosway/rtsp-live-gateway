@@ -12,11 +12,6 @@ export type StreamState = 'idle' | 'starting' | 'running' | 'stopping' | 'error'
 export interface VideoOptions {
   mode?: VideoMode
   codec?: 'libx264' | 'libx265'
-  width?: number
-  height?: number
-  fps?: number
-  bitrateKbps?: number
-  gop?: number
 }
 
 export interface AudioOptions {
@@ -29,7 +24,6 @@ export interface AudioOptions {
 export interface StreamCreateRequest {
   url: string
   transport?: RtspTransport
-  connectTimeoutMs?: number
   ioTimeoutUs?: number
   video?: VideoOptions
   audio?: AudioOptions

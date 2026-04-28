@@ -6,11 +6,6 @@ const DEFAULT_TRANSPORT: RtspTransport = 'tcp'
 const DEFAULT_VIDEO: Required<VideoOptions> = {
   mode: 'auto',
   codec: 'libx264',
-  width: 0,
-  height: 0,
-  fps: 0,
-  bitrateKbps: 0,
-  gop: 0,
 }
 const DEFAULT_AUDIO: Required<AudioOptions> = {
   enabled: false,
@@ -39,15 +34,12 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
     throw new ApiError('INVALID_ARGUMENT', 'Invalid transport')
   }
 
-  const connectTimeoutMs = body.connectTimeoutMs ?? 5000
   const ioTimeoutUs = body.ioTimeoutUs ?? 5_000_000
-  assertPositiveNumber(connectTimeoutMs, 'connectTimeoutMs')
   assertPositiveNumber(ioTimeoutUs, 'ioTimeoutUs')
 
   return {
     url: body.url,
     transport,
-    connectTimeoutMs,
     ioTimeoutUs,
     video: { ...DEFAULT_VIDEO, ...(body.video ?? {}) },
     audio: { ...DEFAULT_AUDIO, ...(body.audio ?? {}) },

@@ -9,29 +9,12 @@ export interface FFmpegCommand {
 
 export type VideoPlan = 'copy' | 'transcode'
 
-function requiresVideoTranscode(req: NormalizedStreamCreateRequest): boolean {
-  return req.video.width > 0 || req.video.height > 0 || req.video.fps > 0 || req.video.bitrateKbps > 0 || req.video.gop > 0
-}
-
 function resolveVideoCodec(req: NormalizedStreamCreateRequest): string {
   return req.video.codec
 }
 
 export function buildFfmpegCommand(ffmpegPath: string, req: NormalizedStreamCreateRequest, plan?: VideoPlan): FFmpegCommand {
-  const connectTimeoutUs = req.connectTimeoutMs * 1000
-  const args: string[] = [
-    '-hide_banner',
-    '-loglevel',
-    'warning',
-    '-rw_timeout',
-    String(connectTimeoutUs),
-    '-rtsp_transport',
-    req.transport,
-    '-timeout',
-    String(req.ioTimeoutUs),
-    '-i',
-    req.url,
-  ]
+  const args: string[] = ['-hide_banner', '-loglevel', 'warning', '-rtsp_transport', req.transport, '-timeout', String(req.ioTimeoutUs), '-i', req.url]
 
   if (!req.audio.enabled || req.audio.mode === 'drop') {
     args.push('-an')
@@ -46,18 +29,6 @@ export function buildFfmpegCommand(ffmpegPath: string, req: NormalizedStreamCrea
     args.push('-c:v', 'copy')
   } else {
     args.push('-c:v', resolveVideoCodec(req), '-preset', 'veryfast', '-tune', 'zerolatency')
-    if (req.video.gop > 0) {
-      args.push('-g', String(req.video.gop), '-keyint_min', String(req.video.gop))
-    }
-    if (req.video.fps > 0) {
-      args.push('-r', String(req.video.fps))
-    }
-    if (req.video.bitrateKbps > 0) {
-      args.push('-b:v', `${req.video.bitrateKbps}k`)
-    }
-    if (req.video.width > 0 && req.video.height > 0) {
-      args.push('-vf', `scale=${req.video.width}:${req.video.height}`)
-    }
   }
 
   args.push('-f', 'flv', '-flvflags', 'no_duration_filesize', 'pipe:1')
@@ -74,7 +45,7 @@ export function resolveVideoPlan(req: NormalizedStreamCreateRequest, attempt: nu
     return 'copy'
   }
 
-  if (req.video.mode === 'transcode' || requiresVideoTranscode(req)) {
+  if (req.video.mode === 'transcode') {
     return 'transcode'
   }
 

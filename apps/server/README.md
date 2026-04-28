@@ -89,7 +89,6 @@ node apps/server/dist/index.js
 
 超时参数：
 
-- `connectTimeoutMs` -> `-rw_timeout`（微秒）
 - `ioTimeoutUs` -> `-timeout`
 
 ## 6. 环境变量
