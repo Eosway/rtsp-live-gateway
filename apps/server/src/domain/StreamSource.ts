@@ -1,7 +1,7 @@
 import type { ApiErrorBody, StreamState, StreamStatusResponse } from '@rtsp-gateway/protocol'
 import { ApiError } from '../errors.js'
 import { nowIso } from '../lib/index.js'
-import { buildFfmpegCommand } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
 import { FFmpegStderrParser, type FFmpegDiagEvent } from '../infra/ffmpeg/FFmpegStderrParser.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
@@ -164,7 +164,8 @@ export class StreamSource {
       const startedAt = Date.now()
       const runner = new FFmpegRunner()
       this.runner = runner
-      const command = buildFfmpegCommand(this.ffmpegPath, this.req)
+      const videoPlan = resolveVideoPlan(this.req, attempt)
+      const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan)
       let firstChunkSeen = false
       let settled = false
 
@@ -243,6 +244,7 @@ export class StreamSource {
           streamId: this.streamId,
           trigger,
           attempt,
+          videoPlan,
           command: command.safePreview,
         })
       } catch (error) {

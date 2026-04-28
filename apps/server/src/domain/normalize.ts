@@ -5,7 +5,7 @@ import type { NormalizedStreamCreateRequest } from '../types.js'
 const DEFAULT_TRANSPORT: RtspTransport = 'tcp'
 const DEFAULT_VIDEO: Required<VideoOptions> = {
   mode: 'auto',
-  forceCodec: 'h264',
+  codec: 'libx264',
   width: 0,
   height: 0,
   fps: 0,

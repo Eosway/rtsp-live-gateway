@@ -50,7 +50,7 @@ test('get/list/delete should hit expected paths', async () => {
             transport: 'tcp',
             video: {
               mode: 'auto',
-              forceCodec: 'h264',
+              codec: 'libx264',
               width: 0,
               height: 0,
               fps: 0,

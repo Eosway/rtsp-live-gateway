@@ -11,7 +11,7 @@ export type StreamState = 'idle' | 'starting' | 'running' | 'stopping' | 'error'
 
 export interface VideoOptions {
   mode?: VideoMode
-  forceCodec?: 'h264'
+  codec?: 'libx264' | 'libx265'
   width?: number
   height?: number
   fps?: number
