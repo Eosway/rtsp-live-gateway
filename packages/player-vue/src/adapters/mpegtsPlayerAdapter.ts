@@ -1,35 +1,9 @@
 import mpegtsModule from 'mpegts.js'
+import type { MpegtsPlayer } from '../types.js'
 
-export interface MpegtsPlayerState {
-  attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean): Promise<void>
-  play(): Promise<void>
-  destroy(): void
-}
-
-export function createMpegtsPlayer(): MpegtsPlayerState {
-  const mpegts = mpegtsModule as unknown as {
-    isSupported(): boolean
-    createPlayer(
-      source: {
-        type: string
-        isLive: boolean
-        url: string
-        hasAudio: boolean
-        hasVideo: boolean
-      },
-      config: { enableStashBuffer: boolean; liveBufferLatencyChasing: boolean }
-    ): {
-      attachMediaElement(mediaElement: HTMLMediaElement): void
-      load(): void
-      play(): Promise<void> | void
-      pause(): void
-      unload(): void
-      detachMediaElement(): void
-      destroy(): void
-    }
-  }
-
-  let player: ReturnType<typeof mpegts.createPlayer> | undefined
+export function createMpegtsPlayer(): MpegtsPlayer {
+  const mpegts = mpegtsModule
+  let player: ReturnType<typeof mpegtsModule.createPlayer> | undefined
 
   async function attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean) {
     if (!mpegts.isSupported()) {
