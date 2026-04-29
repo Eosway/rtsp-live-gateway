@@ -1,4 +1,4 @@
-import type { ApiErrorBody, ApiErrorCode } from '@rtsp-gateway/protocol'
+import type { ApiErrorBody, ApiErrorCode, ApiErrorDetailByCode } from '@rtsp-gateway/protocol'
 
 const STATUS_BY_ERROR: Record<ApiErrorCode, number> = {
   INVALID_ARGUMENT: 400,
@@ -16,19 +16,19 @@ const STATUS_BY_ERROR: Record<ApiErrorCode, number> = {
   INTERNAL_ERROR: 500,
 }
 
-export class ApiError extends Error {
-  readonly code: ApiErrorCode
+export class ApiError<TCode extends ApiErrorCode = ApiErrorCode> extends Error {
+  readonly code: TCode
   readonly status: number
-  readonly detail?: Record<string, unknown>
+  readonly detail?: ApiErrorDetailByCode[TCode]
 
-  constructor(code: ApiErrorCode, message: string, detail?: Record<string, unknown>, status?: number) {
+  constructor(code: TCode, message: string, detail?: ApiErrorDetailByCode[TCode], status?: number) {
     super(message)
     this.code = code
     this.detail = detail
     this.status = status ?? STATUS_BY_ERROR[code] ?? 500
   }
 
-  toBody(requestId?: string): ApiErrorBody {
+  toBody(requestId?: string): ApiErrorBody<TCode> {
     return {
       code: this.code,
       message: this.message,

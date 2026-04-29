@@ -22,8 +22,8 @@ const created = await createStream(baseUrl, {
   transport: 'tcp',
 })
 
-const playUrl = buildLiveUrl(baseUrl, created.streamId)
-console.log(playUrl)
+console.log(created.streamId)
+console.log(buildLiveUrl(baseUrl, created.streamId))
 
 await deleteStream(baseUrl, created.streamId)
 ```

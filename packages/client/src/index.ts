@@ -1,10 +1,18 @@
-import type { ApiErrorBody, StreamCreateRequest, StreamCreateResponse, StreamStatusResponse } from '@rtsp-gateway/protocol'
+import type {
+  ApiErrorBody,
+  ApiErrorDetail,
+  StreamCreateRequest,
+  StreamCreateResponse,
+  StreamDeleteResponse,
+  StreamListResponse,
+  StreamStatusResponse,
+} from '@rtsp-gateway/protocol'
 class ClientError extends Error {
   readonly status: number
   readonly code?: string
-  readonly detail?: Record<string, unknown>
+  readonly detail?: ApiErrorDetail
 
-  constructor(message: string, options: { status: number; code?: string; detail?: Record<string, unknown> }) {
+  constructor(message: string, options: { status: number; code?: string; detail?: ApiErrorDetail }) {
     super(message)
     this.status = options.status
     this.code = options.code
@@ -68,12 +76,12 @@ export async function getStream(baseUrl: string, streamId: string): Promise<Stre
   return request<StreamStatusResponse>(baseUrl, `/v1/streams/${encodeURIComponent(streamId)}`)
 }
 
-export async function listStreams(baseUrl: string): Promise<StreamStatusResponse[]> {
-  return request<StreamStatusResponse[]>(baseUrl, '/v1/streams')
+export async function listStreams(baseUrl: string): Promise<StreamListResponse> {
+  return request<StreamListResponse>(baseUrl, '/v1/streams')
 }
 
-export async function deleteStream(baseUrl: string, streamId: string): Promise<void> {
-  await request<void>(baseUrl, `/v1/streams/${encodeURIComponent(streamId)}`, {
+export async function deleteStream(baseUrl: string, streamId: string): Promise<StreamDeleteResponse> {
+  await request<StreamDeleteResponse>(baseUrl, `/v1/streams/${encodeURIComponent(streamId)}`, {
     method: 'DELETE',
   })
 }
@@ -83,4 +91,13 @@ export function buildLiveUrl(baseUrl: string, streamId: string): string {
 }
 
 export { ClientError }
-export type { ApiErrorBody, StreamCreateRequest, StreamCreateResponse, StreamStatusResponse } from '@rtsp-gateway/protocol'
+export type {
+  ApiErrorBody,
+  ApiErrorDetail,
+  HealthzResponse,
+  StreamCreateRequest,
+  StreamCreateResponse,
+  StreamDeleteResponse,
+  StreamListResponse,
+  StreamStatusResponse,
+} from '@rtsp-gateway/protocol'

@@ -1,4 +1,4 @@
-import type { StreamCreateResponse, StreamStatusResponse } from '@rtsp-gateway/protocol'
+import type { HealthzResponse, StreamCreateResponse, StreamListResponse, StreamStatusResponse } from '@rtsp-gateway/protocol'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { stream } from 'hono/streaming'
@@ -13,14 +13,6 @@ import { assertRtspTargetAllowed } from './security/ssrf.js'
 interface CreateAppOptions {
   config: ServerConfig
   ffmpegPath: string
-}
-
-function buildPlayUrl(requestUrl: string, streamId: string): string {
-  const url = new URL(requestUrl)
-  url.pathname = `/v1/live/${streamId}`
-  url.search = ''
-  url.hash = ''
-  return url.toString()
 }
 
 function buildMetricsText(metrics: { sources: number; runningSources: number; viewers: number; bytesOut: number }): string {
@@ -68,11 +60,12 @@ export function createApp(options: CreateAppOptions) {
   })
 
   app.get('/v1/healthz', (c) => {
-    return c.json({
+    const response: HealthzResponse = {
       status: 'ok',
       ffmpegPath: options.ffmpegPath,
       uptimeSec: Math.floor(process.uptime()),
-    })
+    }
+    return c.json(response)
   })
 
   app.get('/v1/metrics', (c) => {
@@ -97,14 +90,16 @@ export function createApp(options: CreateAppOptions) {
     const response: StreamCreateResponse = {
       streamId: source.streamId,
       state: source.getState(),
-      playUrl: buildPlayUrl(c.req.url, source.streamId),
       reused,
       createdAt: source.createdAt,
     }
     return c.json(response)
   })
 
-  app.get('/v1/streams', (c) => c.json(registry.list()))
+  app.get('/v1/streams', (c) => {
+    const response: StreamListResponse = registry.list()
+    return c.json(response)
+  })
 
   app.get('/v1/streams/:streamId', (c) => {
     const streamId = c.req.param('streamId')

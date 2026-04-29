@@ -3,7 +3,7 @@
 Monorepo implementation of RTSP -> HTTP-FLV gateway:
 
 - `apps/server`: Hono + Node.js gateway service (`/v1/streams`, `/v1/live/:streamId`)
-- `packages/client`: API client for create/get/delete stream and live URL builder
+- `packages/client`: control-plane API client and live URL builder
 - `packages/player-vue`: Vue 3 player component wrapping `mpegts.js`
 - `playground`: demo web app to create stream and play in browser
 

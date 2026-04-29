@@ -16,7 +16,6 @@ test('createStream should POST and return parsed payload', async () => {
       JSON.stringify({
         streamId: 'st_1',
         state: 'idle',
-        playUrl: 'http://localhost:3000/v1/live/st_1',
         reused: false,
         createdAt: '2026-03-26T00:00:00.000Z',
       }),
@@ -46,7 +45,7 @@ test('get/list/delete should hit expected paths', async () => {
           state: 'idle',
           viewerCount: 0,
           createdAt: '2026-03-26T00:00:00.000Z',
-          config: {
+          effectiveConfig: {
             transport: 'tcp',
             video: {
               mode: 'auto',

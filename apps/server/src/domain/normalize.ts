@@ -16,7 +16,7 @@ const DEFAULT_AUDIO: Required<AudioOptions> = {
 
 function assertPositiveNumber(value: number, field: string): void {
   if (!Number.isFinite(value) || value < 0) {
-    throw new ApiError('INVALID_ARGUMENT', `Invalid field: ${field}`)
+    throw new ApiError('INVALID_ARGUMENT', `Invalid field: ${field}`, { field })
   }
 }
 
@@ -26,12 +26,12 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
   }
   const body = raw as StreamCreateRequest
   if (!body.url || typeof body.url !== 'string') {
-    throw new ApiError('INVALID_ARGUMENT', 'url is required')
+    throw new ApiError('INVALID_ARGUMENT', 'url is required', { field: 'url' })
   }
 
   const transport = body.transport ?? DEFAULT_TRANSPORT
   if (!['tcp', 'udp', 'udp_multicast', 'http', 'https'].includes(transport)) {
-    throw new ApiError('INVALID_ARGUMENT', 'Invalid transport')
+    throw new ApiError('INVALID_ARGUMENT', 'Invalid transport', { field: 'transport' })
   }
 
   const ioTimeoutUs = body.ioTimeoutUs ?? 5_000_000

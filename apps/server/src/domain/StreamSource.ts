@@ -1,4 +1,4 @@
-import type { ApiErrorBody, StreamState, StreamStatusResponse } from '@rtsp-gateway/protocol'
+import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@rtsp-gateway/protocol'
 import { ApiError } from '../errors.js'
 import { nowIso } from '../lib/index.js'
 import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
@@ -238,10 +238,11 @@ export class StreamSource {
         if (!this.stopInProgress && !this.deleted) {
           this.state = 'error'
           this.lastErrorAt = nowIso()
+          const detail: FfmpegExitedErrorDetail = { code, signal }
           this.recentError = {
             code: 'FFMPEG_EXITED',
             message: 'FFmpeg exited while running',
-            detail: { code, signal },
+            detail,
           }
           this.fanout.closeAll('ffmpeg_exited')
         }
@@ -285,10 +286,11 @@ export class StreamSource {
   }
 
   private applyDiagEvent(event: FFmpegDiagEvent): void {
+    const detail: FfmpegDiagnosticErrorDetail = { ts: event.ts, level: event.level }
     this.recentError = {
       code: event.code,
       message: event.line.slice(0, 300),
-      detail: { ts: event.ts, level: event.level },
+      detail,
     }
     this.lastErrorAt = nowIso()
   }
@@ -331,7 +333,7 @@ export class StreamSource {
       createdAt: this.createdAt,
       startedAt: this.startedAt,
       lastActiveAt: this.lastActiveAt,
-      config: {
+      effectiveConfig: {
         transport: this.req.transport,
         video: this.req.video,
         audio: this.req.audio,
