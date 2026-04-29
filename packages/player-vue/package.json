@@ -19,13 +19,13 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@rtsp-gateway/client": "workspace:*",
     "mpegts.js": "^1.8.0"
   },
   "peerDependencies": {
     "vue": ">=3.4.0"
   },
   "devDependencies": {
+    "@rtsp-gateway/client": "workspace:*",
     "vite-plugin-dts": "^4.5.4",
     "vue": "^3.5.33",
     "vue-tsc": "^3.2.7"

@@ -10,6 +10,7 @@ export default defineConfig({
       entryRoot: 'src',
       insertTypesEntry: true,
       rollupTypes: true,
+      bundledPackages: ['@rtsp-gateway/protocol'],
       tsconfigPath: resolve(__dirname, 'tsconfig.json'),
     }),
   ],
@@ -20,7 +21,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['vue', 'mpegts.js', '@rtsp-gateway/client', '@rtsp-gateway/protocol'],
+      external: ['vue', 'mpegts.js'],
     },
   },
 })
