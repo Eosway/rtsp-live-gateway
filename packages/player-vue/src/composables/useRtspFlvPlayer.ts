@@ -2,7 +2,15 @@ import { ClientError, buildLiveUrl, createStream, deleteStream } from '@rtsp-gat
 import type { StreamCreateRequest } from '@rtsp-gateway/client'
 import { ref, shallowRef } from 'vue'
 import { createPlayer } from '../player/mpeg2ts.js'
-import type { RtspFlvPlayerError, RtspFlvPlayerStatus, UseRtspFlvPlayerCallbacks, UseRtspFlvPlayerOptions, UseRtspFlvPlayerReturn } from '../types.js'
+import type {
+  MediaPlayer,
+  MediaPlayerError,
+  RtspFlvPlayerError,
+  RtspFlvPlayerStatus,
+  UseRtspFlvPlayerCallbacks,
+  UseRtspFlvPlayerOptions,
+  UseRtspFlvPlayerReturn,
+} from '../types.js'
 
 type UseRtspFlvPlayerOptionsSource = UseRtspFlvPlayerOptions | (() => UseRtspFlvPlayerOptions)
 
@@ -25,7 +33,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   const streamId = ref<string>()
   const state = ref<RtspFlvPlayerStatus>('idle')
   const error = ref<RtspFlvPlayerError>()
-  const player = createPlayer()
+  let player: MediaPlayer | undefined
 
   function resolveOptions(): UseRtspFlvPlayerOptions {
     return typeof optionsSource === 'function' ? optionsSource() : optionsSource
@@ -38,12 +46,24 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
 
   function attach(videoEl: HTMLVideoElement) {
     videoRef.value = videoEl
+    player?.attachMediaElement(videoEl)
   }
 
   async function destroyPlayback(reason: string): Promise<void> {
-    player.destroy()
+    player?.destroy()
+    player = undefined
     emitStateChange('idle')
     callbacks.onClosed?.(reason)
+  }
+
+  function toRtspFlvPlayerError(mediaPlayerError: MediaPlayerError): RtspFlvPlayerError {
+    return {
+      type: 'media_player',
+      code: mediaPlayerError.type,
+      message: mediaPlayerError.detail,
+      detail: mediaPlayerError.info,
+      cause: mediaPlayerError,
+    }
   }
 
   async function start(): Promise<void> {
@@ -64,7 +84,28 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       }
 
       const liveUrl = buildLiveUrl(options.baseUrl, streamId.value)
-      await player.attach(videoRef.value, liveUrl, Boolean(options.stashBuffer))
+      player?.destroy()
+      player = createPlayer(
+        { type: 'flv', isLive: true, url: liveUrl, hasAudio: false, hasVideo: true },
+        {
+          enableStashBuffer: Boolean(options.stashBuffer),
+          liveBufferLatencyChasing: true,
+        }
+      )
+      player.onError = (mediaPlayerError) => {
+        const normalizedError = toRtspFlvPlayerError(mediaPlayerError)
+        error.value = normalizedError
+        emitStateChange('error')
+        callbacks.onError?.(normalizedError)
+      }
+      player.onMediaInfo = (mediaInfo) => {
+        callbacks.onMediaInfo?.(mediaInfo)
+      }
+      player.onMetadataArrived = (metadata) => {
+        callbacks.onMetadataArrived?.(metadata)
+      }
+      player.attachMediaElement(videoRef.value)
+      player.load()
       if (options.autoPlay ?? true) {
         await player.play()
       }
@@ -73,10 +114,14 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       emitStateChange('error')
       const clientError = caughtError instanceof ClientError ? caughtError : undefined
       error.value = {
+        type: 'client',
         code: clientError?.code ?? 'PLAYER_START_FAILED',
         message: caughtError instanceof Error ? caughtError.message : String(caughtError),
-        status: clientError?.status,
-        detail: clientError?.detail,
+        detail: {
+          status: clientError?.status,
+          detail: clientError?.detail,
+        },
+        cause: caughtError,
       }
       callbacks.onError?.(error.value)
     }

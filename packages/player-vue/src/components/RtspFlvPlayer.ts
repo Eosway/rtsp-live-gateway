@@ -1,6 +1,6 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, type PropType, type VNodeRef, watch } from 'vue'
 import { useRtspFlvPlayer } from '../composables/useRtspFlvPlayer.js'
-import type { RtspFlvPlayerProps, RtspFlvPlayerStatus, UseRtspFlvPlayerReturn } from '../types.js'
+import type { MediaInfo, RtspFlvPlayerError, RtspFlvPlayerProps, RtspFlvPlayerStatus, UseRtspFlvPlayerReturn } from '../types.js'
 
 export const RtspFlvPlayer = defineComponent({
   name: 'RtspFlvPlayer',
@@ -18,7 +18,9 @@ export const RtspFlvPlayer = defineComponent({
   emits: {
     created: (_streamId: string) => true,
     statechange: (_state: { state: RtspFlvPlayerStatus }) => true,
-    error: (_error: { code: string; message: string; status?: number; detail?: Record<string, unknown> }) => true,
+    error: (_error: RtspFlvPlayerError) => true,
+    mediainfo: (_mediaInfo: MediaInfo) => true,
+    metadataarrived: (_metadata: unknown) => true,
     closed: (_reason: string) => true,
   },
   setup(props, { emit, expose }) {
@@ -39,6 +41,12 @@ export const RtspFlvPlayer = defineComponent({
         },
         onError: (error) => {
           emit('error', error)
+        },
+        onMediaInfo: (mediaInfo) => {
+          emit('mediainfo', mediaInfo)
+        },
+        onMetadataArrived: (metadata) => {
+          emit('metadataarrived', metadata)
         },
         onClosed: (reason) => {
           emit('closed', reason)

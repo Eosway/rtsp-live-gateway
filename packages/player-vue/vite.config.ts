@@ -20,8 +20,19 @@ export default defineConfig({
       formats: ['es'],
       fileName: 'index',
     },
-    rollupOptions: {
-      external: ['vue', 'mpegts.js'],
+    rolldownOptions: {
+      external: ['vue'],
+      output: {
+        chunkFileNames: '[name].js',
+        codeSplitting: {
+          groups: [
+            {
+              name: 'mpeg2ts',
+              test: /mpegts\.js/,
+            },
+          ],
+        },
+      },
     },
   },
 })

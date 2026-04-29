@@ -44,12 +44,14 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 ### 2.3 Events
 
-| 事件          | 载荷                                                                                   | 说明                                   |
-| ------------- | -------------------------------------------------------------------------------------- | -------------------------------------- |
-| `created`     | `streamId: string`                                                                     | 成功创建 stream 并拿到 streamId        |
-| `statechange` | `{ state: string }`                                                                    | `starting/running/error/idle` 状态变化 |
-| `error`       | `{ code: string; message: string; status?: number; detail?: Record<string, unknown> }` | 启动或播放失败                         |
-| `closed`      | `reason: string`                                                                       | 组件主动停止或卸载关闭                 |
+| 事件              | 载荷                                                                                                     | 说明                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `created`         | `streamId: string`                                                                                       | 成功创建 stream 并拿到 streamId        |
+| `statechange`     | `{ state: string }`                                                                                      | `starting/running/error/idle` 状态变化 |
+| `error`           | `{ type: 'client' \| 'media_player'; code: string; message: string; detail?: unknown; cause?: unknown }` | 启动或播放失败                         |
+| `mediainfo`       | `MediaInfo`                                                                                              | 已解析到媒体信息                       |
+| `metadataarrived` | `unknown`                                                                                                | 已收到 mpegts metadata                 |
+| `closed`          | `reason: string`                                                                                         | 组件主动停止或卸载关闭                 |
 
 ## 3. 使用示例
 
@@ -136,7 +138,7 @@ async function stopPlayer() {
 
 - 必须确保服务端 CORS 配置正确。
 - 浏览器自动播放策略可能要求静音后才允许自动播放，建议默认 `muted=true`。
-- `error` 事件会透传服务端 `code/status/detail`，便于直接展示或排障。
+- `error` 事件统一透传 `{ type, code, message, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
 
 ## 8. 开发命令
 

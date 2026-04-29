@@ -1,48 +1,75 @@
 import MpegTs from 'mpegts.js'
-import type { MpegTsPlayer } from '../types.js'
+import type { MediaPlayer, MediaPlayerConfig, MediaPlayerSource, MediaInfo } from '../types.js'
 
-export function createPlayer(): MpegTsPlayer {
-  let player: ReturnType<typeof MpegTs.createPlayer> | undefined
+export function createPlayer(mediaDataSource: MediaPlayerSource, config: MediaPlayerConfig = {}): MediaPlayer {
+  if (!MpegTs.isSupported()) {
+    throw new Error('MPEG2-TS is not supported in this browser')
+  }
 
-  async function attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean) {
-    if (!MpegTs.isSupported()) {
-      throw new Error('mpegts.js is not supported in this browser')
-    }
-    destroy()
+  const player = MpegTs.createPlayer(mediaDataSource, config)
 
-    player = MpegTs.createPlayer(
-      { type: 'flv', isLive: true, url, hasAudio: false, hasVideo: true },
-      {
-        enableStashBuffer: stashBuffer,
-        liveBufferLatencyChasing: true,
-      }
-    )
+  const instance: MediaPlayer = {
+    onError: undefined,
+    onMediaInfo: undefined,
+    onMetadataArrived: undefined,
+    attachMediaElement,
+    detachMediaElement,
+    load,
+    unload,
+    play,
+    pause,
+    destroy,
+  }
 
-    player.attachMediaElement(videoEl)
+  player.on(MpegTs.Events.ERROR, handlePlayerError)
+  player.on(MpegTs.Events.MEDIA_INFO, handleMediaInfo)
+  player.on(MpegTs.Events.METADATA_ARRIVED, handleMetadataArrived)
+
+  function handlePlayerError(type: string, detail: string, info: unknown) {
+    instance.onError?.({ type, detail, info })
+  }
+
+  function handleMediaInfo(mediaInfo: MediaInfo) {
+    instance.onMediaInfo?.(mediaInfo)
+  }
+
+  function handleMetadataArrived(metadata: unknown) {
+    instance.onMetadataArrived?.(metadata)
+  }
+
+  function attachMediaElement(nextMediaElement: HTMLVideoElement) {
+    player.attachMediaElement(nextMediaElement)
+  }
+
+  function detachMediaElement() {
+    player.detachMediaElement()
+  }
+
+  function load() {
     player.load()
   }
 
+  function unload() {
+    player.unload()
+  }
+
   async function play() {
-    if (!player) {
-      return
-    }
     await player.play()
   }
 
+  function pause() {
+    player.pause()
+  }
+
   function destroy() {
-    if (!player) {
-      return
-    }
+    player.off(MpegTs.Events.ERROR, handlePlayerError)
+    player.off(MpegTs.Events.MEDIA_INFO, handleMediaInfo)
+    player.off(MpegTs.Events.METADATA_ARRIVED, handleMetadataArrived)
     player.pause()
     player.unload()
     player.detachMediaElement()
     player.destroy()
-    player = undefined
   }
 
-  return {
-    attach,
-    play,
-    destroy,
-  }
+  return instance
 }
