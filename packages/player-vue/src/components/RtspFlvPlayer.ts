@@ -1,9 +1,10 @@
-import { defineComponent, h, onBeforeUnmount, onMounted, type PropType, type VNodeRef, watch } from 'vue'
+import { defineComponent, h, onBeforeUnmount, onMounted, type PropType, type VNodeRef, useAttrs, watch } from 'vue'
 import { useRtspFlvPlayer } from '../composables/useRtspFlvPlayer.js'
-import type { MediaInfo, RtspFlvPlayerError, RtspFlvPlayerProps, RtspFlvPlayerStatus, UseRtspFlvPlayerReturn } from '../types.js'
+import type { MediaInfo, MediaPlayerConfig, RtspFlvPlayerError, RtspFlvPlayerProps, RtspFlvPlayerStatus, UseRtspFlvPlayerReturn } from '../types.js'
 
 export const RtspFlvPlayer = defineComponent({
   name: 'RtspFlvPlayer',
+  inheritAttrs: false,
   props: {
     baseUrl: { type: String, required: true },
     sourceConfig: {
@@ -11,8 +12,10 @@ export const RtspFlvPlayer = defineComponent({
       required: true,
     },
     autoPlay: { type: Boolean, default: true },
-    muted: { type: Boolean, default: true },
-    stashBuffer: { type: Boolean, default: false },
+    playerConfig: {
+      type: Object as PropType<MediaPlayerConfig>,
+      default: undefined,
+    },
     cleanOnUnmount: { type: Boolean, default: false },
   },
   emits: {
@@ -24,12 +27,13 @@ export const RtspFlvPlayer = defineComponent({
     closed: (_reason: string) => true,
   },
   setup(props, { emit, expose }) {
+    const attrs = useAttrs()
     const controller: UseRtspFlvPlayerReturn = useRtspFlvPlayer(
       () => ({
         baseUrl: props.baseUrl,
         sourceConfig: props.sourceConfig,
         autoPlay: props.autoPlay,
-        stashBuffer: props.stashBuffer,
+        playerConfig: props.playerConfig,
         cleanOnUnmount: props.cleanOnUnmount,
       }),
       {
@@ -64,7 +68,7 @@ export const RtspFlvPlayer = defineComponent({
     })
 
     watch(
-      () => [props.baseUrl, props.sourceConfig, props.autoPlay, props.stashBuffer] as const,
+      () => [props.baseUrl, props.sourceConfig, props.autoPlay, props.playerConfig] as const,
       () => {
         void controller.reload('props_changed')
       }
@@ -84,14 +88,9 @@ export const RtspFlvPlayer = defineComponent({
 
     return () =>
       h('video', {
+        ...attrs,
         ref: videoRef,
-        muted: props.muted,
-        style: {
-          width: '100%',
-          maxWidth: '100%',
-          backgroundColor: '#0a0a0a',
-          borderRadius: '8px',
-        },
+        style: [{ width: '100%', maxWidth: '100%' }, attrs.style],
       })
   },
 })

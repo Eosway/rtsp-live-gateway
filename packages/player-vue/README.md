@@ -19,7 +19,7 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 - `RtspFlvPlayer`
 - `useRtspFlvPlayer`
-- 类型：`RtspFlvPlayerProps`、`RtspFlvPlayerError`、`RtspFlvPlayerStatus`、`UseRtspFlvPlayerOptions`
+- 类型：`RtspFlvPlayerProps`、`RtspFlvPlayerError`、`RtspFlvPlayerStatus`、`UseRtspFlvPlayerOptions`（与 `RtspFlvPlayerProps` 等价）
 
 ## 2. 组件能力
 
@@ -33,14 +33,13 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 ### 2.2 Props
 
-| Prop             | 类型                  | 必填 | 默认值  | 说明                                       |
-| ---------------- | --------------------- | ---- | ------- | ------------------------------------------ |
-| `baseUrl`        | `string`              | 是   | -       | 网关服务地址，例如 `http://localhost:3000` |
-| `sourceConfig`   | `StreamCreateRequest` | 是   | -       | 播放源配置，会用于创建 stream              |
-| `autoPlay`       | `boolean`             | 否   | `true`  | 自动播放                                   |
-| `muted`          | `boolean`             | 否   | `true`  | 视频元素静音属性                           |
-| `stashBuffer`    | `boolean`             | 否   | `false` | 传给 mpegts `enableStashBuffer`            |
-| `cleanOnUnmount` | `boolean`             | 否   | `false` | 组件卸载时是否显式删除后端 stream          |
+| Prop             | 类型                  | 必填 | 默认值  | 说明                                           |
+| ---------------- | --------------------- | ---- | ------- | ---------------------------------------------- |
+| `baseUrl`        | `string`              | 是   | -       | 网关服务地址，例如 `http://localhost:3000`     |
+| `sourceConfig`   | `StreamCreateRequest` | 是   | -       | 播放源配置，会用于创建 stream                  |
+| `autoPlay`       | `boolean`             | 否   | `true`  | 自动播放                                       |
+| `playerConfig`   | `MediaPlayerConfig`   | 否   | -       | 传给 mpegts 的播放器配置，会覆盖默认 live 配置 |
+| `cleanOnUnmount` | `boolean`             | 否   | `false` | 组件卸载时是否显式删除后端 stream              |
 
 ### 2.3 Events
 
@@ -67,8 +66,9 @@ import { RtspFlvPlayer } from '@rtsp-gateway/player-vue'
     base-url="http://localhost:3000"
     :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }"
     :auto-play="true"
-    :muted="true"
-    :stash-buffer="false"
+    :player-config="{ liveSyncMaxLatency: 3, liveSyncTargetLatency: 1.5 }"
+    muted
+    playsinline
     :clean-on-unmount="false" />
 </template>
 ```
@@ -117,6 +117,11 @@ async function stopPlayer() {
 
 额外选项：
 
+- `playerConfig`
+  - 会透传给 `mpegts.createPlayer`
+  - 在内部默认 live 配置基础上做覆盖
+- 其余未声明为组件 props 的属性，会透传给内部 `<video>` 元素
+  - 例如 `muted`、`playsinline`、`controls`、`poster`、`preload`、`class`、`style`
 - `cleanOnUnmount`
   - 默认 `false`
   - `detach()` 时是否执行删除后端 stream 的清理语义
@@ -130,14 +135,21 @@ async function stopPlayer() {
   - `isLive: true`
   - `hasAudio: false`
   - `hasVideo: true`
-- 可控低延迟参数：
-  - `enableStashBuffer`（由 `stashBuffer` 控制）
-  - `liveBufferLatencyChasing: true`
+- 默认监控直播配置：
+  - `enableStashBuffer: true`
+  - `liveSync: true`
+  - `liveSyncMaxLatency: 4`
+  - `liveSyncTargetLatency: 2`
+  - `liveSyncPlaybackRate: 1.2`
+  - `autoCleanupSourceBuffer: true`
+  - `autoCleanupMaxBackwardDuration: 30`
+  - `autoCleanupMinBackwardDuration: 15`
+- 传入 `playerConfig` 时，会在以上默认值基础上覆盖
 
 ## 7. 注意事项
 
 - 必须确保服务端 CORS 配置正确。
-- 浏览器自动播放策略可能要求静音后才允许自动播放，建议默认 `muted=true`。
+- 浏览器自动播放策略可能要求视频元素静音后才允许自动播放，建议透传 `muted` 给内部 `<video>`。
 - `error` 事件统一透传 `{ type, code, message, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
 
 ## 8. 开发命令

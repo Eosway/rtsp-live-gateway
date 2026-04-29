@@ -14,6 +14,17 @@ import type {
 
 type UseRtspFlvPlayerOptionsSource = UseRtspFlvPlayerOptions | (() => UseRtspFlvPlayerOptions)
 
+const defaultLivePlayerConfig = {
+  enableStashBuffer: true, // 保留输入缓冲，优先抗一般网络抖动而不是追求最低延迟。
+  liveSync: true, // 通过温和提升 playbackRate 追赶延迟，避免频繁直接跳帧。
+  liveSyncMaxLatency: 4, // 延迟超过 4 秒后开始主动追赶，限制多宫格长期漂移。
+  liveSyncTargetLatency: 2, // 将稳态延迟收敛到约 2 秒，兼顾监控实时性与连续性。
+  liveSyncPlaybackRate: 1.2, // 追赶时最多 1.2 倍速，降低音视频突兀变化和抖动风险。
+  autoCleanupSourceBuffer: true, // 长时播放时主动清理旧缓冲，控制多宫格内存增长。
+  autoCleanupMaxBackwardDuration: 30, // 旧缓冲超过 30 秒就触发清理，避免无意义堆积。
+  autoCleanupMinBackwardDuration: 15, // 清理后仍保留 15 秒回退缓冲，兼顾短时抖动恢复。
+} as const
+
 async function createManagedStream(baseUrl: string, sourceConfig: StreamCreateRequest): Promise<string> {
   const response = await createStream(baseUrl, sourceConfig)
   return response.streamId
@@ -88,8 +99,8 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       player = createPlayer(
         { type: 'flv', isLive: true, url: liveUrl, hasAudio: false, hasVideo: true },
         {
-          enableStashBuffer: Boolean(options.stashBuffer),
-          liveBufferLatencyChasing: true,
+          ...defaultLivePlayerConfig,
+          ...options.playerConfig,
         }
       )
       player.onError = (mediaPlayerError) => {

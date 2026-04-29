@@ -4,16 +4,12 @@ import type { Ref, ShallowRef } from 'vue'
 
 export type RtspFlvPlayerStatus = 'idle' | 'starting' | 'running' | 'error'
 
-interface RtspFlvPlayerBaseOptions {
+export interface RtspFlvPlayerProps {
   baseUrl: string
   sourceConfig: StreamCreateRequest
   autoPlay?: boolean
-  stashBuffer?: boolean
+  playerConfig?: MediaPlayerConfig
   cleanOnUnmount?: boolean
-}
-
-export interface RtspFlvPlayerProps extends RtspFlvPlayerBaseOptions {
-  muted?: boolean
 }
 
 export interface RtspFlvPlayerError {
@@ -24,7 +20,7 @@ export interface RtspFlvPlayerError {
   cause?: unknown
 }
 
-export type UseRtspFlvPlayerOptions = RtspFlvPlayerBaseOptions
+export type UseRtspFlvPlayerOptions = RtspFlvPlayerProps
 
 export interface UseRtspFlvPlayerCallbacks {
   onCreated?: (streamId: string) => void
