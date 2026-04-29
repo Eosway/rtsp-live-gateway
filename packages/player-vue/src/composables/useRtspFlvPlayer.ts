@@ -1,7 +1,7 @@
 import { ClientError, buildLiveUrl, createStream, deleteStream } from '@rtsp-gateway/client'
 import type { StreamCreateRequest } from '@rtsp-gateway/client'
 import { ref, shallowRef } from 'vue'
-import { createMpegtsPlayer } from '../adapters/mpegtsPlayerAdapter.js'
+import { createPlayer } from '../player/mpeg2ts.js'
 import type { RtspFlvPlayerError, RtspFlvPlayerStatus, UseRtspFlvPlayerCallbacks, UseRtspFlvPlayerOptions, UseRtspFlvPlayerReturn } from '../types.js'
 
 type UseRtspFlvPlayerOptionsSource = UseRtspFlvPlayerOptions | (() => UseRtspFlvPlayerOptions)
@@ -25,7 +25,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   const streamId = ref<string>()
   const state = ref<RtspFlvPlayerStatus>('idle')
   const error = ref<RtspFlvPlayerError>()
-  const player = createMpegtsPlayer()
+  const player = createPlayer()
 
   function resolveOptions(): UseRtspFlvPlayerOptions {
     return typeof optionsSource === 'function' ? optionsSource() : optionsSource

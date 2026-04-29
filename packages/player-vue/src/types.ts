@@ -43,7 +43,7 @@ export interface UseRtspFlvPlayerReturn {
   reload(reason?: string): Promise<void>
 }
 
-export interface MpegtsPlayer {
+export interface MpegTsPlayer {
   attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean): Promise<void>
   play(): Promise<void>
   destroy(): void

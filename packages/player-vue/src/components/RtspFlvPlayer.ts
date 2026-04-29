@@ -77,8 +77,6 @@ export const RtspFlvPlayer = defineComponent({
     return () =>
       h('video', {
         ref: videoRef,
-        controls: true,
-        playsInline: true,
         muted: props.muted,
         style: {
           width: '100%',

@@ -1,24 +1,17 @@
-import mpegtsModule from 'mpegts.js'
-import type { MpegtsPlayer } from '../types.js'
+import MpegTs from 'mpegts.js'
+import type { MpegTsPlayer } from '../types.js'
 
-export function createMpegtsPlayer(): MpegtsPlayer {
-  const mpegts = mpegtsModule
-  let player: ReturnType<typeof mpegtsModule.createPlayer> | undefined
+export function createPlayer(): MpegTsPlayer {
+  let player: ReturnType<typeof MpegTs.createPlayer> | undefined
 
   async function attach(videoEl: HTMLVideoElement, url: string, stashBuffer: boolean) {
-    if (!mpegts.isSupported()) {
+    if (!MpegTs.isSupported()) {
       throw new Error('mpegts.js is not supported in this browser')
     }
     destroy()
 
-    player = mpegts.createPlayer(
-      {
-        type: 'flv',
-        isLive: true,
-        url,
-        hasAudio: false,
-        hasVideo: true,
-      },
+    player = MpegTs.createPlayer(
+      { type: 'flv', isLive: true, url, hasAudio: false, hasVideo: true },
       {
         enableStashBuffer: stashBuffer,
         liveBufferLatencyChasing: true,
