@@ -76,6 +76,8 @@ export type ApiErrorCode =
   | 'SSRF_BLOCKED'
   | 'STREAM_NOT_FOUND'
   | 'STREAM_DELETED'
+  | 'SOURCE_LIMIT_REACHED'
+  | 'VIEWER_LIMIT_REACHED'
   | 'STREAM_START_TIMEOUT'
   | 'UPSTREAM_AUTH_FAILED'
   | 'UPSTREAM_CONNECT_FAILED'
@@ -123,6 +125,8 @@ export interface ApiErrorDetailByCode {
   SSRF_BLOCKED: SsrfBlockedErrorDetail
   STREAM_NOT_FOUND: undefined
   STREAM_DELETED: undefined
+  SOURCE_LIMIT_REACHED: Required<Pick<InvalidArgumentErrorDetail, 'maxSources'>>
+  VIEWER_LIMIT_REACHED: Required<Pick<InvalidArgumentErrorDetail, 'maxViewersPerSource'>>
   STREAM_START_TIMEOUT: StreamStartTimeoutErrorDetail
   UPSTREAM_AUTH_FAILED: FfmpegDiagnosticErrorDetail
   UPSTREAM_CONNECT_FAILED: FfmpegDiagnosticErrorDetail

@@ -134,7 +134,9 @@ export function createApp(options: CreateAppOptions) {
     }
 
     if (source.viewerCount() >= options.config.maxViewersPerSource) {
-      throw new ApiError('INVALID_ARGUMENT', 'Viewer limit reached', { maxViewersPerSource: options.config.maxViewersPerSource }, 429)
+      throw new ApiError('VIEWER_LIMIT_REACHED', 'Viewer limit reached', {
+        maxViewersPerSource: options.config.maxViewersPerSource,
+      })
     }
 
     const session = new PlaybackSession({

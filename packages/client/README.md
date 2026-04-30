@@ -5,6 +5,7 @@
 ## 导出 API
 
 - `createStream(baseUrl, req)`
+- `getHealthz(baseUrl)`
 - `getStream(baseUrl, streamId)`
 - `listStreams(baseUrl)`
 - `deleteStream(baseUrl, streamId)`
@@ -34,6 +35,7 @@ await deleteStream(baseUrl, created.streamId)
 
 - `status`：HTTP 状态码
 - `code`：服务端 `ApiErrorCode`（若有）
+- `requestId`：服务端请求 ID（若有）
 - `detail`：服务端错误详情（若有）
 
 ## 边界说明

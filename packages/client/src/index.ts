@@ -1,6 +1,8 @@
 import type {
   ApiErrorBody,
+  ApiErrorCode,
   ApiErrorDetail,
+  HealthzResponse,
   StreamCreateRequest,
   StreamCreateResponse,
   StreamDeleteResponse,
@@ -9,13 +11,15 @@ import type {
 } from '@rtsp-gateway/protocol'
 class ClientError extends Error {
   readonly status: number
-  readonly code?: string
+  readonly code?: ApiErrorCode
+  readonly requestId?: string
   readonly detail?: ApiErrorDetail
 
-  constructor(message: string, options: { status: number; code?: string; detail?: ApiErrorDetail }) {
+  constructor(message: string, options: { status: number; code?: ApiErrorCode; requestId?: string; detail?: ApiErrorDetail }) {
     super(message)
     this.status = options.status
     this.code = options.code
+    this.requestId = options.requestId
     this.detail = options.detail
   }
 }
@@ -37,12 +41,14 @@ async function parseJsonSafe<T>(response: Response): Promise<T | undefined> {
 }
 
 async function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers)
+  if (init?.body !== undefined && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json')
+  }
+
   const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
     ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -50,6 +56,7 @@ async function request<T>(baseUrl: string, path: string, init?: RequestInit): Pr
     throw new ClientError(body?.message ?? `HTTP ${response.status}`, {
       status: response.status,
       code: body?.code,
+      requestId: body?.requestId,
       detail: body?.detail,
     })
   }
@@ -76,6 +83,10 @@ export async function getStream(baseUrl: string, streamId: string): Promise<Stre
   return request<StreamStatusResponse>(baseUrl, `/v1/streams/${encodeURIComponent(streamId)}`)
 }
 
+export async function getHealthz(baseUrl: string): Promise<HealthzResponse> {
+  return request<HealthzResponse>(baseUrl, '/v1/healthz')
+}
+
 export async function listStreams(baseUrl: string): Promise<StreamListResponse> {
   return request<StreamListResponse>(baseUrl, '/v1/streams')
 }
@@ -93,6 +104,7 @@ export function buildLiveUrl(baseUrl: string, streamId: string): string {
 export { ClientError }
 export type {
   ApiErrorBody,
+  ApiErrorCode,
   ApiErrorDetail,
   HealthzResponse,
   StreamCreateRequest,

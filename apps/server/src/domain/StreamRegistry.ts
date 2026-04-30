@@ -33,7 +33,7 @@ export class StreamRegistry {
     }
 
     if (this.bySourceKey.size >= this.config.maxSources) {
-      throw new ApiError('INVALID_ARGUMENT', 'Source limit reached', { maxSources: this.config.maxSources }, 429)
+      throw new ApiError('SOURCE_LIMIT_REACHED', 'Source limit reached', { maxSources: this.config.maxSources })
     }
 
     const streamId = `st_${randomUUID().replace(/-/g, '')}`
