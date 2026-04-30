@@ -47,14 +47,13 @@
     <section v-if="showPlayer" class="panel">
       <RtspFlvPlayer
         :base-url="baseUrl"
-        mode="create"
-        :create-request="createRequest"
-        :autoplay="true"
-        :muted="true"
-        :stash-buffer="false"
-        :destroy-on-unmount="true"
+        :source-config="sourceConfig"
+        :auto-play="true"
+        muted
+        playsinline
+        :clean-on-unmount="true"
         @created="onCreated"
-        @statechange="onStateChange"
+        @media-info="onMediaInfo"
         @error="onError"
         @closed="onClosed" />
       <p class="stream-id">当前 Stream ID: {{ currentStreamId || '-' }}</p>
@@ -79,7 +78,7 @@ const form = reactive({
   allowPrivateIp: false,
 })
 
-const createRequest = computed<StreamCreateRequest>(() => ({
+const sourceConfig = computed<StreamCreateRequest>(() => ({
   url: form.url,
   transport: form.transport,
   allowPrivateIp: form.allowPrivateIp,
@@ -105,10 +104,11 @@ function closePlayer() {
 
 function onCreated(streamId: string) {
   currentStreamId.value = streamId
+  status.value = `已创建流: ${streamId}`
 }
 
-function onStateChange(payload: { state: string }) {
-  status.value = `播放器状态: ${payload.state}`
+function onMediaInfo() {
+  status.value = '播放器已开始接收媒体信息'
 }
 
 function onError(payload: { code: string; message: string }) {

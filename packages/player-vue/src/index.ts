@@ -7,5 +7,4 @@ export type {
   UseRtspFlvPlayerReturn,
   RtspFlvPlayerError,
   RtspFlvPlayerProps,
-  RtspFlvPlayerStatus,
 } from './types.js'

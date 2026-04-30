@@ -45,6 +45,8 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   const state = ref<RtspFlvPlayerStatus>('idle')
   const error = ref<RtspFlvPlayerError>()
   let player: MediaPlayer | undefined
+  let operationChain: Promise<void> = Promise.resolve()
+  let operationToken = 0
 
   function resolveOptions(): UseRtspFlvPlayerOptions {
     return typeof optionsSource === 'function' ? optionsSource() : optionsSource
@@ -52,7 +54,6 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
 
   function emitStateChange(nextState: RtspFlvPlayerStatus) {
     state.value = nextState
-    callbacks.onStateChange?.(nextState)
   }
 
   function attach(videoEl: HTMLVideoElement) {
@@ -60,8 +61,25 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     player?.attachMediaElement(videoEl)
   }
 
+  function nextOperationToken(): number {
+    operationToken += 1
+    return operationToken
+  }
+
+  function isOperationCurrent(token: number): boolean {
+    return token === operationToken
+  }
+
+  function runExclusive(task: () => Promise<void>): Promise<void> {
+    const run = operationChain.catch(() => undefined).then(task)
+    operationChain = run.catch(() => undefined)
+    return run
+  }
+
   async function destroyPlayback(reason: string): Promise<void> {
-    player?.destroy()
+    const currentPlayer = player
+    player = undefined
+    currentPlayer?.destroy()
     player = undefined
     emitStateChange('idle')
     callbacks.onClosed?.(reason)
@@ -77,7 +95,8 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     }
   }
 
-  async function start(): Promise<void> {
+  async function startInternal(): Promise<void> {
+    const token = nextOperationToken()
     const options = resolveOptions()
     if (state.value === 'starting' || state.value === 'running') {
       return
@@ -85,49 +104,79 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
 
     emitStateChange('starting')
     error.value = undefined
+    let currentPlayer: MediaPlayer | undefined
     try {
       if (!videoRef.value) {
         throw new Error('Video element is not attached')
       }
       if (!streamId.value) {
-        streamId.value = await createManagedStream(options.baseUrl, options.sourceConfig)
-        callbacks.onCreated?.(streamId.value)
+        const nextStreamId = await createManagedStream(options.baseUrl, options.sourceConfig)
+        if (!isOperationCurrent(token)) {
+          await deleteManagedStream(options.baseUrl, nextStreamId)
+          return
+        }
+        streamId.value = nextStreamId
+        callbacks.onCreated?.(nextStreamId)
       }
 
       const liveUrl = buildLiveUrl(options.baseUrl, streamId.value)
-      player?.destroy()
-      player = createPlayer(
+      currentPlayer = createPlayer(
         { type: 'flv', isLive: true, url: liveUrl, hasAudio: false, hasVideo: true },
         {
           ...defaultLivePlayerConfig,
           ...options.playerConfig,
         }
       )
-      player.onError = (mediaPlayerError) => {
+
+      currentPlayer.onError = (mediaPlayerError) => {
+        if (!isOperationCurrent(token) || player !== currentPlayer) {
+          return
+        }
         const normalizedError = toRtspFlvPlayerError(mediaPlayerError)
         error.value = normalizedError
         emitStateChange('error')
         callbacks.onError?.(normalizedError)
       }
-      player.onMediaInfo = (mediaInfo) => {
+      currentPlayer.onMediaInfo = (mediaInfo) => {
+        if (!isOperationCurrent(token) || player !== currentPlayer) {
+          return
+        }
         callbacks.onMediaInfo?.(mediaInfo)
       }
-      player.onMetadataArrived = (metadata) => {
+      currentPlayer.onMetadataArrived = (metadata) => {
+        if (!isOperationCurrent(token) || player !== currentPlayer) {
+          return
+        }
         callbacks.onMetadataArrived?.(metadata)
       }
-      player.attachMediaElement(videoRef.value)
-      player.load()
+
+      player?.destroy()
+      player = currentPlayer
+      currentPlayer.attachMediaElement(videoRef.value)
+      currentPlayer.load()
       if (options.autoPlay ?? true) {
-        await player.play()
+        await currentPlayer.play()
+      }
+      if (!isOperationCurrent(token) || player !== currentPlayer) {
+        currentPlayer.destroy()
+        return
       }
       emitStateChange('running')
     } catch (caughtError) {
+      if (currentPlayer && player === currentPlayer) {
+        player = undefined
+      }
+      currentPlayer?.destroy()
+      if (!isOperationCurrent(token)) {
+        return
+      }
       emitStateChange('error')
       const clientError = caughtError instanceof ClientError ? caughtError : undefined
       error.value = {
         type: 'client',
         code: clientError?.code ?? 'PLAYER_START_FAILED',
         message: caughtError instanceof Error ? caughtError.message : String(caughtError),
+        requestId: clientError?.requestId,
         detail: {
           status: clientError?.status,
           detail: clientError?.detail,
@@ -138,42 +187,54 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     }
   }
 
+  async function start(): Promise<void> {
+    return runExclusive(startInternal)
+  }
+
   async function stop(reason = 'manual'): Promise<void> {
-    const options = resolveOptions()
-    const currentStreamId = streamId.value
-    await destroyPlayback(reason)
-    streamId.value = undefined
-    if (currentStreamId) {
-      await deleteManagedStream(options.baseUrl, currentStreamId)
-    }
+    return runExclusive(async () => {
+      nextOperationToken()
+      const options = resolveOptions()
+      const currentStreamId = streamId.value
+      await destroyPlayback(reason)
+      streamId.value = undefined
+      if (currentStreamId) {
+        await deleteManagedStream(options.baseUrl, currentStreamId)
+      }
+    })
   }
 
   async function reload(reason = 'reload'): Promise<void> {
-    const options = resolveOptions()
-    const currentStreamId = streamId.value
-    await destroyPlayback(reason)
-    streamId.value = undefined
-    if (currentStreamId) {
-      await deleteManagedStream(options.baseUrl, currentStreamId)
-    }
-    await start()
+    return runExclusive(async () => {
+      nextOperationToken()
+      const options = resolveOptions()
+      const currentStreamId = streamId.value
+      await destroyPlayback(reason)
+      streamId.value = undefined
+      if (currentStreamId) {
+        await deleteManagedStream(options.baseUrl, currentStreamId)
+      }
+      await startInternal()
+    })
   }
 
   async function detach(reason = 'detach'): Promise<void> {
-    const options = resolveOptions()
-    const currentStreamId = streamId.value
-    await destroyPlayback(reason)
-    videoRef.value = undefined
-    if (options.cleanOnUnmount && currentStreamId) {
-      streamId.value = undefined
-      await deleteManagedStream(options.baseUrl, currentStreamId)
-    }
+    return runExclusive(async () => {
+      nextOperationToken()
+      const options = resolveOptions()
+      const currentStreamId = streamId.value
+      await destroyPlayback(reason)
+      videoRef.value = undefined
+      if (options.cleanOnUnmount && currentStreamId) {
+        streamId.value = undefined
+        await deleteManagedStream(options.baseUrl, currentStreamId)
+      }
+    })
   }
 
   return {
     videoRef,
     streamId,
-    state,
     error,
     attach,
     detach,

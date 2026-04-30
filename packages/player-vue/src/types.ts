@@ -16,6 +16,7 @@ export interface RtspFlvPlayerError {
   type: 'client' | 'media_player'
   code: string
   message: string
+  requestId?: string
   detail?: unknown
   cause?: unknown
 }
@@ -24,7 +25,6 @@ export type UseRtspFlvPlayerOptions = RtspFlvPlayerProps
 
 export interface UseRtspFlvPlayerCallbacks {
   onCreated?: (streamId: string) => void
-  onStateChange?: (state: RtspFlvPlayerStatus) => void
   onError?: (error: RtspFlvPlayerError) => void
   onMediaInfo?: (mediaInfo: MediaInfo) => void
   onMetadataArrived?: (metadata: unknown) => void
@@ -34,7 +34,6 @@ export interface UseRtspFlvPlayerCallbacks {
 export interface UseRtspFlvPlayerReturn {
   videoRef: ShallowRef<HTMLVideoElement | undefined>
   streamId: Ref<string | undefined>
-  state: Ref<RtspFlvPlayerStatus>
   error: Ref<RtspFlvPlayerError | undefined>
   attach(videoEl: HTMLVideoElement): void
   detach(reason?: string): Promise<void>

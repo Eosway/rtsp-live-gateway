@@ -19,14 +19,15 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 - `RtspFlvPlayer`
 - `useRtspFlvPlayer`
-- 类型：`RtspFlvPlayerProps`、`RtspFlvPlayerError`、`RtspFlvPlayerStatus`、`UseRtspFlvPlayerOptions`（与 `RtspFlvPlayerProps` 等价）
+- 类型：`RtspFlvPlayerProps`、`RtspFlvPlayerError`、`UseRtspFlvPlayerOptions`（与 `RtspFlvPlayerProps` 等价）
 
 ## 2. 组件能力
 
 ### 2.1 创建并播放单路流
 
 - 组件只支持传入 `sourceConfig`
-- 组件内部始终先创建 stream，再播放 `/v1/live/:streamId`
+- 创建后会播放 `/v1/live/:streamId`
+- 以事件驱动为主，不暴露状态 ref
 - 默认情况下，组件卸载只销毁前端播放器实例，不会自动删除后端 stream
 - 如果传入 `cleanOnUnmount=true`，组件卸载时会显式删除后端 stream
 - 如果需要显式删除后端 stream，调用组件实例的 `stop()`
@@ -43,14 +44,13 @@ pnpm --filter @rtsp-gateway/player-vue build
 
 ### 2.3 Events
 
-| 事件              | 载荷                                                                                                     | 说明                                   |
-| ----------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `created`         | `streamId: string`                                                                                       | 成功创建 stream 并拿到 streamId        |
-| `statechange`     | `{ state: string }`                                                                                      | `starting/running/error/idle` 状态变化 |
-| `error`           | `{ type: 'client' \| 'media_player'; code: string; message: string; detail?: unknown; cause?: unknown }` | 启动或播放失败                         |
-| `mediainfo`       | `MediaInfo`                                                                                              | 已解析到媒体信息                       |
-| `metadataarrived` | `unknown`                                                                                                | 已收到 mpegts metadata                 |
-| `closed`          | `reason: string`                                                                                         | 组件主动停止或卸载关闭                 |
+| 事件              | 载荷                                                                                                                         | 说明                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `created`         | `streamId: string`                                                                                                           | 成功创建 stream 并拿到 streamId |
+| `error`           | `{ type: 'client' \| 'media_player'; code: string; message: string; requestId?: string; detail?: unknown; cause?: unknown }` | 启动或播放失败                  |
+| `mediaInfo`       | `MediaInfo`                                                                                                                  | 已解析到媒体信息                |
+| `metadataArrived` | `unknown`                                                                                                                    | 已收到 mpegts metadata          |
+| `closed`          | `reason: string`                                                                                                             | 组件主动停止或卸载关闭          |
 
 ## 3. 使用示例
 
@@ -94,6 +94,13 @@ async function stopPlayer() {
 </template>
 ```
 
+组件 `ref` 仅暴露命令式方法和 `streamId`：
+
+- `streamId`
+- `start()`
+- `stop()`
+- `reload()`
+
 ## 4. 生命周期说明
 
 1. 组件挂载后自动创建 stream
@@ -103,6 +110,7 @@ async function stopPlayer() {
 5. 若 `cleanOnUnmount=true`，组件卸载时会显式调用 `deleteStream`
 6. 调用 `ref.stop()` 时会显式调用 `deleteStream`
 7. 调用 `ref.reload()` 时会走完整重建流程：删除旧 stream，重新创建新 stream，再重新播放
+8. `baseUrl`、`sourceConfig`、`autoPlay`、`playerConfig` 变化时，组件会自动重载
 
 ## 5. useRtspFlvPlayer
 
@@ -114,6 +122,8 @@ async function stopPlayer() {
 - `reload()`
 - `stop()`
 - `detach()`
+
+返回值中不暴露 `state`，调用方应优先消费事件和错误回调。
 
 额外选项：
 
@@ -150,7 +160,7 @@ async function stopPlayer() {
 
 - 必须确保服务端 CORS 配置正确。
 - 浏览器自动播放策略可能要求视频元素静音后才允许自动播放，建议透传 `muted` 给内部 `<video>`。
-- `error` 事件统一透传 `{ type, code, message, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
+- `error` 事件统一透传 `{ type, code, message, requestId, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
 
 ## 8. 开发命令
 
