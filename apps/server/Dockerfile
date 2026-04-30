@@ -1,8 +1,9 @@
-FROM node:24-trixie-slim AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
+ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
 
 RUN corepack enable
 
@@ -20,21 +21,20 @@ COPY packages/protocol packages/protocol
 RUN pnpm run build:server
 RUN pnpm --filter @eosway/rtsp-live-gateway-server deploy --legacy --prod /prod/apps/server
 
-FROM node:24-trixie-slim AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg ca-certificates tini \
-  && rm -rf /var/lib/apt/lists/* \
-  && useradd --create-home --uid 1001 appuser
+RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories
+RUN apk add --no-cache gcompat ffmpeg ca-certificates tini
+RUN addgroup -S app -g 1001 \
+  && adduser -S app -u 1001 -G app
 
 COPY --from=builder /prod/apps/server /app
 
-USER appuser
+USER app
 EXPOSE 3000
 
 ENTRYPOINT ["tini","--"]

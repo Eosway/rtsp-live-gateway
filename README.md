@@ -18,7 +18,7 @@ pnpm run build
 Runtime baseline:
 
 - Node.js `24+`
-- Default container base: `node:24-trixie-slim` (Debian 13)
+- Default container base: `node:24-alpine`
 
 ### Run server locally
 
@@ -35,14 +35,9 @@ pnpm --filter @eosway/rtsp-live-gateway-playground dev
 
 ## Docker
 
-Debian slim (default):
+Alpine:
 
 ```bash
-docker build -f apps/server/Dockerfile -t rtsp-live-gateway:latest .
-```
-
-Alpine (experimental):
-
-```bash
-docker build -f apps/server/Dockerfile.alpine -t rtsp-live-gateway:alpine .
+pnpm run docker:build
+pnpm run docker:export
 ```

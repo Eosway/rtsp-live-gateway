@@ -14,9 +14,8 @@
     "format": "prettier --write .",
     "dev:playground": "pnpm --filter @eosway/rtsp-live-gateway-playground dev",
     "pack:player": "pnpm --filter @eosway/rtsp-live-gateway-player-vue pack",
-    "docker:server": "docker build -f apps/server/Dockerfile -t rtsp-live-gateway:latest .",
-    "docker:server:alpine": "docker build -f apps/server/Dockerfile.alpine -t rtsp-live-gateway-alpine:latest .",
-    "export:server-image": "bash scripts/export-server-image.sh",
+    "docker:build": "bash scripts/build-server-image.sh",
+    "docker:export": "bash scripts/export-server-image.sh",
     "prepare": "husky"
   },
   "devDependencies": {

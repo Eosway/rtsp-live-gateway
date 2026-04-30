@@ -1,6 +1,6 @@
 services:
   server:
-    image: rtsp-live-gateway-alpine:latest
+    image: rtsp-live-gateway:latest
     pull_policy: never
     restart: unless-stopped
     ports:
