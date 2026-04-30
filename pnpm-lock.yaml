@@ -75,22 +75,22 @@ importers:
         specifier: ^4.12.15
         version: 4.12.15
     devDependencies:
+      '@eosway/rtsp-live-gateway-protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       '@ffmpeg-installer/ffmpeg':
         specifier: ^1.1.0
         version: 1.1.0
-      '@rtsp-gateway/protocol':
-        specifier: workspace:*
-        version: link:../../packages/protocol
 
   packages/client:
     dependencies:
-      '@rtsp-gateway/protocol':
+      '@eosway/rtsp-live-gateway-protocol':
         specifier: workspace:*
         version: link:../protocol
 
   packages/player-vue:
     devDependencies:
-      '@rtsp-gateway/client':
+      '@eosway/rtsp-live-gateway-client':
         specifier: workspace:*
         version: link:../client
       mpegts.js:
@@ -110,10 +110,10 @@ importers:
 
   playground:
     dependencies:
-      '@rtsp-gateway/client':
+      '@eosway/rtsp-live-gateway-client':
         specifier: workspace:*
         version: link:../packages/client
-      '@rtsp-gateway/player-vue':
+      '@eosway/rtsp-live-gateway-player-vue':
         specifier: workspace:*
         version: link:../packages/player-vue
       vue:

@@ -1,5 +1,5 @@
-import { ClientError, buildLiveUrl, createStream, deleteStream } from '@rtsp-gateway/client'
-import type { StreamCreateRequest } from '@rtsp-gateway/client'
+import { ClientError, buildLiveUrl, createStream, deleteStream } from '@eosway/rtsp-live-gateway-client'
+import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
 import { ref, shallowRef } from 'vue'
 import { createPlayer } from '../player/mpeg2ts.js'
 import type {

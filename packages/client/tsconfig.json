@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext",
     "lib": ["ES2022", "DOM"],
     "paths": {
-      "@rtsp-gateway/protocol": ["../../packages/protocol/src/index.ts"]
+      "@eosway/rtsp-live-gateway-protocol": ["../../packages/protocol/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"]

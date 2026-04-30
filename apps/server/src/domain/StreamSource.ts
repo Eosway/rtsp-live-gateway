@@ -1,4 +1,4 @@
-import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@rtsp-gateway/protocol'
+import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
 import { nowIso } from '../lib/index.js'
 import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'

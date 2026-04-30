@@ -1,4 +1,4 @@
-import type { HealthzResponse, StreamCreateResponse, StreamListResponse, StreamStatusResponse } from '@rtsp-gateway/protocol'
+import type { HealthzResponse, StreamCreateResponse, StreamListResponse, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { stream } from 'hono/streaming'

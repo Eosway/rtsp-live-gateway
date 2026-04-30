@@ -62,8 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import type { StreamCreateRequest } from '@rtsp-gateway/client'
-import { RtspFlvPlayer } from '@rtsp-gateway/player-vue'
+import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
+import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
 import { computed, reactive, ref } from 'vue'
 
 const baseUrl = ref('http://localhost:3000')

@@ -18,7 +18,7 @@ COPY apps/server apps/server
 COPY packages/protocol packages/protocol
 
 RUN pnpm run build:server
-RUN pnpm --filter @rtsp-gateway/server deploy --legacy --prod /prod/apps/server
+RUN pnpm --filter @eosway/rtsp-live-gateway-server deploy --legacy --prod /prod/apps/server
 
 FROM node:24-trixie-slim AS runner
 

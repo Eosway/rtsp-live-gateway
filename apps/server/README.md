@@ -1,6 +1,6 @@
-# @rtsp-gateway/server
+# @eosway/rtsp-live-gateway-server
 
-`@rtsp-gateway/server` 是 RTSP Live Gateway 的服务端实现，负责：
+`@eosway/rtsp-live-gateway-server` 是 RTSP Live Gateway 的服务端实现，负责：
 
 - 控制面 API（创建、查询、删除流）
 - 媒体面 HTTP-FLV 输出（`/v1/live/:streamId`）
@@ -22,7 +22,7 @@
 
 ```bash
 pnpm install
-pnpm --filter @rtsp-gateway/server build
+pnpm --filter @eosway/rtsp-live-gateway-server build
 node apps/server/dist/index.js
 ```
 
@@ -129,6 +129,6 @@ SSRF：
 ## 8. 开发验证
 
 ```bash
-pnpm --filter @rtsp-gateway/server tsc
-pnpm --filter @rtsp-gateway/server build
+pnpm --filter @eosway/rtsp-live-gateway-server tsc
+pnpm --filter @eosway/rtsp-live-gateway-server build
 ```

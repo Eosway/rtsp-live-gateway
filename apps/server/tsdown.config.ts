@@ -10,5 +10,5 @@ export default defineConfig({
   clean: true,
   dts: false,
   fixedExtension: false,
-  external: ['@hono/node-server', 'hono', '@ffmpeg-installer/ffmpeg', '@rtsp-gateway/protocol'],
+  external: ['@hono/node-server', 'hono', '@ffmpeg-installer/ffmpeg', '@eosway/rtsp-live-gateway-protocol'],
 })

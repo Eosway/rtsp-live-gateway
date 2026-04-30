@@ -1,10 +1,10 @@
-# @rtsp-gateway/playground
+# @eosway/rtsp-live-gateway-playground
 
-`@rtsp-gateway/playground` 是基于 Vue 3 + Vite 的联调页面，用于快速验证：
+`@eosway/rtsp-live-gateway-playground` 是基于 Vue 3 + Vite 的联调页面，用于快速验证：
 
 - 输入 RTSP 参数
 - 调用网关创建流
-- 使用 `@rtsp-gateway/player-vue` 直接播放 HTTP-FLV
+- 使用 `@eosway/rtsp-live-gateway-player-vue` 直接播放 HTTP-FLV
 
 ## 启动方式
 
@@ -12,7 +12,7 @@
 
 ```bash
 pnpm install
-pnpm --filter @rtsp-gateway/playground dev
+pnpm --filter @eosway/rtsp-live-gateway-playground dev
 ```
 
 默认访问：`http://localhost:5173`
@@ -27,12 +27,12 @@ pnpm --filter @rtsp-gateway/playground dev
 
 ## 依赖关系
 
-- `@rtsp-gateway/client`
-- `@rtsp-gateway/player-vue`
+- `@eosway/rtsp-live-gateway-client`
+- `@eosway/rtsp-live-gateway-player-vue`
 
 ## 构建与检查
 
 ```bash
-pnpm --filter @rtsp-gateway/playground tsc
-pnpm --filter @rtsp-gateway/playground build
+pnpm --filter @eosway/rtsp-live-gateway-playground tsc
+pnpm --filter @eosway/rtsp-live-gateway-playground build
 ```

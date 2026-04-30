@@ -1,5 +1,5 @@
 {
-  "name": "@rtsp-gateway/server",
+  "name": "@eosway/rtsp-live-gateway-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,6 +19,6 @@
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@rtsp-gateway/protocol": "workspace:*"
+    "@eosway/rtsp-live-gateway-protocol": "workspace:*"
   }
 }

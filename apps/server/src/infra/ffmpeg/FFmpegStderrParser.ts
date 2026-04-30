@@ -1,4 +1,4 @@
-import type { ApiErrorCode } from '@rtsp-gateway/protocol'
+import type { ApiErrorCode } from '@eosway/rtsp-live-gateway-protocol'
 
 export interface FFmpegDiagEvent {
   ts: number

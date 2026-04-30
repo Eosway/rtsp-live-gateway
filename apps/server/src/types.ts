@@ -1,4 +1,4 @@
-import type { StreamCreateRequest } from '@rtsp-gateway/protocol'
+import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-protocol'
 
 export interface NormalizedStreamCreateRequest extends StreamCreateRequest {
   transport: 'tcp' | 'udp' | 'udp_multicast' | 'http' | 'https'

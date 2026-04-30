@@ -1,6 +1,6 @@
-# @rtsp-gateway/protocol
+# @eosway/rtsp-live-gateway-protocol
 
-`@rtsp-gateway/protocol` 定义 RTSP Live Gateway 控制面的跨包共享契约与错误码。
+`@eosway/rtsp-live-gateway-protocol` 定义 RTSP Live Gateway 控制面的跨包共享契约与错误码。
 
 ## 目标
 
@@ -10,7 +10,7 @@
 
 ## 范围
 
-`@rtsp-gateway/protocol` 当前覆盖控制面 JSON 协议：
+`@eosway/rtsp-live-gateway-protocol` 当前覆盖控制面 JSON 协议：
 
 - `POST /v1/streams`
 - `GET /v1/streams`
@@ -95,12 +95,12 @@
 统一从 `src/index.ts` 导出，业务侧直接：
 
 ```ts
-import type { StreamCreateRequest, ApiErrorCode } from '@rtsp-gateway/protocol'
+import type { StreamCreateRequest, ApiErrorCode } from '@eosway/rtsp-live-gateway-protocol'
 ```
 
 ## 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/protocol tsc
-pnpm --filter @rtsp-gateway/protocol build
+pnpm --filter @eosway/rtsp-live-gateway-protocol tsc
+pnpm --filter @eosway/rtsp-live-gateway-protocol build
 ```

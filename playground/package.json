@@ -1,5 +1,5 @@
 {
-  "name": "@rtsp-gateway/playground",
+  "name": "@eosway/rtsp-live-gateway-playground",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@rtsp-gateway/client": "workspace:*",
-    "@rtsp-gateway/player-vue": "workspace:*",
+    "@eosway/rtsp-live-gateway-client": "workspace:*",
+    "@eosway/rtsp-live-gateway-player-vue": "workspace:*",
     "vue": "^3.5.33"
   },
   "devDependencies": {

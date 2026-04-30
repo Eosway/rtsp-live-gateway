@@ -1,6 +1,6 @@
-# @rtsp-gateway/client
+# @eosway/rtsp-live-gateway-client
 
-`@rtsp-gateway/client` 是网关控制面 API 的轻量封装，不包含播放器逻辑。
+`@eosway/rtsp-live-gateway-client` 是网关控制面 API 的轻量封装，不包含播放器逻辑。
 
 ## 导出 API
 
@@ -15,7 +15,7 @@
 ## 使用示例
 
 ```ts
-import { createStream, buildLiveUrl, deleteStream } from '@rtsp-gateway/client'
+import { createStream, buildLiveUrl, deleteStream } from '@eosway/rtsp-live-gateway-client'
 
 const baseUrl = 'http://localhost:3000'
 const created = await createStream(baseUrl, {
@@ -46,7 +46,7 @@ await deleteStream(baseUrl, created.streamId)
 ## 开发命令
 
 ```bash
-pnpm --filter @rtsp-gateway/client tsc
-pnpm --filter @rtsp-gateway/client build
-pnpm --filter @rtsp-gateway/client test
+pnpm --filter @eosway/rtsp-live-gateway-client tsc
+pnpm --filter @eosway/rtsp-live-gateway-client build
+pnpm --filter @eosway/rtsp-live-gateway-client test
 ```

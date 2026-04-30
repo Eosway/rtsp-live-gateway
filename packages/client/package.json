@@ -1,5 +1,5 @@
 {
-  "name": "@rtsp-gateway/client",
+  "name": "@eosway/rtsp-live-gateway-client",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,6 +21,6 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@rtsp-gateway/protocol": "workspace:*"
+    "@eosway/rtsp-live-gateway-protocol": "workspace:*"
   }
 }

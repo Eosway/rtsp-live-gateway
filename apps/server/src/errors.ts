@@ -1,4 +1,4 @@
-import type { ApiErrorBody, ApiErrorCode, ApiErrorDetailByCode } from '@rtsp-gateway/protocol'
+import type { ApiErrorBody, ApiErrorCode, ApiErrorDetailByCode } from '@eosway/rtsp-live-gateway-protocol'
 
 const STATUS_BY_ERROR: Record<ApiErrorCode, number> = {
   INVALID_ARGUMENT: 400,

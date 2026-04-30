@@ -8,7 +8,7 @@ import type {
   StreamDeleteResponse,
   StreamListResponse,
   StreamStatusResponse,
-} from '@rtsp-gateway/protocol'
+} from '@eosway/rtsp-live-gateway-protocol'
 class ClientError extends Error {
   readonly status: number
   readonly code?: ApiErrorCode
@@ -112,4 +112,4 @@ export type {
   StreamDeleteResponse,
   StreamListResponse,
   StreamStatusResponse,
-} from '@rtsp-gateway/protocol'
+} from '@eosway/rtsp-live-gateway-protocol'

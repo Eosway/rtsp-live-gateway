@@ -1,4 +1,4 @@
-import type { StreamStatusResponse } from '@rtsp-gateway/protocol'
+import type { StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { randomUUID } from 'node:crypto'
 import type { ServerConfig } from '../config.js'
 import { ApiError } from '../errors.js'

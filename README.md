@@ -30,7 +30,7 @@ node apps/server/dist/index.js
 ### Run playground locally
 
 ```bash
-pnpm --filter @rtsp-gateway/playground dev
+pnpm --filter @eosway/rtsp-live-gateway-playground dev
 ```
 
 ## Docker

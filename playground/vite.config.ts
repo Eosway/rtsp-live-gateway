@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@rtsp-gateway/client': resolve(__dirname, '../packages/client/src/index.ts'),
-      '@rtsp-gateway/player-vue': resolve(__dirname, '../packages/player-vue/src/index.ts'),
-      '@rtsp-gateway/protocol': resolve(__dirname, '../packages/protocol/src/index.ts'),
+      '@eosway/rtsp-live-gateway-client': resolve(__dirname, '../packages/client/src/index.ts'),
+      '@eosway/rtsp-live-gateway-player-vue': resolve(__dirname, '../packages/player-vue/src/index.ts'),
+      '@eosway/rtsp-live-gateway-protocol': resolve(__dirname, '../packages/protocol/src/index.ts'),
     },
   },
   server: {

@@ -1,5 +1,5 @@
 import MpegTs from 'mpegts.js'
-import type { StreamCreateRequest } from '@rtsp-gateway/client'
+import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
 import type { Ref, ShallowRef } from 'vue'
 
 export type RtspFlvPlayerStatus = 'idle' | 'starting' | 'running' | 'error'
