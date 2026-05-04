@@ -12,7 +12,8 @@
     "dev": "tsdown --watch --on-success \"node dist/index.js\"",
     "tsc": "tsc -p tsconfig.json --noEmit",
     "clean": "rimraf dist",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "release": "commit-and-tag-version --path . -t player-vue@"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.14",

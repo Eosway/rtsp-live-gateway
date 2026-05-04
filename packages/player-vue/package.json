@@ -16,7 +16,8 @@
   "scripts": {
     "build": "vite build",
     "tsc": "vue-tsc --noEmit",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "release": "commit-and-tag-version --path . -t player-vue@"
   },
   "peerDependencies": {
     "vue": ">=3.4.0"
