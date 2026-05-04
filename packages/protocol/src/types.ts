@@ -80,6 +80,7 @@ export type ApiErrorCode =
   | 'VIEWER_LIMIT_REACHED'
   | 'STREAM_START_TIMEOUT'
   | 'UPSTREAM_AUTH_FAILED'
+  | 'UPSTREAM_NOT_FOUND'
   | 'UPSTREAM_CONNECT_FAILED'
   | 'NO_MEDIA_OUTPUT'
   | 'FFMPEG_NOT_FOUND'
@@ -100,20 +101,42 @@ export interface SsrfBlockedErrorDetail {
 }
 
 export interface StreamStartTimeoutErrorDetail {
+  summary?: string
   stderrTail?: string[]
 }
+
+export type FfmpegFailureReason =
+  | 'auth_failed'
+  | 'not_found'
+  | 'connection_refused'
+  | 'timeout'
+  | 'dns_failed'
+  | 'connect_failed'
+  | 'unsupported_codec'
+  | 'no_media_output'
+  | 'invalid_output'
+  | 'process_error'
+  | 'exit_before_output'
+  | 'exit_while_running'
 
 export interface FfmpegDiagnosticErrorDetail {
   ts?: number
   level?: 'warn' | 'error'
+  reason?: FfmpegFailureReason
+  summary?: string
+  stderrTail?: string[]
 }
 
 export interface FfmpegProcessErrorDetail {
+  reason?: FfmpegFailureReason
+  summary?: string
   error?: string
   stderrTail?: string[]
 }
 
 export interface FfmpegExitedErrorDetail {
+  reason?: FfmpegFailureReason
+  summary?: string
   code?: number | null
   signal?: string | null
   stderrTail?: string[]
@@ -129,6 +152,7 @@ export interface ApiErrorDetailByCode {
   VIEWER_LIMIT_REACHED: Required<Pick<InvalidArgumentErrorDetail, 'maxViewersPerSource'>>
   STREAM_START_TIMEOUT: StreamStartTimeoutErrorDetail
   UPSTREAM_AUTH_FAILED: FfmpegDiagnosticErrorDetail
+  UPSTREAM_NOT_FOUND: FfmpegDiagnosticErrorDetail
   UPSTREAM_CONNECT_FAILED: FfmpegDiagnosticErrorDetail
   NO_MEDIA_OUTPUT: FfmpegDiagnosticErrorDetail
   FFMPEG_NOT_FOUND: FfmpegProcessErrorDetail

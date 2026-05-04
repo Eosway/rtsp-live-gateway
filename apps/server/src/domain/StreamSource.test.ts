@@ -36,6 +36,18 @@ class FakeRunner {
     }
   }
 
+  emitStderrLine(line: string): void {
+    for (const listener of this.stderrListeners) {
+      listener(line)
+    }
+  }
+
+  emitExit(code: number | null, signal: NodeJS.Signals | null): void {
+    for (const listener of this.exitListeners) {
+      listener(code, signal)
+    }
+  }
+
   async stop(): Promise<void> {
     this.stopped = true
   }
@@ -279,4 +291,32 @@ test('gop cache overflow should wait for next keyframe before rebuilding cache',
 
   const afterResetChunks = await afterResetDrainPromise
   assert.deepEqual(afterResetChunks, [header, sequence, nextKeyframe, audioAfterReset])
+})
+
+test('startup failure should surface structured upstream_not_found error instead of generic ffmpeg_exited', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = createSource([fakeRunner])
+  const viewer = createSession('se_error_not_found')
+  source.addViewer(viewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  fakeRunner.onStderrLine(() => undefined)
+  fakeRunner.emitStderrLine('Error opening input file rtsp://admin:secret@camera.local/live.')
+  fakeRunner.emitStderrLine('[rtsp @ 0x7feabd0cc380] method OPTIONS failed: 404 Not Found')
+  fakeRunner.emitExit(8, null)
+
+  await assert.rejects(startPromise, (error: unknown) => {
+    assert.ok(error instanceof Error)
+    assert.equal((error as { code?: string }).code, 'UPSTREAM_NOT_FOUND')
+    assert.equal(error.message, 'RTSP upstream returned 404 Not Found')
+    return true
+  })
+
+  const recentError = source.snapshotStatus().recentError
+  assert.ok(recentError)
+  assert.equal(recentError.code, 'UPSTREAM_NOT_FOUND')
+  assert.equal(recentError.message, 'RTSP upstream returned 404 Not Found')
+  const detail = recentError.detail as { reason?: string; stderrTail?: string[] } | undefined
+  assert.equal(detail?.reason, 'not_found')
+  assert.ok(detail?.stderrTail?.[0]?.includes('rtsp://admin:***@camera.local/live'))
 })

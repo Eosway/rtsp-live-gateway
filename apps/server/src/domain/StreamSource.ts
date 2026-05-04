@@ -1,9 +1,9 @@
 import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
-import { nowIso } from '../lib/index.js'
+import { maskRtspUrlsInText, nowIso } from '../lib/index.js'
 import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
-import { FFmpegStderrParser, type FFmpegDiagEvent } from '../infra/ffmpeg/FFmpegStderrParser.js'
+import { FFmpegStderrParser, type FFmpegDiagEvent, summarizeStderrTail, toDiagnosticDetail } from '../infra/ffmpeg/FFmpegStderrParser.js'
 import { FlvBootstrapCache, FlvGopCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
 import { FanoutHub } from './FanoutHub.js'
@@ -65,6 +65,7 @@ export class StreamSource {
   private startLatencyMs?: number
   private lastErrorAt?: string
   private recentError?: ApiErrorBody
+  private lastDiagEvent?: FFmpegDiagEvent
 
   constructor(options: StreamSourceOptions) {
     this.streamId = options.streamId
@@ -221,7 +222,7 @@ export class StreamSource {
         let units
         try {
           units = this.flvParser.push(chunk)
-        } catch (error) {
+        } catch {
           clearTimeout(startupTimer)
           void runner.stop(this.stopGraceMs).finally(() => {
             settleReject(
@@ -266,19 +267,19 @@ export class StreamSource {
       runner.onExit((code, signal) => {
         clearTimeout(startupTimer)
         if (!firstChunkSeen) {
-          settleReject(
-            new ApiError('FFMPEG_EXITED', 'FFmpeg exited before first media chunk', {
-              code,
-              signal,
-              stderrTail: this.stderrRing.slice(-10),
-            })
-          )
+          settleReject(this.buildStartupExitError(code, signal))
           return
         }
         if (!this.stopInProgress && !this.deleted) {
           this.state = 'error'
           this.lastErrorAt = nowIso()
-          const detail: FfmpegExitedErrorDetail = { code, signal }
+          const detail: FfmpegExitedErrorDetail = {
+            reason: 'exit_while_running',
+            summary: 'FFmpeg exited while running',
+            code,
+            signal,
+            stderrTail: summarizeStderrTail(this.stderrRing.slice(-10)),
+          }
           this.recentError = {
             code: 'FFMPEG_EXITED',
             message: 'FFmpeg exited while running',
@@ -288,14 +289,10 @@ export class StreamSource {
         }
       })
 
-      runner.onError((error) => {
+      runner.onError(() => {
         clearTimeout(startupTimer)
-        settleReject(
-          new ApiError('FFMPEG_NOT_FOUND', 'FFmpeg process error before media output', {
-            error: error.message,
-            stderrTail: this.stderrRing.slice(-10),
-          })
-        )
+        const detail = this.buildProcessErrorDetail()
+        settleReject(new ApiError('FFMPEG_NOT_FOUND', 'FFmpeg process error before media output', detail))
       })
 
       try {
@@ -309,30 +306,59 @@ export class StreamSource {
         })
       } catch (error) {
         clearTimeout(startupTimer)
-        settleReject(
-          new ApiError('FFMPEG_NOT_FOUND', 'Failed to spawn ffmpeg process', {
-            error: error instanceof Error ? error.message : String(error),
-          })
-        )
+        const detail = this.buildProcessErrorDetail()
+        settleReject(new ApiError('FFMPEG_NOT_FOUND', 'Failed to spawn ffmpeg process', detail))
       }
     })
   }
 
   private pushStderr(line: string): void {
-    this.stderrRing.push(line)
+    this.stderrRing.push(maskRtspUrlsInText(line))
     if (this.stderrRing.length > 50) {
       this.stderrRing = this.stderrRing.slice(-50)
     }
   }
 
   private applyDiagEvent(event: FFmpegDiagEvent): void {
-    const detail: FfmpegDiagnosticErrorDetail = { ts: event.ts, level: event.level }
+    this.lastDiagEvent = event
+    const detail = toDiagnosticDetail(event)
     this.recentError = {
       code: event.code,
-      message: event.line.slice(0, 300),
+      message: event.summary,
       detail,
     }
     this.lastErrorAt = nowIso()
+  }
+
+  private buildStartupExitError(code: number | null, signal: NodeJS.Signals | null): ApiError {
+    const diag = this.lastDiagEvent
+    if (diag) {
+      const detail: FfmpegExitedErrorDetail = {
+        reason: diag.reason ?? 'exit_before_output',
+        summary: diag.summary,
+        code,
+        signal,
+        stderrTail: summarizeStderrTail(this.stderrRing.slice(-10)),
+      }
+      return new ApiError(diag.code, diag.summary, detail)
+    }
+
+    const detail: FfmpegExitedErrorDetail = {
+      reason: 'exit_before_output',
+      summary: 'FFmpeg exited before first media chunk',
+      code,
+      signal,
+      stderrTail: summarizeStderrTail(this.stderrRing.slice(-10)),
+    }
+    return new ApiError('FFMPEG_EXITED', 'FFmpeg exited before first media chunk', detail)
+  }
+
+  private buildProcessErrorDetail(): FfmpegDiagnosticErrorDetail {
+    return {
+      reason: 'process_error',
+      summary: 'FFmpeg process error before media output',
+      stderrTail: summarizeStderrTail(this.stderrRing.slice(-10)),
+    }
   }
 
   async stop(reason: string): Promise<void> {
