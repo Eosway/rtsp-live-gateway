@@ -83,8 +83,8 @@ node apps/server/dist/index.js
 - 输入：`rtsp://` 或 `rtsps://`
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
 - 默认禁音：`-an`
-- `video.codec = libx264`：转码使用 `libx264`
-- `video.codec = libx265`：转码使用 `libx265`
+- `video.codec = h264`：转码使用 `libx264`
+- `video.codec = h265`：转码使用 `libx265`
 
 超时参数：
 
@@ -107,7 +107,7 @@ FFmpeg 策略：
 
 用户侧只配置输出目标：
 
-- `video.codec: libx264 | libx265`
+- `video.codec: h264 | h265`
 
 部署侧负责解码/编码策略和模板：
 

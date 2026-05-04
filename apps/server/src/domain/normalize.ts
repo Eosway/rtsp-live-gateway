@@ -3,7 +3,7 @@ import { ApiError } from '../errors.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
 
 const DEFAULT_TRANSPORT: RtspTransport = 'tcp'
-const DEFAULT_VIDEO_CODEC: 'libx264' | 'libx265' = 'libx264'
+const DEFAULT_VIDEO_CODEC: 'h264' | 'h265' = 'h264'
 const DEFAULT_AUDIO: Required<AudioOptions> = {
   enabled: false,
   mode: 'drop',

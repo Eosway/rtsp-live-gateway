@@ -15,8 +15,12 @@ export interface FFmpegStrategyOptions {
   hardwareVendor: 'nvidia'
 }
 
-function resolveVideoCodec(req: NormalizedStreamCreateRequest): string {
+function resolveVideoCodec(req: NormalizedStreamCreateRequest): 'h264' | 'h265' {
   return req.video.codec
+}
+
+function resolveCodecFamily(codec: 'h264' | 'h265'): CodecFamily {
+  return codec
 }
 
 type CodecFamily = 'h264' | 'h265'
@@ -61,7 +65,7 @@ const ENCODER_TEMPLATE_GROUP: EncoderTemplateGroup = {
 }
 
 function resolveTranscodeEncoder(req: NormalizedStreamCreateRequest, strategy: FFmpegStrategyOptions): CodecTemplateSpec {
-  const outputCodec: CodecFamily = resolveVideoCodec(req) === 'libx265' ? 'h265' : 'h264'
+  const outputCodec = resolveCodecFamily(resolveVideoCodec(req))
   if (strategy.encoder === 'hardware') {
     return ENCODER_TEMPLATE_GROUP[outputCodec].hardware[strategy.hardwareVendor]
   }

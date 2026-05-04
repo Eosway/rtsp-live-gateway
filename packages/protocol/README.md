@@ -49,7 +49,7 @@
 
 - `transport`: `tcp`
 - `ioTimeoutUs`: `5000000`
-- `video.codec`: `libx264`
+- `video.codec`: `h264`
 - `audio.enabled`: `false`
 - `audio.mode`: `drop`
 - `audio.codec`: `aac`

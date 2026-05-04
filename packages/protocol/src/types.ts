@@ -9,7 +9,7 @@ export type AudioMode = 'drop' | 'copy'
 export type StreamState = 'idle' | 'starting' | 'running' | 'stopping' | 'error'
 
 export interface VideoOptions {
-  codec?: 'libx264' | 'libx265'
+  codec?: 'h264' | 'h265'
 }
 
 export interface AudioOptions {

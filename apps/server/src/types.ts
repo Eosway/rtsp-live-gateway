@@ -4,7 +4,7 @@ export interface NormalizedStreamCreateRequest extends StreamCreateRequest {
   transport: RtspTransport
   ioTimeoutUs: number
   video: {
-    codec: 'libx264' | 'libx265'
+    codec: 'h264' | 'h265'
   }
   audio: {
     enabled: boolean

@@ -9,7 +9,7 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
     transport: 'tcp',
     ioTimeoutUs: 5_000_000,
     video: {
-      codec: 'libx264',
+      codec: 'h264',
     },
     audio: {
       enabled: false,
@@ -33,7 +33,7 @@ test('copy mode should preserve video bitstream copy', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        codec: 'libx265',
+        codec: 'h265',
       },
     }),
     'copy'
@@ -43,13 +43,13 @@ test('copy mode should preserve video bitstream copy', () => {
   assert.equal(command.args[videoCodecIndex + 1], 'copy')
 })
 
-test('transcode mode should select libx264 or libx265 from video.codec', () => {
+test('transcode mode should map h264 or h265 to libx264 or libx265', () => {
   const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode')
   const hevcCommand = buildFfmpegCommand(
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        codec: 'libx265',
+        codec: 'h265',
       },
     }),
     'transcode'
@@ -72,7 +72,7 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        codec: 'libx265',
+        codec: 'h265',
       },
     }),
     'transcode',
@@ -87,7 +87,7 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
   assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-c:v') + 1], 'hevc_nvenc')
 })
 
-test('software encoder should stay on libx264 or libx265', () => {
+test('software encoder should map h264 or h265 to libx264 or libx265', () => {
   const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
     decoder: 'auto',
     encoder: 'software',
@@ -97,7 +97,7 @@ test('software encoder should stay on libx264 or libx265', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        codec: 'libx265',
+        codec: 'h265',
       },
     }),
     'transcode',
@@ -122,7 +122,7 @@ test('template group should resolve by codec family first', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        codec: 'libx265',
+        codec: 'h265',
       },
     }),
     'transcode',
