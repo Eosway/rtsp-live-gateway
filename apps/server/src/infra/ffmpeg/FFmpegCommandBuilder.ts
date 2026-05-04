@@ -84,7 +84,7 @@ export function buildFfmpegCommand(
     args.push('-c:a', req.audio.codec, '-b:a', `${req.audio.bitrateKbps}k`)
   }
 
-  const videoMode = plan ?? (req.video.mode === 'copy' ? 'copy' : 'transcode')
+  const videoMode = plan ?? 'transcode'
   if (videoMode === 'copy') {
     args.push('-c:v', 'copy')
   } else {
@@ -101,14 +101,6 @@ export function buildFfmpegCommand(
   }
 }
 
-export function resolveVideoPlan(req: NormalizedStreamCreateRequest, attempt: number): VideoPlan {
-  if (req.video.mode === 'copy') {
-    return 'copy'
-  }
-
-  if (req.video.mode === 'transcode') {
-    return 'transcode'
-  }
-
+export function resolveVideoPlan(attempt: number): VideoPlan {
   return attempt === 1 ? 'copy' : 'transcode'
 }

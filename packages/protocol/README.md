@@ -49,7 +49,6 @@
 
 - `transport`: `tcp`
 - `ioTimeoutUs`: `5000000`
-- `video.mode`: `auto`
 - `video.codec`: `libx264`
 - `audio.enabled`: `false`
 - `audio.mode`: `drop`

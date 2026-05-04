@@ -1,12 +1,9 @@
-import type { AudioOptions, RtspTransport, StreamCreateRequest, VideoOptions } from '@eosway/rtsp-live-gateway-protocol'
+import type { AudioOptions, RtspTransport, StreamCreateRequest } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
 
 const DEFAULT_TRANSPORT: RtspTransport = 'tcp'
-const DEFAULT_VIDEO: Required<VideoOptions> = {
-  mode: 'auto',
-  codec: 'libx264',
-}
+const DEFAULT_VIDEO_CODEC: 'libx264' | 'libx265' = 'libx264'
 const DEFAULT_AUDIO: Required<AudioOptions> = {
   enabled: false,
   mode: 'drop',
@@ -41,8 +38,15 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
     url: body.url,
     transport,
     ioTimeoutUs,
-    video: { ...DEFAULT_VIDEO, ...(body.video ?? {}) },
-    audio: { ...DEFAULT_AUDIO, ...(body.audio ?? {}) },
+    video: {
+      codec: body.video?.codec ?? DEFAULT_VIDEO_CODEC,
+    },
+    audio: {
+      enabled: body.audio?.enabled ?? DEFAULT_AUDIO.enabled,
+      mode: body.audio?.enabled ? (body.audio?.mode ?? 'copy') : 'drop',
+      codec: body.audio?.codec ?? DEFAULT_AUDIO.codec,
+      bitrateKbps: body.audio?.bitrateKbps ?? DEFAULT_AUDIO.bitrateKbps,
+    },
     allowPrivateIp: body.allowPrivateIp ?? false,
     labels: body.labels ?? {},
   }

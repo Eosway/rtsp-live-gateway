@@ -83,9 +83,6 @@ node apps/server/dist/index.js
 - 输入：`rtsp://` 或 `rtsps://`
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
 - 默认禁音：`-an`
-- `video.mode = copy`：始终 `-c:v copy`
-- `video.mode = transcode`：始终按 `video.codec` 转码
-- `video.mode = auto`：首次 `-c:v copy`，失败后按 `video.codec` 回退转码
 - `video.codec = libx264`：转码使用 `libx264`
 - `video.codec = libx265`：转码使用 `libx265`
 
@@ -111,7 +108,6 @@ FFmpeg 策略：
 用户侧只配置输出目标：
 
 - `video.codec: libx264 | libx265`
-- `video.mode: auto | copy | transcode`
 
 部署侧负责解码/编码策略和模板：
 

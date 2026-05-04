@@ -1,7 +1,7 @@
 import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
 import { maskRtspUrlsInText, nowIso } from '../lib/index.js'
-import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { buildFfmpegCommand } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
 import { FFmpegStderrParser, type FFmpegDiagEvent, summarizeStderrTail, toDiagnosticDetail } from '../infra/ffmpeg/FFmpegStderrParser.js'
 import { FlvBootstrapCache, FlvGopCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
@@ -189,7 +189,7 @@ export class StreamSource {
       const startedAt = Date.now()
       const runner = this.runnerFactory()
       this.runner = runner
-      const videoPlan = resolveVideoPlan(this.req, attempt)
+      const videoPlan = this.resolveVideoPlan(attempt)
       const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan, {
         decoder: this.decoder,
         encoder: this.encoder,
@@ -419,8 +419,15 @@ export class StreamSource {
       lastActiveAt: this.lastActiveAt,
       effectiveConfig: {
         transport: this.req.transport,
-        video: this.req.video,
-        audio: this.req.audio,
+        video: {
+          codec: this.req.video.codec,
+        },
+        audio: {
+          enabled: this.req.audio.enabled,
+          mode: this.req.audio.mode,
+          codec: this.req.audio.codec,
+          bitrateKbps: this.req.audio.bitrateKbps,
+        },
       },
       stats: {
         bytesOut: this.bytesOut,
@@ -464,5 +471,9 @@ export class StreamSource {
     this.flvParser.reset()
     this.bootstrapCache.reset()
     this.gopCache.reset()
+  }
+
+  private resolveVideoPlan(attempt: number): 'copy' | 'transcode' {
+    return attempt === 1 ? 'copy' : 'transcode'
   }
 }

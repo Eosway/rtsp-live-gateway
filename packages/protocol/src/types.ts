@@ -4,13 +4,11 @@ export type SessionId = string
 
 export type RtspTransport = 'tcp' | 'udp' | 'udp_multicast' | 'http' | 'https'
 
-export type VideoMode = 'auto' | 'copy' | 'transcode'
-export type AudioMode = 'drop' | 'copy' | 'transcode'
+export type AudioMode = 'drop' | 'copy'
 
 export type StreamState = 'idle' | 'starting' | 'running' | 'stopping' | 'error'
 
 export interface VideoOptions {
-  mode?: VideoMode
   codec?: 'libx264' | 'libx265'
 }
 
@@ -47,7 +45,9 @@ export interface StreamStatusResponse {
   lastActiveAt?: string
   effectiveConfig: {
     transport: RtspTransport
-    video: Required<VideoOptions>
+    video: {
+      codec: NonNullable<VideoOptions['codec']>
+    }
     audio: Required<AudioOptions>
   }
   stats: {

@@ -53,7 +53,6 @@ test('get/list/delete should hit expected paths', async () => {
           effectiveConfig: {
             transport: 'tcp',
             video: {
-              mode: 'auto',
               codec: 'libx264',
             },
             audio: { enabled: false, mode: 'drop', codec: 'aac', bitrateKbps: 0 },

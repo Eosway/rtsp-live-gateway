@@ -9,7 +9,6 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
     transport: 'tcp',
     ioTimeoutUs: 5_000_000,
     video: {
-      mode: 'auto',
       codec: 'libx264',
     },
     audio: {
@@ -25,9 +24,8 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
 }
 
 test('auto mode should copy on first attempt and transcode on retry', () => {
-  const req = createRequest()
-  assert.equal(resolveVideoPlan(req, 1), 'copy')
-  assert.equal(resolveVideoPlan(req, 2), 'transcode')
+  assert.equal(resolveVideoPlan(1), 'copy')
+  assert.equal(resolveVideoPlan(2), 'transcode')
 })
 
 test('copy mode should preserve video bitstream copy', () => {
@@ -35,7 +33,6 @@ test('copy mode should preserve video bitstream copy', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        mode: 'copy',
         codec: 'libx265',
       },
     }),
@@ -52,7 +49,6 @@ test('transcode mode should select libx264 or libx265 from video.codec', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        mode: 'transcode',
         codec: 'libx265',
       },
     }),
@@ -76,7 +72,6 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        mode: 'transcode',
         codec: 'libx265',
       },
     }),
@@ -102,7 +97,6 @@ test('software encoder should stay on libx264 or libx265', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        mode: 'transcode',
         codec: 'libx265',
       },
     }),
@@ -128,7 +122,6 @@ test('template group should resolve by codec family first', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
-        mode: 'transcode',
         codec: 'libx265',
       },
     }),
