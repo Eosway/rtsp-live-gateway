@@ -178,3 +178,63 @@ export class FlvBootstrapCache {
     this.videoSequenceHeader = undefined
   }
 }
+
+export class FlvGopCache {
+  private readonly maxBytes: number
+  private chunks: ByteArray[] = []
+  private cacheBytes = 0
+  private waitingForNextKeyframe = false
+
+  constructor(maxBytes: number) {
+    this.maxBytes = maxBytes
+  }
+
+  observe(unit: FlvStreamUnit): void {
+    if (unit.kind !== 'tag') {
+      return
+    }
+
+    if (unit.isMetadataTag || unit.isAudioSequenceHeader || unit.isVideoSequenceHeader) {
+      return
+    }
+
+    if (unit.isKeyframe) {
+      this.chunks = []
+      this.cacheBytes = 0
+      this.waitingForNextKeyframe = false
+      this.append(unit.bytes)
+      return
+    }
+
+    if (this.waitingForNextKeyframe || this.chunks.length === 0) {
+      return
+    }
+
+    this.append(unit.bytes)
+  }
+
+  snapshot(): ByteArray[] | undefined {
+    if (this.chunks.length === 0 || this.waitingForNextKeyframe) {
+      return undefined
+    }
+    return this.chunks.map((chunk) => copyUint8Array(chunk))
+  }
+
+  reset(): void {
+    this.chunks = []
+    this.cacheBytes = 0
+    this.waitingForNextKeyframe = false
+  }
+
+  private append(chunk: ByteArray): void {
+    const nextBytes = this.cacheBytes + chunk.byteLength
+    if (nextBytes > this.maxBytes) {
+      this.reset()
+      this.waitingForNextKeyframe = true
+      return
+    }
+
+    this.chunks.push(copyUint8Array(chunk))
+    this.cacheBytes = nextBytes
+  }
+}

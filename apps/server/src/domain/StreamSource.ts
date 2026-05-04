@@ -4,7 +4,7 @@ import { nowIso } from '../lib/index.js'
 import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
 import { FFmpegStderrParser, type FFmpegDiagEvent } from '../infra/ffmpeg/FFmpegStderrParser.js'
-import { FlvBootstrapCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
+import { FlvBootstrapCache, FlvGopCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
 import { FanoutHub } from './FanoutHub.js'
 import { PlaybackSession } from './PlaybackSession.js'
@@ -23,6 +23,7 @@ interface StreamSourceOptions {
     warn(message: string, detail?: Record<string, unknown>): void
     error(message: string, detail?: Record<string, unknown>): void
   }
+  gopCacheMaxBytes?: number
   runnerFactory?: () => FFmpegRunner
 }
 
@@ -39,6 +40,7 @@ export class StreamSource {
   private readonly maxStartAttempts: number
   private readonly logger: StreamSourceOptions['logger']
   private readonly runnerFactory: () => FFmpegRunner
+  private readonly gopCache: FlvGopCache
 
   private state: StreamState = 'idle'
   private readonly sessions = new Map<string, PlaybackSession>()
@@ -75,6 +77,7 @@ export class StreamSource {
     this.maxStartAttempts = options.maxStartAttempts
     this.logger = options.logger
     this.runnerFactory = options.runnerFactory ?? (() => new FFmpegRunner())
+    this.gopCache = new FlvGopCache(options.gopCacheMaxBytes ?? 512 * 1024)
     this.createdAt = nowIso()
     this.lastActiveAt = this.createdAt
   }
@@ -237,13 +240,17 @@ export class StreamSource {
             clearTimeout(startupTimer)
             settleResolve()
           }
-          this.bootstrapCache.observe(unit)
-          this.bytesOut += unit.bytes.byteLength
           if (unit.kind === 'header') {
+            this.bootstrapCache.observe(unit)
+            this.bytesOut += unit.bytes.byteLength
             this.activatePendingSessions()
             continue
           }
+
           this.activatePendingSessions()
+          this.bootstrapCache.observe(unit)
+          this.gopCache.observe(unit)
+          this.bytesOut += unit.bytes.byteLength
           this.fanout.publish(unit.bytes)
         }
       })
@@ -403,9 +410,11 @@ export class StreamSource {
     if (!bootstrap) {
       return
     }
+    const gop = this.gopCache.snapshot() ?? []
+    const preload = [...bootstrap, ...gop]
     for (const [sessionId, session] of this.pendingSessions) {
       this.pendingSessions.delete(sessionId)
-      this.fanout.activate(session, bootstrap)
+      this.fanout.activate(session, preload)
       if (session.isClosed()) {
         this.sessions.delete(sessionId)
       }
@@ -415,5 +424,6 @@ export class StreamSource {
   private resetStreamCaches(): void {
     this.flvParser.reset()
     this.bootstrapCache.reset()
+    this.gopCache.reset()
   }
 }

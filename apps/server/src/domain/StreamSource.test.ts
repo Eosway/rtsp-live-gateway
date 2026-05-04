@@ -74,7 +74,7 @@ function createRequest(): NormalizedStreamCreateRequest {
   }
 }
 
-function createSource(fakeRunners: FakeRunner[]): StreamSource {
+function createSource(fakeRunners: FakeRunner[], overrides: { gopCacheMaxBytes?: number } = {}): StreamSource {
   return new StreamSource({
     streamId: 'st_test',
     sourceKey: 'src_test',
@@ -85,6 +85,7 @@ function createSource(fakeRunners: FakeRunner[]): StreamSource {
     stopGraceMs: 100,
     maxStartAttempts: 1,
     logger: createLogger(),
+    gopCacheMaxBytes: overrides.gopCacheMaxBytes,
     runnerFactory: () => {
       const nextRunner = fakeRunners.shift()
       assert.ok(nextRunner, 'expected fake runner')
@@ -133,6 +134,14 @@ function createVideoSequenceHeaderTag(): Uint8Array {
 
 function createVideoInterFrameTag(): Uint8Array {
   return createFlvTag(9, [0x27, 0x01, 0x00, 0x00, 0x00, 0x02])
+}
+
+function createVideoKeyframeTag(marker = 0x03): Uint8Array {
+  return createFlvTag(9, [0x17, 0x01, 0x00, 0x00, 0x00, marker])
+}
+
+function createAudioFrameTag(marker = 0x04): Uint8Array {
+  return createFlvTag(8, [0xaf, 0x01, marker])
 }
 
 async function drainSession(session: PlaybackSession, chunkCount: number): Promise<Uint8Array[]> {
@@ -199,4 +208,75 @@ test('stream restart should rebuild bootstrap instead of reusing stale prefix', 
   const secondDrainPromise = drainSession(secondViewer, 2)
   const secondChunks = await secondDrainPromise
   assert.deepEqual(secondChunks, [secondHeader, secondSequence])
+})
+
+test('late viewer should receive latest gop before live tags', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = createSource([fakeRunner])
+  const firstViewer = createSession('se_gop_first')
+  source.addViewer(firstViewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  const header = createFlvHeader()
+  const sequence = createVideoSequenceHeaderTag()
+  const oldKeyframe = createVideoKeyframeTag(0x11)
+  const oldInterFrame = createVideoInterFrameTag()
+  const newKeyframe = createVideoKeyframeTag(0x22)
+  const newAudio = createAudioFrameTag(0x33)
+  const liveInterFrame = createFlvTag(9, [0x27, 0x01, 0x00, 0x00, 0x00, 0x44])
+
+  fakeRunner.emitStdout(header)
+  fakeRunner.emitStdout(sequence)
+  fakeRunner.emitStdout(oldKeyframe)
+  fakeRunner.emitStdout(oldInterFrame)
+  fakeRunner.emitStdout(newKeyframe)
+  fakeRunner.emitStdout(newAudio)
+  await startPromise
+
+  const lateViewer = createSession('se_gop_late')
+  source.addViewer(lateViewer)
+  const lateDrainPromise = drainSession(lateViewer, 5)
+
+  fakeRunner.emitStdout(liveInterFrame)
+
+  const lateChunks = await lateDrainPromise
+  assert.deepEqual(lateChunks, [header, sequence, newKeyframe, newAudio, liveInterFrame])
+})
+
+test('gop cache overflow should wait for next keyframe before rebuilding cache', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = createSource([fakeRunner], { gopCacheMaxBytes: 30 })
+  const firstViewer = createSession('se_overflow_first')
+  source.addViewer(firstViewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  const header = createFlvHeader()
+  const sequence = createVideoSequenceHeaderTag()
+  const largeKeyframe = createVideoKeyframeTag(0x55)
+  const largeInterFrame = createFlvTag(9, [0x27, 0x01, 0x00, 0x00, 0x00, 0x66, 0x67, 0x68, 0x69, 0x6a])
+  fakeRunner.emitStdout(header)
+  fakeRunner.emitStdout(sequence)
+  fakeRunner.emitStdout(largeKeyframe)
+  fakeRunner.emitStdout(largeInterFrame)
+  await startPromise
+
+  const lateViewerBeforeReset = createSession('se_overflow_before_reset')
+  source.addViewer(lateViewerBeforeReset)
+  const beforeResetDrainPromise = drainSession(lateViewerBeforeReset, 2)
+
+  const nextKeyframe = createVideoKeyframeTag(0x77)
+  fakeRunner.emitStdout(nextKeyframe)
+
+  const beforeResetChunks = await beforeResetDrainPromise
+  assert.deepEqual(beforeResetChunks, [header, sequence, nextKeyframe])
+
+  const lateViewerAfterReset = createSession('se_overflow_after_reset')
+  source.addViewer(lateViewerAfterReset)
+  const afterResetDrainPromise = drainSession(lateViewerAfterReset, 4)
+
+  const audioAfterReset = createAudioFrameTag(0x88)
+  fakeRunner.emitStdout(audioAfterReset)
+
+  const afterResetChunks = await afterResetDrainPromise
+  assert.deepEqual(afterResetChunks, [header, sequence, nextKeyframe, audioAfterReset])
 })
