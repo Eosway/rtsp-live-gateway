@@ -14,6 +14,9 @@ interface StreamSourceOptions {
   sourceKey: string
   req: NormalizedStreamCreateRequest
   ffmpegPath: string
+  decoder: 'auto' | 'software' | 'hardware'
+  encoder: 'auto' | 'software' | 'hardware'
+  hardwareVendor: 'nvidia'
   startupTimeoutMs: number
   idleGraceMs: number
   stopGraceMs: number
@@ -34,6 +37,9 @@ export class StreamSource {
   readonly req: NormalizedStreamCreateRequest
 
   private readonly ffmpegPath: string
+  private readonly decoder: 'auto' | 'software' | 'hardware'
+  private readonly encoder: 'auto' | 'software' | 'hardware'
+  private readonly hardwareVendor: 'nvidia'
   private readonly startupTimeoutMs: number
   private readonly idleGraceMs: number
   private readonly stopGraceMs: number
@@ -72,6 +78,9 @@ export class StreamSource {
     this.sourceKey = options.sourceKey
     this.req = options.req
     this.ffmpegPath = options.ffmpegPath
+    this.decoder = options.decoder
+    this.encoder = options.encoder
+    this.hardwareVendor = options.hardwareVendor
     this.startupTimeoutMs = options.startupTimeoutMs
     this.idleGraceMs = options.idleGraceMs
     this.stopGraceMs = options.stopGraceMs
@@ -181,7 +190,11 @@ export class StreamSource {
       const runner = this.runnerFactory()
       this.runner = runner
       const videoPlan = resolveVideoPlan(this.req, attempt)
-      const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan)
+      const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan, {
+        decoder: this.decoder,
+        encoder: this.encoder,
+        hardwareVendor: this.hardwareVendor,
+      })
       let firstChunkSeen = false
       let settled = false
       this.resetStreamCaches()

@@ -4,6 +4,9 @@ export interface ServerConfig {
   port: number
   nodeEnv: string
   logLevel: 'debug' | 'info' | 'warn' | 'error'
+  decoder: 'auto' | 'software' | 'hardware'
+  encoder: 'auto' | 'software' | 'hardware'
+  hardwareTemplate: 'nvidia'
   startupTimeoutMs: number
   idleGraceMs: number
   stopGraceMs: number
@@ -51,6 +54,23 @@ function parseStringList(value: string | undefined): string[] {
     .filter(Boolean)
 }
 
+function parseStrategy(value: string | undefined, fallback: ServerConfig['decoder']): ServerConfig['decoder'] {
+  if (!value) {
+    return fallback
+  }
+  if (value === 'auto' || value === 'software' || value === 'hardware') {
+    return value
+  }
+  return fallback
+}
+
+function parseHardwareTemplate(value: string | undefined): ServerConfig['hardwareTemplate'] {
+  if (value === 'nvidia') {
+    return 'nvidia'
+  }
+  return 'nvidia'
+}
+
 export function loadServerConfig(): ServerConfig {
   const logLevel = (process.env.LOG_LEVEL as ServerConfig['logLevel'] | undefined) ?? 'info'
 
@@ -58,6 +78,9 @@ export function loadServerConfig(): ServerConfig {
     port: parseIntValue(process.env.PORT, 3000),
     nodeEnv: process.env.NODE_ENV ?? 'development',
     logLevel,
+    decoder: parseStrategy(process.env.FFMPEG_DECODER, 'auto'),
+    encoder: parseStrategy(process.env.FFMPEG_ENCODER, 'auto'),
+    hardwareTemplate: parseHardwareTemplate(process.env.FFMPEG_HARDWARE_TEMPLATE),
     startupTimeoutMs: parseIntValue(process.env.STREAM_STARTUP_TIMEOUT_MS, 8000),
     idleGraceMs: parseIntValue(process.env.STREAM_IDLE_GRACE_MS, 15000),
     stopGraceMs: parseIntValue(process.env.STOP_GRACE_MS, 1500),

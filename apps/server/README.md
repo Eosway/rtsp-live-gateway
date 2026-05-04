@@ -102,6 +102,28 @@ node apps/server/dist/index.js
 - `FFMPEG_PATH`
 - `CORS_ALLOW_ORIGIN`（默认 `*`）
 
+FFmpeg 策略：
+
+- `FFMPEG_DECODER`（`auto` / `software` / `hardware`，默认 `auto`）
+- `FFMPEG_ENCODER`（`auto` / `software` / `hardware`，默认 `auto`）
+- `FFMPEG_HARDWARE_TEMPLATE`（当前仅支持 `nvidia`，只用于硬件编解码参数模板）
+
+用户侧只配置输出目标：
+
+- `video.codec: libx264 | libx265`
+- `video.mode: auto | copy | transcode`
+
+部署侧负责解码/编码策略和模板：
+
+- `FFMPEG_DECODER: auto | software | hardware`
+- `FFMPEG_ENCODER: auto | software | hardware`
+- `FFMPEG_HARDWARE_TEMPLATE: nvidia`
+
+规则：
+
+- 软件编码固定映射为 `libx264` / `libx265`，参数也写入软件模板
+- 硬件模板只负责厂商差异，例如 `hardware.nvidia`
+
 流控制：
 
 - `STREAM_STARTUP_TIMEOUT_MS`（默认 `8000`）

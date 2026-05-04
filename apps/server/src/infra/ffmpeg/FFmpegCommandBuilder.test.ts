@@ -61,5 +61,85 @@ test('transcode mode should select libx264 or libx265 from video.codec', () => {
 
   assert.equal(avcCommand.args[avcCommand.args.indexOf('-c:v') + 1], 'libx264')
   assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-c:v') + 1], 'libx265')
+  assert.equal(avcCommand.args[avcCommand.args.indexOf('-preset') + 1], 'veryfast')
+  assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-preset') + 1], 'veryfast')
   assert.ok(avcCommand.safePreview.includes('rtsp://admin:***@example.com/live'))
+})
+
+test('hardware encoder should map output codec to nvenc encoder', () => {
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+    decoder: 'auto',
+    encoder: 'hardware',
+    hardwareVendor: 'nvidia',
+  })
+  const hevcCommand = buildFfmpegCommand(
+    '/usr/bin/ffmpeg',
+    createRequest({
+      video: {
+        mode: 'transcode',
+        codec: 'libx265',
+      },
+    }),
+    'transcode',
+    {
+      decoder: 'auto',
+      encoder: 'hardware',
+      hardwareVendor: 'nvidia',
+    }
+  )
+
+  assert.equal(avcCommand.args[avcCommand.args.indexOf('-c:v') + 1], 'h264_nvenc')
+  assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-c:v') + 1], 'hevc_nvenc')
+})
+
+test('software encoder should stay on libx264 or libx265', () => {
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+    decoder: 'auto',
+    encoder: 'software',
+    hardwareVendor: 'nvidia',
+  })
+  const hevcCommand = buildFfmpegCommand(
+    '/usr/bin/ffmpeg',
+    createRequest({
+      video: {
+        mode: 'transcode',
+        codec: 'libx265',
+      },
+    }),
+    'transcode',
+    {
+      decoder: 'auto',
+      encoder: 'software',
+      hardwareVendor: 'nvidia',
+    }
+  )
+
+  assert.equal(avcCommand.args[avcCommand.args.indexOf('-c:v') + 1], 'libx264')
+  assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-c:v') + 1], 'libx265')
+})
+
+test('template group should resolve by codec family first', () => {
+  const avcHardwareCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+    decoder: 'auto',
+    encoder: 'hardware',
+    hardwareVendor: 'nvidia',
+  })
+  const hevcSoftwareCommand = buildFfmpegCommand(
+    '/usr/bin/ffmpeg',
+    createRequest({
+      video: {
+        mode: 'transcode',
+        codec: 'libx265',
+      },
+    }),
+    'transcode',
+    {
+      decoder: 'auto',
+      encoder: 'software',
+      hardwareVendor: 'nvidia',
+    }
+  )
+
+  assert.equal(avcHardwareCommand.args[avcHardwareCommand.args.indexOf('-c:v') + 1], 'h264_nvenc')
+  assert.equal(hevcSoftwareCommand.args[hevcSoftwareCommand.args.indexOf('-c:v') + 1], 'libx265')
 })
