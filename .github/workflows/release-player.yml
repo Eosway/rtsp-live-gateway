@@ -1,0 +1,77 @@
+name: Release Player Package
+
+on:
+  push:
+    tags: ['player-vue@*.*.*']
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  release-player:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve player version from tag
+        id: package
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#player-vue@}"
+          package_json="packages/player-vue/package.json"
+
+          if [[ "${tag}" == "${version}" || -z "${version}" ]]; then
+            echo "::error::Tag must use the format player-vue@<version>, for example player-vue@0.1.0."
+            exit 1
+          fi
+
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid version in tag '${tag}'."
+            exit 1
+          fi
+
+          package_name="$(node -p "require('./${package_json}').name")"
+          package_version="$(node -p "require('./${package_json}').version")"
+
+          if [[ "${package_version}" != "${version}" ]]; then
+            echo "::error::Tag version '${version}' does not match ${package_json} version '${package_version}'."
+            exit 1
+          fi
+
+          echo "name=${package_name}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build player package
+        run: pnpm --filter ./packages/player-vue... run build
+
+      - name: Publish player package
+        run: pnpm --filter ./packages/player-vue publish --access public --no-git-checks --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create release for tag
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ steps.package.outputs.name }} v${{ steps.package.outputs.version }}
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          body: |
+            Published `${{ steps.package.outputs.name }}` from `packages/player-vue`.
