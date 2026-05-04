@@ -15,6 +15,13 @@ export class FanoutHub {
     this.sessions.set(session.sessionId, session)
   }
 
+  activate(session: PlaybackSession, bootstrap?: readonly Uint8Array[]): void {
+    if (bootstrap && !session.enqueueMany(bootstrap)) {
+      return
+    }
+    this.sessions.set(session.sessionId, session)
+  }
+
   unsubscribe(sessionId: string, reason: string): void {
     const session = this.sessions.get(sessionId)
     if (!session) {

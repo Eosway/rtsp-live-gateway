@@ -64,6 +64,15 @@ export class PlaybackSession {
     }
   }
 
+  enqueueMany(chunks: readonly Uint8Array[]): boolean {
+    for (const chunk of chunks) {
+      if (!this.enqueue(chunk)) {
+        return false
+      }
+    }
+    return true
+  }
+
   close(reason: string): void {
     if (this.closed) {
       return

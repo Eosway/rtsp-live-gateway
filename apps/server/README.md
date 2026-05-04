@@ -64,6 +64,8 @@ node apps/server/dist/index.js
 
 - 每个 HTTP 连接对应一个 `PlaybackSession`
 - `MAX_QUEUE_BYTES` 限制慢客户端队列
+- 运行中新增观众不会从 FLV 中间字节直接接入
+- 服务端会先下发当前 FFmpeg 实例的 FLV bootstrap，再在下一个完整 FLV tag 边界切入实时流
 - 最后一个观众离开后，等待 `STREAM_IDLE_GRACE_MS` 再停止 FFmpeg
 - 空闲停止后仍可再次懒启动（不等同于删除）
 

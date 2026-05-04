@@ -4,6 +4,7 @@ import { nowIso } from '../lib/index.js'
 import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
 import { FFmpegStderrParser, type FFmpegDiagEvent } from '../infra/ffmpeg/FFmpegStderrParser.js'
+import { FlvBootstrapCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
 import { FanoutHub } from './FanoutHub.js'
 import { PlaybackSession } from './PlaybackSession.js'
@@ -22,6 +23,7 @@ interface StreamSourceOptions {
     warn(message: string, detail?: Record<string, unknown>): void
     error(message: string, detail?: Record<string, unknown>): void
   }
+  runnerFactory?: () => FFmpegRunner
 }
 
 export class StreamSource {
@@ -36,12 +38,16 @@ export class StreamSource {
   private readonly stopGraceMs: number
   private readonly maxStartAttempts: number
   private readonly logger: StreamSourceOptions['logger']
+  private readonly runnerFactory: () => FFmpegRunner
 
   private state: StreamState = 'idle'
   private readonly sessions = new Map<string, PlaybackSession>()
   private readonly fanout = new FanoutHub()
   private readonly stderrParser = new FFmpegStderrParser()
+  private readonly flvParser = new FlvStreamParser()
+  private readonly bootstrapCache = new FlvBootstrapCache()
   private stderrRing: string[] = []
+  private pendingSessions = new Map<string, PlaybackSession>()
 
   private runner?: FFmpegRunner
   private startPromise?: Promise<void>
@@ -68,6 +74,7 @@ export class StreamSource {
     this.stopGraceMs = options.stopGraceMs
     this.maxStartAttempts = options.maxStartAttempts
     this.logger = options.logger
+    this.runnerFactory = options.runnerFactory ?? (() => new FFmpegRunner())
     this.createdAt = nowIso()
     this.lastActiveAt = this.createdAt
   }
@@ -83,7 +90,7 @@ export class StreamSource {
   addViewer(session: PlaybackSession): void {
     this.clearIdleTimer()
     this.sessions.set(session.sessionId, session)
-    this.fanout.subscribe(session)
+    this.pendingSessions.set(session.sessionId, session)
     this.lastActiveAt = nowIso()
   }
 
@@ -94,6 +101,7 @@ export class StreamSource {
     }
     session.close(reason)
     this.fanout.unsubscribe(sessionId, reason)
+    this.pendingSessions.delete(sessionId)
     this.sessions.delete(sessionId)
     this.lastActiveAt = nowIso()
     if (this.sessions.size === 0) {
@@ -166,12 +174,13 @@ export class StreamSource {
       this.startAttempts += 1
       this.state = 'starting'
       const startedAt = Date.now()
-      const runner = new FFmpegRunner()
+      const runner = this.runnerFactory()
       this.runner = runner
       const videoPlan = resolveVideoPlan(this.req, attempt)
       const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan)
       let firstChunkSeen = false
       let settled = false
+      this.resetStreamCaches()
 
       const settleReject = (error: ApiError) => {
         if (settled) {
@@ -206,13 +215,37 @@ export class StreamSource {
       }, this.startupTimeoutMs)
 
       runner.onStdout((chunk) => {
-        if (!firstChunkSeen) {
-          firstChunkSeen = true
+        let units
+        try {
+          units = this.flvParser.push(chunk)
+        } catch (error) {
           clearTimeout(startupTimer)
-          settleResolve()
+          void runner.stop(this.stopGraceMs).finally(() => {
+            settleReject(
+              new ApiError('NO_MEDIA_OUTPUT', 'Invalid FLV output from FFmpeg', {
+                ts: Date.now(),
+                level: 'error',
+              })
+            )
+          })
+          return
         }
-        this.bytesOut += chunk.byteLength
-        this.fanout.publish(chunk)
+
+        for (const unit of units) {
+          if (!firstChunkSeen) {
+            firstChunkSeen = true
+            clearTimeout(startupTimer)
+            settleResolve()
+          }
+          this.bootstrapCache.observe(unit)
+          this.bytesOut += unit.bytes.byteLength
+          if (unit.kind === 'header') {
+            this.activatePendingSessions()
+            continue
+          }
+          this.activatePendingSessions()
+          this.fanout.publish(unit.bytes)
+        }
       })
 
       runner.onStderrLine((line) => {
@@ -308,6 +341,10 @@ export class StreamSource {
       this.clearIdleTimer()
       this.state = 'stopping'
       this.fanout.closeAll(reason)
+      for (const [sessionId, session] of this.pendingSessions) {
+        session.close(reason)
+        this.pendingSessions.delete(sessionId)
+      }
       for (const [sessionId, session] of this.sessions) {
         session.close(reason)
         this.sessions.delete(sessionId)
@@ -316,6 +353,7 @@ export class StreamSource {
         await this.runner.stop(this.stopGraceMs)
         this.runner = undefined
       }
+      this.resetStreamCaches()
       this.state = 'idle'
     })().finally(() => {
       this.stopInProgress = false
@@ -355,5 +393,27 @@ export class StreamSource {
     }
     clearTimeout(this.idleTimer)
     this.idleTimer = undefined
+  }
+
+  private activatePendingSessions(): void {
+    if (this.pendingSessions.size === 0) {
+      return
+    }
+    const bootstrap = this.bootstrapCache.snapshot()
+    if (!bootstrap) {
+      return
+    }
+    for (const [sessionId, session] of this.pendingSessions) {
+      this.pendingSessions.delete(sessionId)
+      this.fanout.activate(session, bootstrap)
+      if (session.isClosed()) {
+        this.sessions.delete(sessionId)
+      }
+    }
+  }
+
+  private resetStreamCaches(): void {
+    this.flvParser.reset()
+    this.bootstrapCache.reset()
   }
 }
