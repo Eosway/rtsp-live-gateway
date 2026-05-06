@@ -9,6 +9,7 @@ import { StreamSource } from './StreamSource.js'
 interface StreamRegistryOptions {
   config: ServerConfig
   ffmpegPath: string
+  ffprobePath?: string
 }
 
 export class StreamRegistry {
@@ -16,10 +17,12 @@ export class StreamRegistry {
   private readonly bySourceKey = new Map<string, StreamSource>()
   private readonly config: ServerConfig
   private readonly ffmpegPath: string
+  private readonly ffprobePath?: string
 
   constructor(options: StreamRegistryOptions) {
     this.config = options.config
     this.ffmpegPath = options.ffmpegPath
+    this.ffprobePath = options.ffprobePath
   }
 
   createOrReuse(req: NormalizedStreamCreateRequest): {
@@ -42,6 +45,7 @@ export class StreamRegistry {
       sourceKey,
       req,
       ffmpegPath: this.ffmpegPath,
+      ffprobePath: this.ffprobePath,
       decoder: this.config.decoder,
       encoder: this.config.encoder,
       hardwareVendor: this.config.hardwareTemplate,

@@ -1,8 +1,9 @@
 import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
 import { maskRtspUrlsInText, nowIso } from '../lib/index.js'
-import { buildFfmpegCommand } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
+import { FFprobeRunner, type ProbedVideoCodec } from '../infra/ffmpeg/FFprobeRunner.js'
 import { FFmpegStderrParser, type FFmpegDiagEvent, summarizeStderrTail, toDiagnosticDetail } from '../infra/ffmpeg/FFmpegStderrParser.js'
 import { FlvBootstrapCache, FlvGopCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
@@ -14,6 +15,7 @@ interface StreamSourceOptions {
   sourceKey: string
   req: NormalizedStreamCreateRequest
   ffmpegPath: string
+  ffprobePath?: string
   decoder: 'auto' | 'software' | 'hardware'
   encoder: 'auto' | 'software' | 'hardware'
   hardwareVendor: 'nvidia'
@@ -37,6 +39,7 @@ export class StreamSource {
   readonly req: NormalizedStreamCreateRequest
 
   private readonly ffmpegPath: string
+  private readonly ffprobePath?: string
   private readonly decoder: 'auto' | 'software' | 'hardware'
   private readonly encoder: 'auto' | 'software' | 'hardware'
   private readonly hardwareVendor: 'nvidia'
@@ -46,6 +49,7 @@ export class StreamSource {
   private readonly maxStartAttempts: number
   private readonly logger: StreamSourceOptions['logger']
   private readonly runnerFactory: () => FFmpegRunner
+  private readonly ffprobeRunner?: FFprobeRunner
   private readonly gopCache: FlvGopCache
 
   private state: StreamState = 'idle'
@@ -78,6 +82,7 @@ export class StreamSource {
     this.sourceKey = options.sourceKey
     this.req = options.req
     this.ffmpegPath = options.ffmpegPath
+    this.ffprobePath = options.ffprobePath
     this.decoder = options.decoder
     this.encoder = options.encoder
     this.hardwareVendor = options.hardwareVendor
@@ -87,6 +92,7 @@ export class StreamSource {
     this.maxStartAttempts = options.maxStartAttempts
     this.logger = options.logger
     this.runnerFactory = options.runnerFactory ?? (() => new FFmpegRunner())
+    this.ffprobeRunner = this.ffprobePath ? new FFprobeRunner(this.ffprobePath) : undefined
     this.gopCache = new FlvGopCache(options.gopCacheMaxBytes ?? 512 * 1024)
     this.createdAt = nowIso()
     this.lastActiveAt = this.createdAt
@@ -182,14 +188,15 @@ export class StreamSource {
     throw lastError instanceof Error ? lastError : new ApiError('FFMPEG_EXITED', 'FFmpeg exited before media output')
   }
 
-  private startOnce(trigger: 'first_viewer' | 'manual', attempt: number): Promise<void> {
+  private async startOnce(trigger: 'first_viewer' | 'manual', attempt: number): Promise<void> {
+    const inputVideoCodec = await this.probeInputVideoCodec()
     return new Promise((resolve, reject) => {
       this.startAttempts += 1
       this.state = 'starting'
       const startedAt = Date.now()
       const runner = this.runnerFactory()
       this.runner = runner
-      const videoPlan = this.resolveVideoPlan(attempt)
+      const videoPlan = resolveVideoPlan(attempt, this.req.video.codec, inputVideoCodec)
       const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan, {
         decoder: this.decoder,
         encoder: this.encoder,
@@ -314,6 +321,7 @@ export class StreamSource {
           streamId: this.streamId,
           trigger,
           attempt,
+          inputVideoCodec,
           videoPlan,
           command: command.safePreview,
         })
@@ -473,7 +481,18 @@ export class StreamSource {
     this.gopCache.reset()
   }
 
-  private resolveVideoPlan(attempt: number): 'copy' | 'transcode' {
-    return attempt === 1 ? 'copy' : 'transcode'
+  private async probeInputVideoCodec(): Promise<ProbedVideoCodec> {
+    if (!this.ffprobeRunner) {
+      return 'unknown'
+    }
+    try {
+      return await this.ffprobeRunner.probeVideoCodec({
+        transport: this.req.transport,
+        ioTimeoutUs: this.req.ioTimeoutUs,
+        url: this.req.url,
+      })
+    } catch {
+      return 'unknown'
+    }
   }
 }

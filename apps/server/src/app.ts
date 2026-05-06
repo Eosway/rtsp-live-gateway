@@ -13,6 +13,7 @@ import { assertRtspTargetAllowed } from './security/ssrf.js'
 interface CreateAppOptions {
   config: ServerConfig
   ffmpegPath: string
+  ffprobePath?: string
 }
 
 function buildMetricsText(metrics: { sources: number; runningSources: number; viewers: number; bytesOut: number }): string {
@@ -37,6 +38,7 @@ export function createApp(options: CreateAppOptions) {
   const registry = new StreamRegistry({
     config: options.config,
     ffmpegPath: options.ffmpegPath,
+    ffprobePath: options.ffprobePath,
   })
 
   app.use(

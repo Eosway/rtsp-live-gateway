@@ -15,6 +15,9 @@
   - 优先 `FFMPEG_PATH`
   - 其次系统 PATH 中的 `ffmpeg`
   - 非生产环境下可回退到 `@ffmpeg-installer/ffmpeg`
+- 建议可执行 `ffprobe`
+  - 优先 `FFPROBE_PATH`
+  - 未显式配置时，默认尝试从 `FFMPEG_PATH` 同目录推导 `ffprobe`
 
 ## 2. 快速启动
 
@@ -83,6 +86,10 @@ node apps/server/dist/index.js
 - 输入：`rtsp://` 或 `rtsps://`
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
 - 默认禁音：`-an`
+- 首次启动会先探测输入视频 codec
+- 输入 codec 与 `video.codec` 一致：首轮使用 `copy`
+- 输入 codec 与 `video.codec` 不一致：首轮使用转码
+- 重试启动：强制转码
 - `video.codec = h264`：转码使用 `libx264`
 - `video.codec = h265`：转码使用 `libx265`
 
@@ -97,6 +104,7 @@ node apps/server/dist/index.js
 - `PORT`（默认 `3000`）
 - `LOG_LEVEL`（默认 `info`）
 - `FFMPEG_PATH`
+- `FFPROBE_PATH`
 - `CORS_ALLOW_ORIGIN`（默认 `*`）
 
 FFmpeg 策略：

@@ -8,6 +8,8 @@ export interface FFmpegCommand {
 }
 
 export type VideoPlan = 'copy' | 'transcode'
+export type RequestedVideoCodec = 'h264' | 'h265'
+export type InputVideoCodec = RequestedVideoCodec | 'unknown'
 
 export interface FFmpegStrategyOptions {
   decoder: 'auto' | 'software' | 'hardware'
@@ -105,6 +107,12 @@ export function buildFfmpegCommand(
   }
 }
 
-export function resolveVideoPlan(attempt: number): VideoPlan {
-  return attempt === 1 ? 'copy' : 'transcode'
+export function resolveVideoPlan(attempt: number, requestedCodec: RequestedVideoCodec, inputCodec: InputVideoCodec): VideoPlan {
+  if (attempt > 1) {
+    return 'transcode'
+  }
+  if (inputCodec === requestedCodec) {
+    return 'copy'
+  }
+  return 'transcode'
 }

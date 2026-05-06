@@ -2,10 +2,12 @@ import { serve } from '@hono/node-server'
 import { createApp } from './app.js'
 import { loadServerConfig } from './config.js'
 import { resolveFfmpegPath } from './infra/ffmpeg/resolveFfmpegPath.js'
+import { resolveFfprobePath } from './infra/ffmpeg/resolveFfprobePath.js'
 
 const config = loadServerConfig()
 const ffmpegPath = await resolveFfmpegPath(config.nodeEnv)
-const app = createApp({ config, ffmpegPath })
+const ffprobePath = resolveFfprobePath(ffmpegPath)
+const app = createApp({ config, ffmpegPath, ffprobePath })
 
 serve(
   {
@@ -20,6 +22,7 @@ serve(
         detail: {
           port: info.port,
           ffmpegPath,
+          ffprobePath,
         },
       })}\n`
     )

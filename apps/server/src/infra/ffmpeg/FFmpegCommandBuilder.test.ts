@@ -23,9 +23,12 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
   }
 }
 
-test('auto mode should copy on first attempt and transcode on retry', () => {
-  assert.equal(resolveVideoPlan(1), 'copy')
-  assert.equal(resolveVideoPlan(2), 'transcode')
+test('auto mode should always transcode to honor requested output codec', () => {
+  assert.equal(resolveVideoPlan(1, 'h264', 'h264'), 'copy')
+  assert.equal(resolveVideoPlan(1, 'h265', 'h265'), 'copy')
+  assert.equal(resolveVideoPlan(1, 'h264', 'h265'), 'transcode')
+  assert.equal(resolveVideoPlan(1, 'h264', 'unknown'), 'transcode')
+  assert.equal(resolveVideoPlan(2, 'h264', 'h264'), 'transcode')
 })
 
 test('copy mode should preserve video bitstream copy', () => {

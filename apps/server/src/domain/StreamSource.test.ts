@@ -4,6 +4,7 @@ import { PlaybackSession } from './PlaybackSession.js'
 import { StreamSource } from './StreamSource.js'
 import type { Logger } from '../lib/logger.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
+import type { FFmpegCommand } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 
 class FakeRunner {
   private stdoutListeners: Array<(chunk: Uint8Array) => void> = []
@@ -12,7 +13,11 @@ class FakeRunner {
   private errorListeners: Array<(error: Error) => void> = []
   private stopped = false
 
-  start(): void {}
+  public command?: FFmpegCommand
+
+  start(command?: FFmpegCommand): void {
+    this.command = command
+  }
 
   onStdout(listener: (chunk: Uint8Array) => void): void {
     this.stdoutListeners.push(listener)
@@ -293,6 +298,68 @@ test('gop cache overflow should wait for next keyframe before rebuilding cache',
 
   const afterResetChunks = await afterResetDrainPromise
   assert.deepEqual(afterResetChunks, [header, sequence, nextKeyframe, audioAfterReset])
+})
+
+test('first start should copy when probed codec matches requested output codec', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = new StreamSource({
+    streamId: 'st_auto_copy',
+    sourceKey: 'src_auto_copy',
+    req: createRequest(),
+    ffmpegPath: '/usr/bin/ffmpeg',
+    ffprobePath: '/usr/bin/ffprobe',
+    decoder: 'auto',
+    encoder: 'auto',
+    hardwareVendor: 'nvidia',
+    startupTimeoutMs: 1000,
+    idleGraceMs: 1000,
+    stopGraceMs: 100,
+    maxStartAttempts: 1,
+    logger: createLogger(),
+    runnerFactory: () => fakeRunner as never,
+  })
+  ;(source as unknown as { probeInputVideoCodec(): Promise<'h264'> }).probeInputVideoCodec = async () => 'h264'
+
+  const viewer = createSession('se_auto_copy')
+  source.addViewer(viewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  fakeRunner.emitStdout(createFlvHeader())
+  fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  await startPromise
+
+  assert.equal(fakeRunner.command?.args[fakeRunner.command.args.indexOf('-c:v') + 1], 'copy')
+})
+
+test('first start should transcode when probed codec differs from requested output codec', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = new StreamSource({
+    streamId: 'st_auto_transcode',
+    sourceKey: 'src_auto_transcode',
+    req: createRequest(),
+    ffmpegPath: '/usr/bin/ffmpeg',
+    ffprobePath: '/usr/bin/ffprobe',
+    decoder: 'auto',
+    encoder: 'auto',
+    hardwareVendor: 'nvidia',
+    startupTimeoutMs: 1000,
+    idleGraceMs: 1000,
+    stopGraceMs: 100,
+    maxStartAttempts: 1,
+    logger: createLogger(),
+    runnerFactory: () => fakeRunner as never,
+  })
+  ;(source as unknown as { probeInputVideoCodec(): Promise<'h265'> }).probeInputVideoCodec = async () => 'h265'
+
+  const viewer = createSession('se_auto_transcode')
+  source.addViewer(viewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  fakeRunner.emitStdout(createFlvHeader())
+  fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  await startPromise
+
+  assert.notEqual(fakeRunner.command?.args[fakeRunner.command.args.indexOf('-c:v') + 1], 'copy')
 })
 
 test('startup failure should surface structured upstream_not_found error instead of generic ffmpeg_exited', async () => {
