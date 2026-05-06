@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.0.0...player-vue@1.0.1) (2026-05-06)
+
+### Bug Fixes
+
+- skip enhanced hevc metadata packets([44df32e](https://github.com/Eosway/rtsp-live-gateway/commit/44df32ec9d14c106af8ae98fb1cd3dba6f8e6687))
+
 ## 1.0.0 (2026-05-04)
 
 ### Features
