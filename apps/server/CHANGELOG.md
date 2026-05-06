@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.0](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.0.0...server@1.1.0) (2026-05-06)
+
+### Features
+
+- add video mode auto or transcode ([a5634d8](https://github.com/Eosway/rtsp-live-gateway/commit/a5634d8ba22e702d5a7ef0bc85de262b9d649772))
+- add gop cache for late viewer playback ([8962d3c](https://github.com/Eosway/rtsp-live-gateway/commit/8962d3c67e78c1ddcbd74f40b0b8b0335888e769))
+- auto select copy or transcode by input codec ([dc10275](https://github.com/Eosway/rtsp-live-gateway/commit/dc10275984633762396de391eebd17c863e0c373))
+- bootstrap late viewers at flv tag boundary ([1714da9](https://github.com/Eosway/rtsp-live-gateway/commit/1714da9488be54bf5194b5630fc9ef9f562107c5))
+- improve ffmpeg error readability and structure ([d3f5810](https://github.com/Eosway/rtsp-live-gateway/commit/d3f581004ba5038e826fd23e86ad4a0d332834f8))
+
+### Bug Fixes
+
+- docker build issue cause by mpegts.js patches ([32f8c22](https://github.com/Eosway/rtsp-live-gateway/commit/32f8c22a9dca584f79e1a3fd430eb4e31299a255))
+
+### Code Refactoring
+
+- remove video mode and restrict audio mode ([7aa17c7](https://github.com/Eosway/rtsp-live-gateway/commit/7aa17c772123694a43d95c4dbc3b27732d6d44be))
+- rename video codec values to h264 h265 ([13f5b38](https://github.com/Eosway/rtsp-live-gateway/commit/13f5b38bc6e4e50ad0d0cd3a8f8032d8afbeaf5a))
+- reorganize ffmpeg codec templates ([8516983](https://github.com/Eosway/rtsp-live-gateway/commit/8516983ef9b560ba5dd3567b298172df3e760e7d))
+
 ## 1.0.0 (2026-05-04)
 
 ### Features
