@@ -8,6 +8,7 @@ export interface FFmpegCommand {
 }
 
 export type VideoPlan = 'copy' | 'transcode'
+export type RequestedVideoMode = 'auto' | 'transcode'
 export type RequestedVideoCodec = 'h264' | 'h265'
 export type InputVideoCodec = RequestedVideoCodec | 'unknown'
 
@@ -107,7 +108,15 @@ export function buildFfmpegCommand(
   }
 }
 
-export function resolveVideoPlan(attempt: number, requestedCodec: RequestedVideoCodec, inputCodec: InputVideoCodec): VideoPlan {
+export function resolveVideoPlan(
+  attempt: number,
+  requestedMode: RequestedVideoMode,
+  requestedCodec: RequestedVideoCodec,
+  inputCodec: InputVideoCodec
+): VideoPlan {
+  if (requestedMode === 'transcode') {
+    return 'transcode'
+  }
   if (attempt > 1) {
     return 'transcode'
   }

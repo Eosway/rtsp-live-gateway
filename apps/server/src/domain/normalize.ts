@@ -3,6 +3,7 @@ import { ApiError } from '../errors.js'
 import type { NormalizedStreamCreateRequest } from '../types.js'
 
 const DEFAULT_TRANSPORT: RtspTransport = 'tcp'
+const DEFAULT_VIDEO_MODE: 'auto' | 'transcode' = 'auto'
 const DEFAULT_VIDEO_CODEC: 'h264' | 'h265' = 'h264'
 const DEFAULT_AUDIO: Required<AudioOptions> = {
   enabled: false,
@@ -34,11 +35,17 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
   const ioTimeoutUs = body.ioTimeoutUs ?? 5_000_000
   assertPositiveNumber(ioTimeoutUs, 'ioTimeoutUs')
 
+  const videoMode = body.video?.mode ?? DEFAULT_VIDEO_MODE
+  if (!['auto', 'transcode'].includes(videoMode)) {
+    throw new ApiError('INVALID_ARGUMENT', 'Invalid video.mode', { field: 'video.mode' })
+  }
+
   return {
     url: body.url,
     transport,
     ioTimeoutUs,
     video: {
+      mode: videoMode,
       codec: body.video?.codec ?? DEFAULT_VIDEO_CODEC,
     },
     audio: {

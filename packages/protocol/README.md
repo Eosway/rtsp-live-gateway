@@ -49,6 +49,7 @@
 
 - `transport`: `tcp`
 - `ioTimeoutUs`: `5000000`
+- `video.mode`: `auto`
 - `video.codec`: `h264`
 - `audio.enabled`: `false`
 - `audio.mode`: `drop`
@@ -87,6 +88,8 @@
 ## 边界说明
 
 - `StreamStatusResponse.effectiveConfig` 表示服务端归一化后的生效配置，不是原始请求体回显。
+- `video.mode = auto` 表示服务端会在首次启动尝试前先探测输入 codec，再按输入 codec 与目标 codec 是否一致决定 `copy` 或 `transcode`。
+- `video.mode = transcode` 表示始终转码，不允许任何启动尝试走 `copy`。
 - `sourceKey` 仅用于服务端内部单源复用，不属于对外稳定协议。
 
 ## 导出

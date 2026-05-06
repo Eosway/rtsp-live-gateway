@@ -86,10 +86,11 @@ node apps/server/dist/index.js
 - 输入：`rtsp://` 或 `rtsps://`
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
 - 默认禁音：`-an`
-- 首次启动会先探测输入视频 codec
-- 输入 codec 与 `video.codec` 一致：首轮使用 `copy`
-- 输入 codec 与 `video.codec` 不一致：首轮使用转码
-- 重试启动：强制转码
+- 首次启动尝试前会先用 `ffprobe` 探测输入视频 codec
+- `video.mode = auto` 且输入 codec 与 `video.codec` 一致：首次启动尝试使用 `copy`
+- `video.mode = auto` 且输入 codec 与 `video.codec` 不一致：首次启动尝试使用转码
+- `video.mode = transcode`：所有启动尝试都使用转码
+- 启动重试：强制转码
 - `video.codec = h264`：转码使用 `libx264`
 - `video.codec = h265`：转码使用 `libx265`
 
@@ -115,6 +116,7 @@ FFmpeg 策略：
 
 用户侧只配置输出目标：
 
+- `video.mode: auto | transcode`
 - `video.codec: h264 | h265`
 
 部署侧负责解码/编码策略和模板：

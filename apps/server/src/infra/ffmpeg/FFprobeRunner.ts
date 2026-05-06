@@ -23,7 +23,11 @@ function normalizeCodec(codecName: string | undefined): ProbedVideoCodec {
 }
 
 export class FFprobeRunner {
-  constructor(private readonly ffprobePath: string) {}
+  private readonly ffprobePath: string
+
+  constructor(ffprobePath: string) {
+    this.ffprobePath = ffprobePath
+  }
 
   async probeVideoCodec(input: FFprobeInput): Promise<ProbedVideoCodec> {
     return new Promise((resolve) => {

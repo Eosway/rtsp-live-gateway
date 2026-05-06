@@ -21,6 +21,10 @@ const baseUrl = 'http://localhost:3000'
 const created = await createStream(baseUrl, {
   url: 'rtsp://camera/live',
   transport: 'tcp',
+  video: {
+    mode: 'auto',
+    codec: 'h264',
+  },
 })
 
 console.log(created.streamId)

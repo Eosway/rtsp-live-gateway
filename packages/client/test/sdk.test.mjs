@@ -52,9 +52,7 @@ test('get/list/delete should hit expected paths', async () => {
           createdAt: '2026-03-26T00:00:00.000Z',
           effectiveConfig: {
             transport: 'tcp',
-            video: {
-              codec: 'h264',
-            },
+            video: { mode: 'auto', codec: 'h264' },
             audio: { enabled: false, mode: 'drop', codec: 'aac', bitrateKbps: 0 },
           },
           stats: {

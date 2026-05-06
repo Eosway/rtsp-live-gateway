@@ -77,6 +77,7 @@ function createRequest(): NormalizedStreamCreateRequest {
     transport: 'tcp',
     ioTimeoutUs: 5_000_000,
     video: {
+      mode: 'auto',
       codec: 'h264',
     },
     audio: {

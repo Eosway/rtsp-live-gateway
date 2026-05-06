@@ -9,6 +9,7 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
     transport: 'tcp',
     ioTimeoutUs: 5_000_000,
     video: {
+      mode: 'auto',
       codec: 'h264',
     },
     audio: {
@@ -23,12 +24,17 @@ function createRequest(overrides: Partial<NormalizedStreamCreateRequest> = {}): 
   }
 }
 
-test('auto mode should always transcode to honor requested output codec', () => {
-  assert.equal(resolveVideoPlan(1, 'h264', 'h264'), 'copy')
-  assert.equal(resolveVideoPlan(1, 'h265', 'h265'), 'copy')
-  assert.equal(resolveVideoPlan(1, 'h264', 'h265'), 'transcode')
-  assert.equal(resolveVideoPlan(1, 'h264', 'unknown'), 'transcode')
-  assert.equal(resolveVideoPlan(2, 'h264', 'h264'), 'transcode')
+test('auto mode should choose copy only for first attempt when probed codec matches', () => {
+  assert.equal(resolveVideoPlan(1, 'auto', 'h264', 'h264'), 'copy')
+  assert.equal(resolveVideoPlan(1, 'auto', 'h265', 'h265'), 'copy')
+  assert.equal(resolveVideoPlan(1, 'auto', 'h264', 'h265'), 'transcode')
+  assert.equal(resolveVideoPlan(1, 'auto', 'h264', 'unknown'), 'transcode')
+  assert.equal(resolveVideoPlan(2, 'auto', 'h264', 'h264'), 'transcode')
+})
+
+test('transcode mode should never downgrade to copy even if input codec matches', () => {
+  assert.equal(resolveVideoPlan(1, 'transcode', 'h264', 'h264'), 'transcode')
+  assert.equal(resolveVideoPlan(1, 'transcode', 'h265', 'h265'), 'transcode')
 })
 
 test('copy mode should preserve video bitstream copy', () => {
@@ -36,6 +42,7 @@ test('copy mode should preserve video bitstream copy', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
+        mode: 'auto',
         codec: 'h265',
       },
     }),
@@ -52,6 +59,7 @@ test('transcode mode should map h264 or h265 to libx264 or libx265', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
+        mode: 'auto',
         codec: 'h265',
       },
     }),
@@ -75,6 +83,7 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
+        mode: 'auto',
         codec: 'h265',
       },
     }),
@@ -100,6 +109,7 @@ test('software encoder should map h264 or h265 to libx264 or libx265', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
+        mode: 'auto',
         codec: 'h265',
       },
     }),
@@ -125,6 +135,7 @@ test('template group should resolve by codec family first', () => {
     '/usr/bin/ffmpeg',
     createRequest({
       video: {
+        mode: 'auto',
         codec: 'h265',
       },
     }),

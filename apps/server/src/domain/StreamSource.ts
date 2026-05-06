@@ -196,7 +196,7 @@ export class StreamSource {
       const startedAt = Date.now()
       const runner = this.runnerFactory()
       this.runner = runner
-      const videoPlan = resolveVideoPlan(attempt, this.req.video.codec, inputVideoCodec)
+      const videoPlan = resolveVideoPlan(attempt, this.req.video.mode, this.req.video.codec, inputVideoCodec)
       const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan, {
         decoder: this.decoder,
         encoder: this.encoder,
@@ -428,6 +428,7 @@ export class StreamSource {
       effectiveConfig: {
         transport: this.req.transport,
         video: {
+          mode: this.req.video.mode,
           codec: this.req.video.codec,
         },
         audio: {

@@ -26,8 +26,8 @@
         <label>
           Video Codec
           <select v-model="form.videoCodec">
-            <option value="libx264">AVC(libx264)</option>
-            <option value="libx265">HEVC(libx265)</option>
+            <option value="h264">AVC(libx264)</option>
+            <option value="h265">HEVC(libx265)</option>
           </select>
         </label>
         <label class="checkbox">
@@ -74,7 +74,7 @@ const showPlayer = ref(false)
 const form = reactive({
   url: '',
   transport: 'tcp' as StreamCreateRequest['transport'],
-  videoCodec: 'libx264' as NonNullable<NonNullable<StreamCreateRequest['video']>['codec']>,
+  videoCodec: 'h264' as NonNullable<NonNullable<StreamCreateRequest['video']>['codec']>,
   allowPrivateIp: false,
 })
 
