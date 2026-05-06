@@ -6,3 +6,5 @@ packages:
 allowBuilds:
   '@ffmpeg-installer/linux-x64': true
   esbuild: true
+patchedDependencies:
+  mpegts.js@1.8.0: patches/mpegts.js@1.8.0.patch

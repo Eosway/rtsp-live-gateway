@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  mpegts.js@1.8.0:
+    hash: e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c
+    path: patches/mpegts.js@1.8.0.patch
+
 importers:
 
   .:
@@ -98,7 +103,7 @@ importers:
         version: link:../client
       mpegts.js:
         specifier: ^1.8.0
-        version: 1.8.0
+        version: 1.8.0(patch_hash=e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c)
       vite-plugin-dts:
         specifier: ^4.5.4
         version: 4.5.4(@types/node@24.12.2)(rollup@4.60.0)(typescript@5.9.3)(vite@8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3))
@@ -4409,7 +4414,7 @@ snapshots:
 
   modify-values@1.0.1: {}
 
-  mpegts.js@1.8.0:
+  mpegts.js@1.8.0(patch_hash=e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c):
     dependencies:
       es6-promise: 4.2.8
       webworkify-webpack: https://codeload.github.com/xqq/webworkify-webpack/tar.gz/24d1e719b4a6cac37a518b2bb10fe124527ef4ef
