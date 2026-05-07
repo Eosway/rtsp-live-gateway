@@ -17,13 +17,16 @@
   "scripts": {
     "build": "tsdown",
     "tsc": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm run build && node --test test/*.test.mjs",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "clean": "rimraf dist"
   },
   "dependencies": {
     "@eosway/rtsp-live-gateway-protocol": "workspace:*"
   },
   "devDependencies": {
-    "tsdown": "catalog:"
+    "@vitest/coverage-v8": "catalog:",
+    "tsdown": "catalog:",
+    "vitest": "catalog:"
   }
 }

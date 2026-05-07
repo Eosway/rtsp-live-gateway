@@ -1,10 +1,9 @@
-import assert from 'node:assert/strict'
-import test from 'node:test'
-import { PlaybackSession } from './PlaybackSession.js'
-import { StreamSource } from './StreamSource.js'
-import type { Logger } from '../lib/logger.js'
-import type { NormalizedStreamCreateRequest } from '../types.js'
-import type { FFmpegCommand } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { expect, test } from 'vitest'
+import { PlaybackSession } from '../PlaybackSession.js'
+import { StreamSource } from '../StreamSource.js'
+import type { Logger } from '../../lib/logger.js'
+import type { NormalizedStreamCreateRequest } from '../../types.js'
+import type { FFmpegCommand } from '../../infra/ffmpeg/FFmpegCommandBuilder.js'
 
 class FakeRunner {
   private stdoutListeners: Array<(chunk: Uint8Array) => void> = []
@@ -108,7 +107,9 @@ function createSource(fakeRunners: FakeRunner[], overrides: { gopCacheMaxBytes?:
     gopCacheMaxBytes: overrides.gopCacheMaxBytes,
     runnerFactory: () => {
       const nextRunner = fakeRunners.shift()
-      assert.ok(nextRunner, 'expected fake runner')
+      if (!nextRunner) {
+        throw new Error('expected fake runner')
+      }
       return nextRunner as never
     },
   })
@@ -176,6 +177,10 @@ async function drainSession(session: PlaybackSession, chunkCount: number): Promi
   return chunks
 }
 
+async function nextTick(): Promise<void> {
+  await Promise.resolve()
+}
+
 test('running source should bootstrap late viewer at next tag boundary', async () => {
   const fakeRunner = new FakeRunner()
   const source = createSource([fakeRunner])
@@ -183,13 +188,13 @@ test('running source should bootstrap late viewer at next tag boundary', async (
   source.addViewer(firstViewer)
 
   const startPromise = source.ensureStarted('first_viewer')
+  await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
   await startPromise
 
-  const firstDrainPromise = drainSession(firstViewer, 2)
-  const firstChunks = await firstDrainPromise
-  assert.deepEqual(firstChunks, [createFlvHeader(), createVideoSequenceHeaderTag()])
+  const firstChunks = await drainSession(firstViewer, 2)
+  expect(firstChunks).toEqual([createFlvHeader(), createVideoSequenceHeaderTag()])
 
   const lateViewer = createSession('se_late')
   source.addViewer(lateViewer)
@@ -198,7 +203,7 @@ test('running source should bootstrap late viewer at next tag boundary', async (
   fakeRunner.emitStdout(createVideoInterFrameTag())
 
   const lateChunks = await lateDrainPromise
-  assert.deepEqual(lateChunks, [createFlvHeader(), createVideoSequenceHeaderTag(), createVideoInterFrameTag()])
+  expect(lateChunks).toEqual([createFlvHeader(), createVideoSequenceHeaderTag(), createVideoInterFrameTag()])
 })
 
 test('stream restart should rebuild bootstrap instead of reusing stale prefix', async () => {
@@ -211,6 +216,7 @@ test('stream restart should rebuild bootstrap instead of reusing stale prefix', 
   const firstStartPromise = source.ensureStarted('first_viewer')
   const firstHeader = createFlvHeader()
   const firstSequence = createVideoSequenceHeaderTag()
+  await nextTick()
   firstRunner.emitStdout(firstHeader)
   firstRunner.emitStdout(firstSequence)
   await firstStartPromise
@@ -221,13 +227,13 @@ test('stream restart should rebuild bootstrap instead of reusing stale prefix', 
   const secondStartPromise = source.ensureStarted('first_viewer')
   const secondHeader = createFlvHeader()
   const secondSequence = createFlvTag(9, [0x17, 0x00, 0x00, 0x00, 0x00, 0x09])
+  await nextTick()
   secondRunner.emitStdout(secondHeader)
   secondRunner.emitStdout(secondSequence)
   await secondStartPromise
 
-  const secondDrainPromise = drainSession(secondViewer, 2)
-  const secondChunks = await secondDrainPromise
-  assert.deepEqual(secondChunks, [secondHeader, secondSequence])
+  const secondChunks = await drainSession(secondViewer, 2)
+  expect(secondChunks).toEqual([secondHeader, secondSequence])
 })
 
 test('late viewer should receive latest gop before live tags', async () => {
@@ -245,6 +251,7 @@ test('late viewer should receive latest gop before live tags', async () => {
   const newAudio = createAudioFrameTag(0x33)
   const liveInterFrame = createFlvTag(9, [0x27, 0x01, 0x00, 0x00, 0x00, 0x44])
 
+  await nextTick()
   fakeRunner.emitStdout(header)
   fakeRunner.emitStdout(sequence)
   fakeRunner.emitStdout(oldKeyframe)
@@ -260,7 +267,7 @@ test('late viewer should receive latest gop before live tags', async () => {
   fakeRunner.emitStdout(liveInterFrame)
 
   const lateChunks = await lateDrainPromise
-  assert.deepEqual(lateChunks, [header, sequence, newKeyframe, newAudio, liveInterFrame])
+  expect(lateChunks).toEqual([header, sequence, newKeyframe, newAudio, liveInterFrame])
 })
 
 test('gop cache overflow should wait for next keyframe before rebuilding cache', async () => {
@@ -274,6 +281,7 @@ test('gop cache overflow should wait for next keyframe before rebuilding cache',
   const sequence = createVideoSequenceHeaderTag()
   const largeKeyframe = createVideoKeyframeTag(0x55)
   const largeInterFrame = createFlvTag(9, [0x27, 0x01, 0x00, 0x00, 0x00, 0x66, 0x67, 0x68, 0x69, 0x6a])
+  await nextTick()
   fakeRunner.emitStdout(header)
   fakeRunner.emitStdout(sequence)
   fakeRunner.emitStdout(largeKeyframe)
@@ -288,7 +296,7 @@ test('gop cache overflow should wait for next keyframe before rebuilding cache',
   fakeRunner.emitStdout(nextKeyframe)
 
   const beforeResetChunks = await beforeResetDrainPromise
-  assert.deepEqual(beforeResetChunks, [header, sequence, nextKeyframe])
+  expect(beforeResetChunks).toEqual([header, sequence, nextKeyframe])
 
   const lateViewerAfterReset = createSession('se_overflow_after_reset')
   source.addViewer(lateViewerAfterReset)
@@ -298,7 +306,7 @@ test('gop cache overflow should wait for next keyframe before rebuilding cache',
   fakeRunner.emitStdout(audioAfterReset)
 
   const afterResetChunks = await afterResetDrainPromise
-  assert.deepEqual(afterResetChunks, [header, sequence, nextKeyframe, audioAfterReset])
+  expect(afterResetChunks).toEqual([header, sequence, nextKeyframe, audioAfterReset])
 })
 
 test('first start should copy when probed codec matches requested output codec', async () => {
@@ -325,11 +333,16 @@ test('first start should copy when probed codec matches requested output codec',
   source.addViewer(viewer)
 
   const startPromise = source.ensureStarted('first_viewer')
+  await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
   await startPromise
 
-  assert.equal(fakeRunner.command?.args[fakeRunner.command.args.indexOf('-c:v') + 1], 'copy')
+  const command = fakeRunner.command
+  if (!command) {
+    throw new Error('expected ffmpeg command')
+  }
+  expect(command.args[command.args.indexOf('-c:v') + 1]).toBe('copy')
 })
 
 test('first start should transcode when probed codec differs from requested output codec', async () => {
@@ -356,11 +369,16 @@ test('first start should transcode when probed codec differs from requested outp
   source.addViewer(viewer)
 
   const startPromise = source.ensureStarted('first_viewer')
+  await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
   await startPromise
 
-  assert.notEqual(fakeRunner.command?.args[fakeRunner.command.args.indexOf('-c:v') + 1], 'copy')
+  const command = fakeRunner.command
+  if (!command) {
+    throw new Error('expected ffmpeg command')
+  }
+  expect(command.args[command.args.indexOf('-c:v') + 1]).not.toBe('copy')
 })
 
 test('startup failure should surface structured upstream_not_found error instead of generic ffmpeg_exited', async () => {
@@ -370,23 +388,24 @@ test('startup failure should surface structured upstream_not_found error instead
   source.addViewer(viewer)
 
   const startPromise = source.ensureStarted('first_viewer')
+  await nextTick()
   fakeRunner.onStderrLine(() => undefined)
   fakeRunner.emitStderrLine('Error opening input file rtsp://admin:secret@camera.local/live.')
   fakeRunner.emitStderrLine('[rtsp @ 0x7feabd0cc380] method OPTIONS failed: 404 Not Found')
   fakeRunner.emitExit(8, null)
 
-  await assert.rejects(startPromise, (error: unknown) => {
-    assert.ok(error instanceof Error)
-    assert.equal((error as { code?: string }).code, 'UPSTREAM_NOT_FOUND')
-    assert.equal(error.message, 'RTSP upstream returned 404 Not Found')
-    return true
+  await expect(startPromise).rejects.toMatchObject({
+    code: 'UPSTREAM_NOT_FOUND',
+    message: 'RTSP upstream returned 404 Not Found',
   })
 
   const recentError = source.snapshotStatus().recentError
-  assert.ok(recentError)
-  assert.equal(recentError.code, 'UPSTREAM_NOT_FOUND')
-  assert.equal(recentError.message, 'RTSP upstream returned 404 Not Found')
-  const detail = recentError.detail as { reason?: string; stderrTail?: string[] } | undefined
-  assert.equal(detail?.reason, 'not_found')
-  assert.ok(detail?.stderrTail?.[0]?.includes('rtsp://admin:***@camera.local/live'))
+  expect(recentError).toBeTruthy()
+  expect(recentError).toMatchObject({
+    code: 'UPSTREAM_NOT_FOUND',
+    message: 'RTSP upstream returned 404 Not Found',
+  })
+  const detail = recentError?.detail as { reason?: string; stderrTail?: string[] } | undefined
+  expect(detail?.reason).toBe('not_found')
+  expect(detail?.stderrTail?.[0]).toContain('rtsp://admin:***@camera.local/live')
 })

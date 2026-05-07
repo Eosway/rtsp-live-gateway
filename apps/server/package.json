@@ -11,6 +11,8 @@
     "build": "tsdown",
     "dev": "tsdown --watch --on-success \"node dist/index.js\"",
     "tsc": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "clean": "rimraf dist",
     "start": "node dist/index.js",
     "release": "commit-and-tag-version --path . -t server@"
@@ -23,6 +25,8 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@eosway/rtsp-live-gateway-protocol": "workspace:*",
     "@types/node": "catalog:",
-    "tsdown": "catalog:"
+    "@vitest/coverage-v8": "catalog:",
+    "tsdown": "catalog:",
+    "vitest": "catalog:"
   }
 }
