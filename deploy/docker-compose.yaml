@@ -1,6 +1,6 @@
 services:
   server:
-    image: rtsp-live-gateway:latest
+    image: rtsp-live-gateway-server:latest
     pull_policy: never
     restart: unless-stopped
     ports:
@@ -22,6 +22,13 @@ services:
     #   SSRF_ALLOW_PRIVATE_IP: 'true'
     #   RTSP_HOST_DENYLIST: 'localhost,127.0.0.1,::1'
     #   RTSP_PORT_ALLOWLIST: '554,8554'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/v1/healthz').then((res) => { if (!res.ok) process.exit(1) }).catch(() => process.exit(1))"]
       interval: 60s

@@ -47,24 +47,56 @@ jobs:
           fi
 
           archive_name="rtsp-live-gateway-server-${version}.tar.gz"
+          deploy_dir_name="rtsp-live-gateway-server-${version}"
+          deploy_archive_name="${deploy_dir_name}.tar.gz"
           image_tag="rtsp-live-gateway-server:${version}"
 
           echo "name=${package_name}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
           echo "archive_name=${archive_name}" >> "${GITHUB_OUTPUT}"
+          echo "deploy_dir_name=${deploy_dir_name}" >> "${GITHUB_OUTPUT}"
+          echo "deploy_archive_name=${deploy_archive_name}" >> "${GITHUB_OUTPUT}"
           echo "image_tag=${image_tag}" >> "${GITHUB_OUTPUT}"
 
       - name: Build server image
         run: bash scripts/build-server-image.sh "${{ steps.package.outputs.image_tag }}"
 
-      - name: Export server image archive
-        run: bash scripts/export-server-image.sh "${{ steps.package.outputs.image_tag }}" "${{ steps.package.outputs.archive_name }}"
+      - name: Prepare deploy bundle directory
+        shell: bash
+        run: |
+          deploy_dir_name="${{ steps.package.outputs.deploy_dir_name }}"
+          image_tag="${{ steps.package.outputs.image_tag }}"
+          archive_name="${{ steps.package.outputs.archive_name }}"
+
+          bundle_root="${RUNNER_TEMP}/${deploy_dir_name}"
+          rm -rf "${bundle_root}"
+          mkdir -p "${bundle_root}"
+
+          cp -R deploy/. "${bundle_root}/"
+          mkdir -p "${bundle_root}/image"
+
+          sed -i "s|rtsp-live-gateway-server:latest|${image_tag}|g" "${bundle_root}/docker-compose.yaml"
+          sed -i "s|rtsp-live-gateway-server.tar.gz|${archive_name}|g" "${bundle_root}/load-server-image.sh"
+
+      - name: Export server image archive into deploy bundle
+        run: >
+          bash scripts/export-server-image.sh
+          "${{ steps.package.outputs.image_tag }}"
+          "${{ runner.temp }}/${{ steps.package.outputs.deploy_dir_name }}/image/${{ steps.package.outputs.archive_name }}"
+
+      - name: Pack deploy bundle
+        shell: bash
+        run: |
+          deploy_dir_name="${{ steps.package.outputs.deploy_dir_name }}"
+          deploy_archive_name="${{ steps.package.outputs.deploy_archive_name }}"
+
+          tar -C "${RUNNER_TEMP}" -czf "${deploy_archive_name}" "${deploy_dir_name}"
 
       - name: Create release for tag
         uses: softprops/action-gh-release@v3
         with:
           name: ${{ steps.package.outputs.name }} v${{ steps.package.outputs.version }}
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
-          files: ${{ steps.package.outputs.archive_name }}
+          files: ${{ steps.package.outputs.deploy_archive_name }}
           body: |
-            Published server image archive `${{ steps.package.outputs.archive_name }}`.
+            Published deploy archive `${{ steps.package.outputs.deploy_archive_name }}`.
