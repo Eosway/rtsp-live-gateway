@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.1](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.1.0...server@1.1.1) (2026-05-07)
+
+### Bug Fixes
+
+- apply hardware decoder args for transcode ([3390199](https://github.com/Eosway/rtsp-live-gateway/commit/3390199bb3fb2fcd6786bfdb04e6edf38bef7e37))
+- validate video codec and encoder fallback ([b807815](https://github.com/Eosway/rtsp-live-gateway/commit/b8078151face63e465dc75c4ff708d2b38e16d34))
+
+### Miscellaneous Chores
+
+- align server release bundle tooling ([b359232](https://github.com/Eosway/rtsp-live-gateway/commit/b35923291eedb38a2808f728d4308781721071da))
+
 ## [1.1.0](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.0.0...server@1.1.0) (2026-05-06)
 
 ### Features
