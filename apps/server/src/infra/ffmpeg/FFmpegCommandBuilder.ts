@@ -33,12 +33,17 @@ interface CodecTemplateSpec {
   args: string[]
 }
 
+interface DecoderTemplateSpec {
+  args: string[]
+}
+
 interface EncoderTemplateVariant {
   software: CodecTemplateSpec
   hardware: Record<FFmpegStrategyOptions['hardwareVendor'], CodecTemplateSpec>
 }
 
 type EncoderTemplateGroup = Record<CodecFamily, EncoderTemplateVariant>
+type DecoderTemplateGroup = Record<CodecFamily, Record<FFmpegStrategyOptions['hardwareVendor'], DecoderTemplateSpec>>
 
 const ENCODER_TEMPLATE_GROUP: EncoderTemplateGroup = {
   h264: {
@@ -67,6 +72,19 @@ const ENCODER_TEMPLATE_GROUP: EncoderTemplateGroup = {
   },
 }
 
+const DECODER_TEMPLATE_GROUP: DecoderTemplateGroup = {
+  h264: {
+    nvidia: {
+      args: ['-hwaccel', 'cuda', '-c:v', 'h264_cuvid'],
+    },
+  },
+  h265: {
+    nvidia: {
+      args: ['-hwaccel', 'cuda', '-c:v', 'hevc_cuvid'],
+    },
+  },
+}
+
 function resolveEncoderTemplateVariant(strategy: FFmpegStrategyOptions): 'software' | 'hardware' {
   if (strategy.encoder === 'hardware') {
     return 'hardware'
@@ -83,13 +101,25 @@ function resolveTranscodeEncoder(req: NormalizedStreamCreateRequest, strategy: F
   return ENCODER_TEMPLATE_GROUP[outputCodec].software
 }
 
+function resolveHardwareDecoder(inputCodec: RequestedVideoCodec, strategy: FFmpegStrategyOptions): DecoderTemplateSpec {
+  return DECODER_TEMPLATE_GROUP[inputCodec][strategy.hardwareVendor]
+}
+
 export function buildFfmpegCommand(
   ffmpegPath: string,
   req: NormalizedStreamCreateRequest,
-  plan?: VideoPlan,
+  plan: VideoPlan,
+  inputCodec: InputVideoCodec = 'unknown',
   strategy: FFmpegStrategyOptions = { decoder: 'auto', encoder: 'auto', hardwareVendor: 'nvidia' }
 ): FFmpegCommand {
-  const args: string[] = ['-hide_banner', '-loglevel', 'warning', '-rtsp_transport', req.transport, '-timeout', String(req.ioTimeoutUs), '-i', req.url]
+  const args: string[] = ['-hide_banner', '-loglevel', 'warning']
+
+  if (plan === 'transcode' && strategy.decoder === 'hardware' && inputCodec !== 'unknown') {
+    const decoder = resolveHardwareDecoder(inputCodec, strategy)
+    args.push(...decoder.args)
+  }
+
+  args.push('-rtsp_transport', req.transport, '-timeout', String(req.ioTimeoutUs), '-i', req.url)
 
   if (!req.audio.enabled || req.audio.mode === 'drop') {
     args.push('-an')
@@ -99,8 +129,7 @@ export function buildFfmpegCommand(
     args.push('-c:a', req.audio.codec, '-b:a', `${req.audio.bitrateKbps}k`)
   }
 
-  const videoMode = plan ?? 'transcode'
-  if (videoMode === 'copy') {
+  if (plan === 'copy') {
     args.push('-c:v', 'copy')
   } else {
     const encoder = resolveTranscodeEncoder(req, strategy)

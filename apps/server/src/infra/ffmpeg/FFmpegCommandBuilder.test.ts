@@ -46,7 +46,8 @@ test('copy mode should preserve video bitstream copy', () => {
         codec: 'h265',
       },
     }),
-    'copy'
+    'copy',
+    'h265'
   )
 
   const videoCodecIndex = command.args.indexOf('-c:v')
@@ -54,7 +55,7 @@ test('copy mode should preserve video bitstream copy', () => {
 })
 
 test('transcode mode should map h264 or h265 to libx264 or libx265', () => {
-  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode')
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'h264')
   const hevcCommand = buildFfmpegCommand(
     '/usr/bin/ffmpeg',
     createRequest({
@@ -63,7 +64,8 @@ test('transcode mode should map h264 or h265 to libx264 or libx265', () => {
         codec: 'h265',
       },
     }),
-    'transcode'
+    'transcode',
+    'h265'
   )
 
   assert.equal(avcCommand.args[avcCommand.args.indexOf('-c:v') + 1], 'libx264')
@@ -74,7 +76,7 @@ test('transcode mode should map h264 or h265 to libx264 or libx265', () => {
 })
 
 test('hardware encoder should map output codec to nvenc encoder', () => {
-  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'h264', {
     decoder: 'auto',
     encoder: 'hardware',
     hardwareVendor: 'nvidia',
@@ -88,6 +90,7 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
       },
     }),
     'transcode',
+    'h265',
     {
       decoder: 'auto',
       encoder: 'hardware',
@@ -100,7 +103,7 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
 })
 
 test('software encoder should map h264 or h265 to libx264 or libx265', () => {
-  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'h264', {
     decoder: 'auto',
     encoder: 'software',
     hardwareVendor: 'nvidia',
@@ -114,6 +117,7 @@ test('software encoder should map h264 or h265 to libx264 or libx265', () => {
       },
     }),
     'transcode',
+    'h265',
     {
       decoder: 'auto',
       encoder: 'software',
@@ -126,7 +130,7 @@ test('software encoder should map h264 or h265 to libx264 or libx265', () => {
 })
 
 test('auto encoder should currently fall back to software templates', () => {
-  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'h264', {
     decoder: 'auto',
     encoder: 'auto',
     hardwareVendor: 'nvidia',
@@ -140,6 +144,7 @@ test('auto encoder should currently fall back to software templates', () => {
       },
     }),
     'transcode',
+    'h265',
     {
       decoder: 'auto',
       encoder: 'auto',
@@ -152,7 +157,7 @@ test('auto encoder should currently fall back to software templates', () => {
 })
 
 test('template group should resolve by codec family first', () => {
-  const avcHardwareCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+  const avcHardwareCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'h264', {
     decoder: 'auto',
     encoder: 'hardware',
     hardwareVendor: 'nvidia',
@@ -166,6 +171,7 @@ test('template group should resolve by codec family first', () => {
       },
     }),
     'transcode',
+    'h265',
     {
       decoder: 'auto',
       encoder: 'software',
@@ -175,4 +181,73 @@ test('template group should resolve by codec family first', () => {
 
   assert.equal(avcHardwareCommand.args[avcHardwareCommand.args.indexOf('-c:v') + 1], 'h264_nvenc')
   assert.equal(hevcSoftwareCommand.args[hevcSoftwareCommand.args.indexOf('-c:v') + 1], 'libx265')
+})
+
+test('hardware decoder should inject cuda and cuvid args for h264 transcode', () => {
+  const command = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'h264', {
+    decoder: 'hardware',
+    encoder: 'hardware',
+    hardwareVendor: 'nvidia',
+  })
+
+  assert.deepEqual(command.args.slice(0, 10), [
+    '-hide_banner',
+    '-loglevel',
+    'warning',
+    '-hwaccel',
+    'cuda',
+    '-c:v',
+    'h264_cuvid',
+    '-rtsp_transport',
+    'tcp',
+    '-timeout',
+  ])
+})
+
+test('hardware decoder should inject cuda and cuvid args for h265 transcode', () => {
+  const command = buildFfmpegCommand(
+    '/usr/bin/ffmpeg',
+    createRequest({
+      video: {
+        mode: 'auto',
+        codec: 'h265',
+      },
+    }),
+    'transcode',
+    'h265',
+    {
+      decoder: 'hardware',
+      encoder: 'hardware',
+      hardwareVendor: 'nvidia',
+    }
+  )
+
+  const decoderCodecIndex = command.args.indexOf('-c:v')
+  assert.equal(command.args[decoderCodecIndex - 2], '-hwaccel')
+  assert.equal(command.args[decoderCodecIndex - 1], 'cuda')
+  assert.equal(command.args[decoderCodecIndex + 1], 'hevc_cuvid')
+  assert.equal(command.args[command.args.lastIndexOf('-c:v') + 1], 'hevc_nvenc')
+})
+
+test('hardware decoder should not inject cuvid args for copy mode', () => {
+  const command = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'copy', 'h264', {
+    decoder: 'hardware',
+    encoder: 'hardware',
+    hardwareVendor: 'nvidia',
+  })
+
+  assert.ok(!command.args.includes('h264_cuvid'))
+  assert.ok(!command.args.includes('cuda'))
+})
+
+test('hardware decoder should not inject cuvid args when input codec is unknown', () => {
+  const command = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', 'unknown', {
+    decoder: 'hardware',
+    encoder: 'hardware',
+    hardwareVendor: 'nvidia',
+  })
+
+  assert.ok(!command.args.includes('h264_cuvid'))
+  assert.ok(!command.args.includes('hevc_cuvid'))
+  assert.ok(!command.args.includes('cuda'))
 })
