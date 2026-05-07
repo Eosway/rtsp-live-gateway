@@ -127,6 +127,7 @@ FFmpeg 策略：
 
 规则：
 
+- `FFMPEG_ENCODER=auto` 当前等价于软件编码模板，即 `libx264` / `libx265`
 - 软件编码固定映射为 `libx264` / `libx265`，参数也写入软件模板
 - 硬件模板只负责厂商差异，例如 `hardware.nvidia`
 

@@ -40,13 +40,18 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
     throw new ApiError('INVALID_ARGUMENT', 'Invalid video.mode', { field: 'video.mode' })
   }
 
+  const videoCodec = body.video?.codec ?? DEFAULT_VIDEO_CODEC
+  if (!['h264', 'h265'].includes(videoCodec)) {
+    throw new ApiError('INVALID_ARGUMENT', 'Invalid video.codec', { field: 'video.codec' })
+  }
+
   return {
     url: body.url,
     transport,
     ioTimeoutUs,
     video: {
       mode: videoMode,
-      codec: body.video?.codec ?? DEFAULT_VIDEO_CODEC,
+      codec: videoCodec,
     },
     audio: {
       enabled: body.audio?.enabled ?? DEFAULT_AUDIO.enabled,

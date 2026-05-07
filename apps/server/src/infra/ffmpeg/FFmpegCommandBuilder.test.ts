@@ -125,6 +125,32 @@ test('software encoder should map h264 or h265 to libx264 or libx265', () => {
   assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-c:v') + 1], 'libx265')
 })
 
+test('auto encoder should currently fall back to software templates', () => {
+  const avcCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
+    decoder: 'auto',
+    encoder: 'auto',
+    hardwareVendor: 'nvidia',
+  })
+  const hevcCommand = buildFfmpegCommand(
+    '/usr/bin/ffmpeg',
+    createRequest({
+      video: {
+        mode: 'auto',
+        codec: 'h265',
+      },
+    }),
+    'transcode',
+    {
+      decoder: 'auto',
+      encoder: 'auto',
+      hardwareVendor: 'nvidia',
+    }
+  )
+
+  assert.equal(avcCommand.args[avcCommand.args.indexOf('-c:v') + 1], 'libx264')
+  assert.equal(hevcCommand.args[hevcCommand.args.indexOf('-c:v') + 1], 'libx265')
+})
+
 test('template group should resolve by codec family first', () => {
   const avcHardwareCommand = buildFfmpegCommand('/usr/bin/ffmpeg', createRequest(), 'transcode', {
     decoder: 'auto',

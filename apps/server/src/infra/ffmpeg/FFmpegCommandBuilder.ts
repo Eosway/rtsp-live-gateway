@@ -67,9 +67,17 @@ const ENCODER_TEMPLATE_GROUP: EncoderTemplateGroup = {
   },
 }
 
+function resolveEncoderTemplateVariant(strategy: FFmpegStrategyOptions): 'software' | 'hardware' {
+  if (strategy.encoder === 'hardware') {
+    return 'hardware'
+  }
+  return 'software'
+}
+
 function resolveTranscodeEncoder(req: NormalizedStreamCreateRequest, strategy: FFmpegStrategyOptions): CodecTemplateSpec {
   const outputCodec = resolveCodecFamily(resolveVideoCodec(req))
-  if (strategy.encoder === 'hardware') {
+  const variant = resolveEncoderTemplateVariant(strategy)
+  if (variant === 'hardware') {
     return ENCODER_TEMPLATE_GROUP[outputCodec].hardware[strategy.hardwareVendor]
   }
   return ENCODER_TEMPLATE_GROUP[outputCodec].software
