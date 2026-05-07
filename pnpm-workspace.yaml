@@ -5,7 +5,15 @@ packages:
 
 allowBuilds:
   '@ffmpeg-installer/linux-x64': true
-  esbuild: true
+
 allowUnusedPatches: true
+
+catalog:
+  '@types/node': ^24.12.2
+  '@vitejs/plugin-vue': ^6.0.6
+  'tsdown': ^0.16.8
+  'vite': ^8.0.10
+  'vue': ^3.5.33
+  'vue-tsc': ^3.2.7
 patchedDependencies:
   mpegts.js@1.8.0: patches/mpegts.js@1.8.0.patch

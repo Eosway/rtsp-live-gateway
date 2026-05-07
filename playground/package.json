@@ -12,9 +12,11 @@
   "dependencies": {
     "@eosway/rtsp-live-gateway-client": "workspace:*",
     "@eosway/rtsp-live-gateway-player-vue": "workspace:*",
-    "vue": "^3.5.33"
+    "vue": "catalog:"
   },
   "devDependencies": {
-    "vue-tsc": "^3.2.7"
+    "@vitejs/plugin-vue": "catalog:",
+    "vite": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

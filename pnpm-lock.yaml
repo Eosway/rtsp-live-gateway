@@ -4,6 +4,27 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@types/node':
+      specifier: ^24.12.2
+      version: 24.12.2
+    '@vitejs/plugin-vue':
+      specifier: ^6.0.6
+      version: 6.0.6
+    tsdown:
+      specifier: ^0.16.8
+      version: 0.16.8
+    vite:
+      specifier: ^8.0.10
+      version: 8.0.10
+    vue:
+      specifier: ^3.5.33
+      version: 3.5.33
+    vue-tsc:
+      specifier: ^3.2.7
+      version: 3.2.7
+
 patchedDependencies:
   mpegts.js@1.8.0:
     hash: e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c
@@ -23,11 +44,8 @@ importers:
         specifier: ^9.39.4
         version: 9.39.4
       '@types/node':
-        specifier: ^24.12.2
+        specifier: 'catalog:'
         version: 24.12.2
-      '@vitejs/plugin-vue':
-        specifier: ^6.0.6
-        version: 6.0.6(vite@8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.33(typescript@5.9.3))
       commit-and-tag-version:
         specifier: ^12.7.1
         version: 12.7.1
@@ -58,18 +76,12 @@ importers:
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      tsdown:
-        specifier: ^0.16.8
-        version: 0.16.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(synckit@0.11.12)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       typescript-eslint:
         specifier: ^8.59.1
         version: 8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      vite:
-        specifier: ^8.0.10
-        version: 8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3)
       vue-eslint-parser:
         specifier: ^10.4.0
         version: 10.4.0(eslint@9.39.4(jiti@2.6.1))
@@ -89,29 +101,45 @@ importers:
       '@ffmpeg-installer/ffmpeg':
         specifier: ^1.1.0
         version: 1.1.0
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.16.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(synckit@0.11.12)(typescript@5.9.3)
 
   packages/client:
     dependencies:
       '@eosway/rtsp-live-gateway-protocol':
         specifier: workspace:*
         version: link:../protocol
+    devDependencies:
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.16.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(synckit@0.11.12)(typescript@5.9.3)
 
   packages/player-vue:
     devDependencies:
       '@eosway/rtsp-live-gateway-client':
         specifier: workspace:*
         version: link:../client
+      '@vitejs/plugin-vue':
+        specifier: 'catalog:'
+        version: 6.0.6(vite@8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.33(typescript@5.9.3))
       mpegts.js:
         specifier: ^1.8.0
         version: 1.8.0(patch_hash=e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c)
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3)
       vite-plugin-dts:
         specifier: ^4.5.4
         version: 4.5.4(@types/node@24.12.2)(rollup@4.60.0)(typescript@5.9.3)(vite@8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3))
       vue:
-        specifier: ^3.5.33
+        specifier: 'catalog:'
         version: 3.5.33(typescript@5.9.3)
       vue-tsc:
-        specifier: ^3.2.7
+        specifier: 'catalog:'
         version: 3.2.7(typescript@5.9.3)
 
   packages/protocol: {}
@@ -125,11 +153,17 @@ importers:
         specifier: workspace:*
         version: link:../packages/player-vue
       vue:
-        specifier: ^3.5.33
+        specifier: 'catalog:'
         version: 3.5.33(typescript@5.9.3)
     devDependencies:
+      '@vitejs/plugin-vue':
+        specifier: 'catalog:'
+        version: 6.0.6(vite@8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3))(vue@3.5.33(typescript@5.9.3))
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.10(@types/node@24.12.2)(jiti@2.6.1)(yaml@2.8.3)
       vue-tsc:
-        specifier: ^3.2.7
+        specifier: 'catalog:'
         version: 3.2.7(typescript@5.9.3)
 
 packages:

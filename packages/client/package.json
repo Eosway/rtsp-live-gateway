@@ -22,5 +22,8 @@
   },
   "dependencies": {
     "@eosway/rtsp-live-gateway-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:"
   }
 }

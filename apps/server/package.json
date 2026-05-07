@@ -21,6 +21,8 @@
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@eosway/rtsp-live-gateway-protocol": "workspace:*"
+    "@eosway/rtsp-live-gateway-protocol": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:"
   }
 }
