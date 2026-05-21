@@ -1,20 +1,21 @@
 import type { ApiErrorBody, FfmpegDiagnosticErrorDetail, FfmpegExitedErrorDetail, StreamState, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
 import { maskRtspUrlsInText, nowIso } from '../lib/index.js'
-import { buildFfmpegCommand, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { buildFfmpegCommand, resolveAudioPlan, resolveVideoPlan } from '../infra/ffmpeg/FFmpegCommandBuilder.js'
 import { FFmpegRunner } from '../infra/ffmpeg/FFmpegRunner.js'
-import { FFprobeRunner, type ProbedVideoCodec } from '../infra/ffmpeg/FFprobeRunner.js'
+import { FFprobeRunner } from '../infra/ffmpeg/FFprobeRunner.js'
 import { FFmpegStderrParser, type FFmpegDiagEvent, summarizeStderrTail, toDiagnosticDetail } from '../infra/ffmpeg/FFmpegStderrParser.js'
 import { FlvBootstrapCache, FlvGopCache, FlvStreamParser } from '../infra/flv/FlvStreamParser.js'
-import type { NormalizedStreamCreateRequest } from '../types.js'
+import type { ProbedInputMedia, ResolvedStreamCreateRequest } from '../types.js'
 import { FanoutHub } from './FanoutHub.js'
 import { PlaybackSession } from './PlaybackSession.js'
 
 interface StreamSourceOptions {
   streamId: string
   sourceKey: string
-  req: NormalizedStreamCreateRequest
+  req: ResolvedStreamCreateRequest
   ffmpegPath: string
+  ioTimeoutMs: number
   ffprobePath?: string
   decoder: 'auto' | 'software' | 'hardware'
   encoder: 'auto' | 'software' | 'hardware'
@@ -36,9 +37,10 @@ export class StreamSource {
   readonly streamId: string
   readonly sourceKey: string
   readonly createdAt: string
-  readonly req: NormalizedStreamCreateRequest
+  readonly req: ResolvedStreamCreateRequest
 
   private readonly ffmpegPath: string
+  private readonly ioTimeoutMs: number
   private readonly ffprobePath?: string
   private readonly decoder: 'auto' | 'software' | 'hardware'
   private readonly encoder: 'auto' | 'software' | 'hardware'
@@ -70,9 +72,9 @@ export class StreamSource {
 
   private startedAt?: string
   private lastActiveAt?: string
-  private bytesOut = 0
-  private startAttempts = 0
-  private startLatencyMs?: number
+  private bytesOutTotal = 0
+  private startAttemptsTotal = 0
+  private lastStartLatencyMs?: number
   private lastErrorAt?: string
   private recentError?: ApiErrorBody
   private lastDiagEvent?: FFmpegDiagEvent
@@ -82,6 +84,7 @@ export class StreamSource {
     this.sourceKey = options.sourceKey
     this.req = options.req
     this.ffmpegPath = options.ffmpegPath
+    this.ioTimeoutMs = options.ioTimeoutMs
     this.ffprobePath = options.ffprobePath
     this.decoder = options.decoder
     this.encoder = options.encoder
@@ -189,15 +192,17 @@ export class StreamSource {
   }
 
   private async startOnce(trigger: 'first_viewer' | 'manual', attempt: number): Promise<void> {
-    const inputVideoCodec = await this.probeInputVideoCodec()
+    const inputMedia = await this.probeInputMedia()
     return new Promise((resolve, reject) => {
-      this.startAttempts += 1
+      this.startAttemptsTotal += 1
       this.state = 'starting'
       const startedAt = Date.now()
       const runner = this.runnerFactory()
       this.runner = runner
-      const videoPlan = resolveVideoPlan(attempt, this.req.video.mode, this.req.video.codec, inputVideoCodec)
-      const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan, inputVideoCodec, {
+      const videoPlan = resolveVideoPlan(attempt, this.req.video.mode, this.req.video.codec, inputMedia.video)
+      const audioPlan = resolveAudioPlan(this.req, inputMedia.audio)
+      const command = buildFfmpegCommand(this.ffmpegPath, this.req, videoPlan, audioPlan, inputMedia.video, {
+        ioTimeoutMs: this.ioTimeoutMs,
         decoder: this.decoder,
         encoder: this.encoder,
         hardwareVendor: this.hardwareVendor,
@@ -224,7 +229,7 @@ export class StreamSource {
         settled = true
         this.state = 'running'
         this.startedAt = nowIso()
-        this.startLatencyMs = Date.now() - startedAt
+        this.lastStartLatencyMs = Date.now() - startedAt
         resolve()
       }
 
@@ -263,7 +268,7 @@ export class StreamSource {
           }
           if (unit.kind === 'header') {
             this.bootstrapCache.observe(unit)
-            this.bytesOut += unit.bytes.byteLength
+            this.bytesOutTotal += unit.bytes.byteLength
             this.activatePendingSessions()
             continue
           }
@@ -271,7 +276,7 @@ export class StreamSource {
           this.activatePendingSessions()
           this.bootstrapCache.observe(unit)
           this.gopCache.observe(unit)
-          this.bytesOut += unit.bytes.byteLength
+          this.bytesOutTotal += unit.bytes.byteLength
           this.fanout.publish(unit.bytes)
         }
       })
@@ -321,8 +326,10 @@ export class StreamSource {
           streamId: this.streamId,
           trigger,
           attempt,
-          inputVideoCodec,
+          inputVideoCodec: inputMedia.video,
+          inputAudioCodec: inputMedia.audio,
           videoPlan,
+          audioPlan,
           command: command.safePreview,
         })
       } catch (error) {
@@ -425,24 +432,19 @@ export class StreamSource {
       createdAt: this.createdAt,
       startedAt: this.startedAt,
       lastActiveAt: this.lastActiveAt,
-      effectiveConfig: {
+      resolvedConfig: {
         transport: this.req.transport,
         video: {
           mode: this.req.video.mode,
           codec: this.req.video.codec,
         },
-        audio: {
-          enabled: this.req.audio.enabled,
-          mode: this.req.audio.mode,
-          codec: this.req.audio.codec,
-          bitrateKbps: this.req.audio.bitrateKbps,
-        },
+        audio: this.req.audio,
       },
       stats: {
-        bytesOut: this.bytesOut,
-        ffmpegPid: this.runner?.pid(),
-        startAttempts: this.startAttempts,
-        startLatencyMs: this.startLatencyMs,
+        bytesOutTotal: this.bytesOutTotal,
+        currentFfmpegPid: this.runner?.pid(),
+        startAttemptsTotal: this.startAttemptsTotal,
+        lastStartLatencyMs: this.lastStartLatencyMs,
         lastErrorAt: this.lastErrorAt,
       },
       recentError: this.recentError,
@@ -482,18 +484,26 @@ export class StreamSource {
     this.gopCache.reset()
   }
 
-  private async probeInputVideoCodec(): Promise<ProbedVideoCodec> {
+  private async probeInputMedia(): Promise<ProbedInputMedia> {
     if (!this.ffprobeRunner) {
-      return 'unknown'
+      return {
+        video: 'unknown',
+        audio: 'unknown',
+      }
     }
     try {
-      return await this.ffprobeRunner.probeVideoCodec({
+      const input = {
         transport: this.req.transport,
-        ioTimeoutUs: this.req.ioTimeoutUs,
+        ioTimeoutMs: this.ioTimeoutMs,
         url: this.req.url,
-      })
+      }
+      const [video, audio] = await Promise.all([this.ffprobeRunner.probeVideoCodec(input), this.ffprobeRunner.probeAudioCodec(input)])
+      return { video, audio }
     } catch {
-      return 'unknown'
+      return {
+        video: 'unknown',
+        audio: 'unknown',
+      }
     }
   }
 }

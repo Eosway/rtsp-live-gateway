@@ -1,24 +1,53 @@
-import type { AudioOptions, RtspTransport, StreamCreateRequest } from '@eosway/rtsp-live-gateway-protocol'
+import type { AudioCodec, AudioMode, RtspTransport, StreamCreateRequest } from '@eosway/rtsp-live-gateway-protocol'
 import { ApiError } from '../errors.js'
-import type { NormalizedStreamCreateRequest } from '../types.js'
+import type { ResolvedStreamCreateRequest } from '../types.js'
 
 const DEFAULT_TRANSPORT: RtspTransport = 'tcp'
 const DEFAULT_VIDEO_MODE: 'auto' | 'transcode' = 'auto'
 const DEFAULT_VIDEO_CODEC: 'h264' | 'h265' = 'h264'
-const DEFAULT_AUDIO: Required<AudioOptions> = {
-  enabled: false,
-  mode: 'drop',
-  codec: 'aac',
-  bitrateKbps: 0,
-}
+const DEFAULT_AUDIO_ENABLED = false
+const DEFAULT_AUDIO_MODE: AudioMode = 'auto'
+const DEFAULT_AUDIO_CODEC: AudioCodec = 'aac'
 
-function assertPositiveNumber(value: number, field: string): void {
-  if (!Number.isFinite(value) || value < 0) {
-    throw new ApiError('INVALID_ARGUMENT', `Invalid field: ${field}`, { field })
+function resolveAudioOptions(audio: StreamCreateRequest['audio']): ResolvedStreamCreateRequest['audio'] {
+  const audioEnabled = audio?.enabled ?? DEFAULT_AUDIO_ENABLED
+  const requestedAudioMode = audio && typeof audio === 'object' && 'mode' in audio ? audio.mode : undefined
+  const requestedAudioCodec = audio && typeof audio === 'object' && 'codec' in audio ? audio.codec : undefined
+
+  if (typeof audioEnabled !== 'boolean') {
+    throw new ApiError('INVALID_ARGUMENT', 'Invalid audio.enabled', { field: 'audio.enabled' })
+  }
+
+  if (!audioEnabled) {
+    if (requestedAudioMode !== undefined) {
+      throw new ApiError('INVALID_ARGUMENT', 'audio.mode requires audio.enabled = true', { field: 'audio.mode' })
+    }
+    if (requestedAudioCodec !== undefined) {
+      throw new ApiError('INVALID_ARGUMENT', 'audio.codec requires audio.enabled = true', { field: 'audio.codec' })
+    }
+    return {
+      enabled: false,
+    }
+  }
+
+  const audioMode = requestedAudioMode ?? DEFAULT_AUDIO_MODE
+  if (audioMode !== 'auto' && audioMode !== 'transcode') {
+    throw new ApiError('INVALID_ARGUMENT', 'Invalid audio.mode', { field: 'audio.mode' })
+  }
+
+  const audioCodec = requestedAudioCodec ?? DEFAULT_AUDIO_CODEC
+  if (audioCodec !== 'aac' && audioCodec !== 'mp3') {
+    throw new ApiError('INVALID_ARGUMENT', 'Invalid audio.codec', { field: 'audio.codec' })
+  }
+
+  return {
+    enabled: true,
+    mode: audioMode,
+    codec: audioCodec,
   }
 }
 
-export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequest {
+export function resolveStreamCreateRequest(raw: unknown): ResolvedStreamCreateRequest {
   if (!raw || typeof raw !== 'object') {
     throw new ApiError('INVALID_ARGUMENT', 'Request body must be an object')
   }
@@ -31,9 +60,6 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
   if (!['tcp', 'udp', 'udp_multicast', 'http', 'https'].includes(transport)) {
     throw new ApiError('INVALID_ARGUMENT', 'Invalid transport', { field: 'transport' })
   }
-
-  const ioTimeoutUs = body.ioTimeoutUs ?? 5_000_000
-  assertPositiveNumber(ioTimeoutUs, 'ioTimeoutUs')
 
   const videoMode = body.video?.mode ?? DEFAULT_VIDEO_MODE
   if (!['auto', 'transcode'].includes(videoMode)) {
@@ -48,18 +74,10 @@ export function normalizeCreateRequest(raw: unknown): NormalizedStreamCreateRequ
   return {
     url: body.url,
     transport,
-    ioTimeoutUs,
     video: {
       mode: videoMode,
       codec: videoCodec,
     },
-    audio: {
-      enabled: body.audio?.enabled ?? DEFAULT_AUDIO.enabled,
-      mode: body.audio?.enabled ? (body.audio?.mode ?? 'copy') : 'drop',
-      codec: body.audio?.codec ?? DEFAULT_AUDIO.codec,
-      bitrateKbps: body.audio?.bitrateKbps ?? DEFAULT_AUDIO.bitrateKbps,
-    },
-    allowPrivateIp: body.allowPrivateIp ?? false,
-    labels: body.labels ?? {},
+    audio: resolveAudioOptions(body.audio),
   }
 }

@@ -50,14 +50,14 @@ test('get/list/delete should hit expected paths', async () => {
           state: 'idle',
           viewerCount: 0,
           createdAt: '2026-03-26T00:00:00.000Z',
-          effectiveConfig: {
+          resolvedConfig: {
             transport: 'tcp',
             video: { mode: 'auto', codec: 'h264' },
-            audio: { enabled: false, mode: 'drop', codec: 'aac', bitrateKbps: 0 },
+            audio: { enabled: false },
           },
           stats: {
-            bytesOut: 0,
-            startAttempts: 0,
+            bytesOutTotal: 0,
+            startAttemptsTotal: 0,
           },
         }),
         { status: 200 }

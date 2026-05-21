@@ -87,6 +87,8 @@ node apps/server/dist/index.js
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
 - 默认禁音：`-an`
 - 首次启动尝试前会先用 `ffprobe` 探测输入视频 codec
+- `audio.mode = auto`：会先探测输入音频 codec，若为 `aac` 或 `mp3` 则优先 `copy`，否则转码到目标 codec
+- `audio.mode = transcode`：始终转码到目标 codec
 - `video.mode = auto` 且输入 codec 与 `video.codec` 一致：首次启动尝试使用 `copy`
 - `video.mode = auto` 且输入 codec 与 `video.codec` 不一致：首次启动尝试使用转码
 - `video.mode = transcode`：所有启动尝试都使用转码
@@ -96,7 +98,18 @@ node apps/server/dist/index.js
 
 超时参数：
 
-- `ioTimeoutUs` -> `-timeout`
+- `RTSP_IO_TIMEOUT_MS` -> 服务端内部换算为 FFmpeg / ffprobe 所需的 `-timeout` 微秒值
+
+## 5.1 状态字段语义
+
+- `createdAt`：`StreamSource` 创建时间
+- `startedAt`：最近一次成功启动时间；空闲停止后保留，再次成功启动时覆盖
+- `lastActiveAt`：最近一次观众活动时间；创建流、观众加入、观众离开时更新
+- `stats.bytesOutTotal`：当前 `StreamSource` 生命周期内累计扇出字节数
+- `stats.currentFfmpegPid`：当前运行中 FFmpeg 进程 pid；停止后为空
+- `stats.startAttemptsTotal`：当前 `StreamSource` 生命周期内累计启动尝试次数
+- `stats.lastStartLatencyMs`：最近一次成功启动耗时
+- `stats.lastErrorAt`：最近一次记录 `recentError` 的时间
 
 ## 6. 环境变量
 
@@ -142,10 +155,14 @@ FFmpeg 策略：
 
 SSRF：
 
-- `SSRF_ALLOW_PRIVATE_IP`（默认 `true`）
+- `SSRF_ALLOW_PRIVATE_IP`（默认 `false`）
 - `RTSP_HOST_ALLOWLIST`（逗号分隔）
 - `RTSP_HOST_DENYLIST`（逗号分隔）
 - `RTSP_PORT_ALLOWLIST`（逗号分隔，默认 `554,8554`）
+
+RTSP 输入：
+
+- `RTSP_IO_TIMEOUT_MS`（默认 `5000`）
 
 ## 7. 代码结构
 

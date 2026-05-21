@@ -30,10 +30,6 @@
             <option value="h265">HEVC(libx265)</option>
           </select>
         </label>
-        <label class="checkbox">
-          <input v-model="form.allowPrivateIp" type="checkbox" />
-          允许私网地址（仅开发联调）
-        </label>
       </div>
 
       <div class="actions">
@@ -75,13 +71,11 @@ const form = reactive({
   url: '',
   transport: 'tcp' as StreamCreateRequest['transport'],
   videoCodec: 'h264' as NonNullable<NonNullable<StreamCreateRequest['video']>['codec']>,
-  allowPrivateIp: false,
 })
 
 const sourceConfig = computed<StreamCreateRequest>(() => ({
   url: form.url,
   transport: form.transport,
-  allowPrivateIp: form.allowPrivateIp,
   video: {
     mode: 'auto',
     codec: form.videoCodec,

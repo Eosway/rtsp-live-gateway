@@ -1,4 +1,4 @@
-import type { NormalizedStreamCreateRequest } from '../../types.js'
+import type { ProbedInputMedia, ResolvedAudioPlan, ResolvedStreamCreateRequest } from '../../types.js'
 import { maskRtspUrl } from '../../lib/index.js'
 
 export interface FFmpegCommand {
@@ -10,15 +10,17 @@ export interface FFmpegCommand {
 export type VideoPlan = 'copy' | 'transcode'
 export type RequestedVideoMode = 'auto' | 'transcode'
 export type RequestedVideoCodec = 'h264' | 'h265'
+export type RequestedAudioCodec = 'aac' | 'mp3'
 export type InputVideoCodec = RequestedVideoCodec | 'unknown'
 
 export interface FFmpegStrategyOptions {
+  ioTimeoutMs: number
   decoder: 'auto' | 'software' | 'hardware'
   encoder: 'auto' | 'software' | 'hardware'
   hardwareVendor: 'nvidia'
 }
 
-function resolveVideoCodec(req: NormalizedStreamCreateRequest): 'h264' | 'h265' {
+function resolveVideoCodec(req: ResolvedStreamCreateRequest): 'h264' | 'h265' {
   return req.video.codec
 }
 
@@ -92,7 +94,7 @@ function resolveEncoderTemplateVariant(strategy: FFmpegStrategyOptions): 'softwa
   return 'software'
 }
 
-function resolveTranscodeEncoder(req: NormalizedStreamCreateRequest, strategy: FFmpegStrategyOptions): CodecTemplateSpec {
+function resolveTranscodeEncoder(req: ResolvedStreamCreateRequest, strategy: FFmpegStrategyOptions): CodecTemplateSpec {
   const outputCodec = resolveCodecFamily(resolveVideoCodec(req))
   const variant = resolveEncoderTemplateVariant(strategy)
   if (variant === 'hardware') {
@@ -105,31 +107,39 @@ function resolveHardwareDecoder(inputCodec: RequestedVideoCodec, strategy: FFmpe
   return DECODER_TEMPLATE_GROUP[inputCodec][strategy.hardwareVendor]
 }
 
+function resolveTranscodeAudioEncoder(codec: RequestedAudioCodec): string {
+  if (codec === 'aac') {
+    return 'aac'
+  }
+  return 'libmp3lame'
+}
+
 export function buildFfmpegCommand(
   ffmpegPath: string,
-  req: NormalizedStreamCreateRequest,
-  plan: VideoPlan,
+  req: ResolvedStreamCreateRequest,
+  videoPlan: VideoPlan,
+  audioPlan: ResolvedAudioPlan,
   inputCodec: InputVideoCodec = 'unknown',
-  strategy: FFmpegStrategyOptions = { decoder: 'auto', encoder: 'auto', hardwareVendor: 'nvidia' }
+  strategy: FFmpegStrategyOptions = { ioTimeoutMs: 5000, decoder: 'auto', encoder: 'auto', hardwareVendor: 'nvidia' }
 ): FFmpegCommand {
   const args: string[] = ['-hide_banner', '-loglevel', 'warning']
 
-  if (plan === 'transcode' && strategy.decoder === 'hardware' && inputCodec !== 'unknown') {
+  if (videoPlan === 'transcode' && strategy.decoder === 'hardware' && inputCodec !== 'unknown') {
     const decoder = resolveHardwareDecoder(inputCodec, strategy)
     args.push(...decoder.args)
   }
 
-  args.push('-rtsp_transport', req.transport, '-timeout', String(req.ioTimeoutUs), '-i', req.url)
+  args.push('-rtsp_transport', req.transport, '-timeout', String(strategy.ioTimeoutMs * 1000), '-i', req.url)
 
-  if (!req.audio.enabled || req.audio.mode === 'drop') {
+  if (!audioPlan.enabled) {
     args.push('-an')
-  } else if (req.audio.mode === 'copy') {
+  } else if (audioPlan.mode === 'copy') {
     args.push('-c:a', 'copy')
   } else {
-    args.push('-c:a', req.audio.codec, '-b:a', `${req.audio.bitrateKbps}k`)
+    args.push('-c:a', resolveTranscodeAudioEncoder(audioPlan.codec))
   }
 
-  if (plan === 'copy') {
+  if (videoPlan === 'copy') {
     args.push('-c:v', 'copy')
   } else {
     const encoder = resolveTranscodeEncoder(req, strategy)
@@ -161,4 +171,30 @@ export function resolveVideoPlan(
     return 'copy'
   }
   return 'transcode'
+}
+
+export function resolveAudioPlan(req: ResolvedStreamCreateRequest, inputCodec: ProbedInputMedia['audio']): ResolvedAudioPlan {
+  if (!req.audio.enabled) {
+    return {
+      enabled: false,
+    }
+  }
+  if (req.audio.mode === 'transcode') {
+    return {
+      enabled: true,
+      mode: 'transcode',
+      codec: req.audio.codec,
+    }
+  }
+  if (inputCodec === 'aac' || inputCodec === 'mp3') {
+    return {
+      enabled: true,
+      mode: 'copy',
+    }
+  }
+  return {
+    enabled: true,
+    mode: 'transcode',
+    codec: req.audio.codec,
+  }
 }

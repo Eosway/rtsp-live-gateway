@@ -2,7 +2,7 @@ import type { StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { randomUUID } from 'node:crypto'
 import type { ServerConfig } from '../config.js'
 import { ApiError } from '../errors.js'
-import type { NormalizedStreamCreateRequest } from '../types.js'
+import type { ResolvedStreamCreateRequest } from '../types.js'
 import { buildSourceKey } from './sourceKey.js'
 import { StreamSource } from './StreamSource.js'
 
@@ -25,7 +25,7 @@ export class StreamRegistry {
     this.ffprobePath = options.ffprobePath
   }
 
-  createOrReuse(req: NormalizedStreamCreateRequest): {
+  createOrReuse(req: ResolvedStreamCreateRequest): {
     source: StreamSource
     reused: boolean
   } {
@@ -45,6 +45,7 @@ export class StreamRegistry {
       sourceKey,
       req,
       ffmpegPath: this.ffmpegPath,
+      ioTimeoutMs: this.config.ioTimeoutMs,
       ffprobePath: this.ffprobePath,
       decoder: this.config.decoder,
       encoder: this.config.encoder,
@@ -82,14 +83,14 @@ export class StreamRegistry {
     sources: number
     runningSources: number
     viewers: number
-    bytesOut: number
+    bytesOutTotal: number
   } {
     const statuses = this.list()
     return {
       sources: statuses.length,
       runningSources: statuses.filter((item) => item.state === 'running').length,
       viewers: statuses.reduce((acc, item) => acc + item.viewerCount, 0),
-      bytesOut: statuses.reduce((acc, item) => acc + item.stats.bytesOut, 0),
+      bytesOutTotal: statuses.reduce((acc, item) => acc + item.stats.bytesOutTotal, 0),
     }
   }
 }

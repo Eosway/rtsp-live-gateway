@@ -4,6 +4,7 @@ export interface ServerConfig {
   port: number
   nodeEnv: string
   logLevel: 'debug' | 'info' | 'warn' | 'error'
+  ioTimeoutMs: number
   decoder: 'auto' | 'software' | 'hardware'
   encoder: 'auto' | 'software' | 'hardware'
   hardwareTemplate: 'nvidia'
@@ -78,6 +79,7 @@ export function loadServerConfig(): ServerConfig {
     port: parseIntValue(process.env.PORT, 3000),
     nodeEnv: process.env.NODE_ENV ?? 'development',
     logLevel,
+    ioTimeoutMs: parseIntValue(process.env.RTSP_IO_TIMEOUT_MS, 5000),
     decoder: parseStrategy(process.env.FFMPEG_DECODER, 'auto'),
     encoder: parseStrategy(process.env.FFMPEG_ENCODER, 'auto'),
     hardwareTemplate: parseHardwareTemplate(process.env.FFMPEG_HARDWARE_TEMPLATE),
@@ -87,7 +89,7 @@ export function loadServerConfig(): ServerConfig {
     maxQueueBytes: parseIntValue(process.env.MAX_QUEUE_BYTES, 2 * 1024 * 1024),
     maxSources: parseIntValue(process.env.MAX_SOURCES, 64),
     maxViewersPerSource: parseIntValue(process.env.MAX_VIEWERS_PER_SOURCE, 256),
-    ssrfAllowPrivateIp: parseBoolValue(process.env.SSRF_ALLOW_PRIVATE_IP, true),
+    ssrfAllowPrivateIp: parseBoolValue(process.env.SSRF_ALLOW_PRIVATE_IP, false),
     rtspHostAllowlist: parseStringList(process.env.RTSP_HOST_ALLOWLIST),
     rtspHostDenylist: parseStringList(process.env.RTSP_HOST_DENYLIST),
     rtspPortAllowlist: parseNumberList(process.env.RTSP_PORT_ALLOWLIST, [554, 8554]),

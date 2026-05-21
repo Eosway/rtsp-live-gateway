@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { PlaybackSession } from '../PlaybackSession.js'
 import { StreamSource } from '../StreamSource.js'
 import type { Logger } from '../../lib/logger.js'
-import type { NormalizedStreamCreateRequest } from '../../types.js'
+import type { ResolvedStreamCreateRequest } from '../../types.js'
 import type { FFmpegCommand } from '../../infra/ffmpeg/FFmpegCommandBuilder.js'
 
 class FakeRunner {
@@ -70,23 +70,17 @@ function createLogger(): Logger {
   }
 }
 
-function createRequest(): NormalizedStreamCreateRequest {
+function createRequest(): ResolvedStreamCreateRequest {
   return {
     url: 'rtsp://example.com/live',
     transport: 'tcp',
-    ioTimeoutUs: 5_000_000,
     video: {
       mode: 'auto',
       codec: 'h264',
     },
     audio: {
       enabled: false,
-      mode: 'drop',
-      codec: 'aac',
-      bitrateKbps: 0,
     },
-    allowPrivateIp: false,
-    labels: {},
   }
 }
 
@@ -96,6 +90,7 @@ function createSource(fakeRunners: FakeRunner[], overrides: { gopCacheMaxBytes?:
     sourceKey: 'src_test',
     req: createRequest(),
     ffmpegPath: '/usr/bin/ffmpeg',
+    ioTimeoutMs: 5000,
     decoder: 'auto',
     encoder: 'auto',
     hardwareVendor: 'nvidia',
@@ -316,6 +311,7 @@ test('first start should copy when probed codec matches requested output codec',
     sourceKey: 'src_auto_copy',
     req: createRequest(),
     ffmpegPath: '/usr/bin/ffmpeg',
+    ioTimeoutMs: 5000,
     ffprobePath: '/usr/bin/ffprobe',
     decoder: 'auto',
     encoder: 'auto',
@@ -327,7 +323,10 @@ test('first start should copy when probed codec matches requested output codec',
     logger: createLogger(),
     runnerFactory: () => fakeRunner as never,
   })
-  ;(source as unknown as { probeInputVideoCodec(): Promise<'h264'> }).probeInputVideoCodec = async () => 'h264'
+  ;(source as unknown as { probeInputMedia(): Promise<{ video: 'h264'; audio: 'unknown' }> }).probeInputMedia = async () => ({
+    video: 'h264',
+    audio: 'unknown',
+  })
 
   const viewer = createSession('se_auto_copy')
   source.addViewer(viewer)
@@ -352,6 +351,7 @@ test('first start should transcode when probed codec differs from requested outp
     sourceKey: 'src_auto_transcode',
     req: createRequest(),
     ffmpegPath: '/usr/bin/ffmpeg',
+    ioTimeoutMs: 5000,
     ffprobePath: '/usr/bin/ffprobe',
     decoder: 'auto',
     encoder: 'auto',
@@ -363,7 +363,10 @@ test('first start should transcode when probed codec differs from requested outp
     logger: createLogger(),
     runnerFactory: () => fakeRunner as never,
   })
-  ;(source as unknown as { probeInputVideoCodec(): Promise<'h265'> }).probeInputVideoCodec = async () => 'h265'
+  ;(source as unknown as { probeInputMedia(): Promise<{ video: 'h265'; audio: 'unknown' }> }).probeInputMedia = async () => ({
+    video: 'h265',
+    audio: 'unknown',
+  })
 
   const viewer = createSession('se_auto_transcode')
   source.addViewer(viewer)
@@ -379,6 +382,149 @@ test('first start should transcode when probed codec differs from requested outp
     throw new Error('expected ffmpeg command')
   }
   expect(command.args[command.args.indexOf('-c:v') + 1]).not.toBe('copy')
+})
+
+test('audio auto should copy when probed input audio codec is aac', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = new StreamSource({
+    streamId: 'st_audio_auto_copy',
+    sourceKey: 'src_audio_auto_copy',
+    req: {
+      ...createRequest(),
+      audio: {
+        enabled: true,
+        mode: 'auto',
+        codec: 'aac',
+      },
+    },
+    ffmpegPath: '/usr/bin/ffmpeg',
+    ioTimeoutMs: 5000,
+    ffprobePath: '/usr/bin/ffprobe',
+    decoder: 'auto',
+    encoder: 'auto',
+    hardwareVendor: 'nvidia',
+    startupTimeoutMs: 1000,
+    idleGraceMs: 1000,
+    stopGraceMs: 100,
+    maxStartAttempts: 1,
+    logger: createLogger(),
+    runnerFactory: () => fakeRunner as never,
+  })
+  ;(source as unknown as { probeInputMedia(): Promise<{ video: 'h264'; audio: 'aac' }> }).probeInputMedia = async () => ({
+    video: 'h264',
+    audio: 'aac',
+  })
+
+  const viewer = createSession('se_audio_auto_copy')
+  source.addViewer(viewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  await nextTick()
+  fakeRunner.emitStdout(createFlvHeader())
+  fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  await startPromise
+
+  const command = fakeRunner.command
+  if (!command) {
+    throw new Error('expected ffmpeg command')
+  }
+  expect(command.args[command.args.indexOf('-c:a') + 1]).toBe('copy')
+})
+
+test('audio auto should transcode unknown input audio codec', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = new StreamSource({
+    streamId: 'st_audio_auto_transcode',
+    sourceKey: 'src_audio_auto_transcode',
+    req: {
+      ...createRequest(),
+      audio: {
+        enabled: true,
+        mode: 'auto',
+        codec: 'mp3',
+      },
+    },
+    ffmpegPath: '/usr/bin/ffmpeg',
+    ioTimeoutMs: 5000,
+    ffprobePath: '/usr/bin/ffprobe',
+    decoder: 'auto',
+    encoder: 'auto',
+    hardwareVendor: 'nvidia',
+    startupTimeoutMs: 1000,
+    idleGraceMs: 1000,
+    stopGraceMs: 100,
+    maxStartAttempts: 1,
+    logger: createLogger(),
+    runnerFactory: () => fakeRunner as never,
+  })
+  ;(source as unknown as { probeInputMedia(): Promise<{ video: 'h264'; audio: 'unknown' }> }).probeInputMedia = async () => ({
+    video: 'h264',
+    audio: 'unknown',
+  })
+
+  const viewer = createSession('se_audio_auto_transcode')
+  source.addViewer(viewer)
+
+  const startPromise = source.ensureStarted('first_viewer')
+  await nextTick()
+  fakeRunner.emitStdout(createFlvHeader())
+  fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  await startPromise
+
+  const command = fakeRunner.command
+  if (!command) {
+    throw new Error('expected ffmpeg command')
+  }
+  expect(command.args[command.args.indexOf('-c:a') + 1]).toBe('libmp3lame')
+})
+
+test('snapshotStatus should expose cumulative and last-run stats with explicit semantics', async () => {
+  const firstRunner = new FakeRunner()
+  const secondRunner = new FakeRunner()
+  const source = createSource([firstRunner, secondRunner])
+  const firstViewer = createSession('se_stats_first')
+  source.addViewer(firstViewer)
+
+  const firstStartPromise = source.ensureStarted('first_viewer')
+  const firstHeader = createFlvHeader()
+  const firstSequence = createVideoSequenceHeaderTag()
+  await nextTick()
+  firstRunner.emitStdout(firstHeader)
+  firstRunner.emitStdout(firstSequence)
+  await firstStartPromise
+
+  const runningStatus = source.snapshotStatus()
+  expect(runningStatus.startedAt).toBeTruthy()
+  expect(runningStatus.lastActiveAt).toBeTruthy()
+  expect(runningStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength)
+  expect(runningStatus.stats.startAttemptsTotal).toBe(1)
+  expect(runningStatus.stats.currentFfmpegPid).toBe(1234)
+  expect(runningStatus.stats.lastStartLatencyMs).toBeTypeOf('number')
+
+  await source.stop('idle_timeout')
+
+  const stoppedStatus = source.snapshotStatus()
+  expect(stoppedStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength)
+  expect(stoppedStatus.stats.startAttemptsTotal).toBe(1)
+  expect(stoppedStatus.stats.currentFfmpegPid).toBeUndefined()
+
+  const secondViewer = createSession('se_stats_second')
+  source.addViewer(secondViewer)
+  const secondStartPromise = source.ensureStarted('first_viewer')
+  const secondHeader = createFlvHeader()
+  const secondSequence = createVideoSequenceHeaderTag()
+  await nextTick()
+  secondRunner.emitStdout(secondHeader)
+  secondRunner.emitStdout(secondSequence)
+  await secondStartPromise
+
+  const restartedStatus = source.snapshotStatus()
+  expect(restartedStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength + secondHeader.byteLength + secondSequence.byteLength)
+  expect(restartedStatus.stats.startAttemptsTotal).toBe(2)
+  expect(restartedStatus.stats.currentFfmpegPid).toBe(1234)
+  expect(restartedStatus.stats.lastStartLatencyMs).toBeTypeOf('number')
+  expect(restartedStatus.startedAt).toBeTruthy()
+  expect(restartedStatus.lastActiveAt).toBeTruthy()
 })
 
 test('startup failure should surface structured upstream_not_found error instead of generic ffmpeg_exited', async () => {

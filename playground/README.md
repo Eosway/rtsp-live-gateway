@@ -21,7 +21,6 @@ pnpm --filter @eosway/rtsp-live-gateway-playground dev
 
 - 编辑网关 `baseUrl`
 - 设置 RTSP URL 与 transport
-- 切换 `allowPrivateIp`（开发联调开关）
 - 一键创建并播放
 - 展示播放器状态与当前 `streamId`
 

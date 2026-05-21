@@ -4,7 +4,7 @@ import { cors } from 'hono/cors'
 import { stream } from 'hono/streaming'
 import { randomUUID } from 'node:crypto'
 import type { ServerConfig } from './config.js'
-import { normalizeCreateRequest } from './domain/normalize.js'
+import { resolveStreamCreateRequest } from './domain/normalize.js'
 import { PlaybackSession } from './domain/PlaybackSession.js'
 import { StreamRegistry } from './domain/StreamRegistry.js'
 import { ApiError, toApiError } from './errors.js'
@@ -16,7 +16,7 @@ interface CreateAppOptions {
   ffprobePath?: string
 }
 
-function buildMetricsText(metrics: { sources: number; runningSources: number; viewers: number; bytesOut: number }): string {
+function buildMetricsText(metrics: { sources: number; runningSources: number; viewers: number; bytesOutTotal: number }): string {
   return [
     '# HELP rtsp_gw_sources Number of current stream sources.',
     '# TYPE rtsp_gw_sources gauge',
@@ -29,7 +29,7 @@ function buildMetricsText(metrics: { sources: number; runningSources: number; vi
     `rtsp_gw_viewers ${metrics.viewers}`,
     '# HELP rtsp_gw_bytes_out_total Total fanout bytes output.',
     '# TYPE rtsp_gw_bytes_out_total counter',
-    `rtsp_gw_bytes_out_total ${metrics.bytesOut}`,
+    `rtsp_gw_bytes_out_total ${metrics.bytesOutTotal}`,
   ].join('\n')
 }
 
@@ -79,13 +79,13 @@ export function createApp(options: CreateAppOptions) {
     const body = await c.req.json().catch(() => {
       throw new ApiError('INVALID_ARGUMENT', 'Invalid JSON payload')
     })
-    const req = normalizeCreateRequest(body)
+    const req = resolveStreamCreateRequest(body)
     await assertRtspTargetAllowed(req.url, {
       allowPrivateIp: options.config.ssrfAllowPrivateIp,
       allowlist: options.config.rtspHostAllowlist,
       denylist: options.config.rtspHostDenylist,
       portAllowlist: options.config.rtspPortAllowlist,
-      requestAllowPrivateIp: req.allowPrivateIp,
+      requestAllowPrivateIp: false,
     })
 
     const { source, reused } = registry.createOrReuse(req)
