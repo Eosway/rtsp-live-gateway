@@ -39,10 +39,14 @@ async function deleteManagedStream(baseUrl: string, streamId: string): Promise<v
   }
 }
 
+function resolveHasAudio(sourceConfig: StreamCreateRequest): boolean {
+  return sourceConfig.audio?.enabled === true
+}
+
 export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, callbacks: UseRtspFlvPlayerCallbacks = {}): UseRtspFlvPlayerReturn {
   const videoRef = shallowRef<HTMLVideoElement>()
   const streamId = ref<string>()
-  const state = ref<RtspFlvPlayerStatus>('idle')
+  const status = ref<RtspFlvPlayerStatus>('idle')
   const error = ref<RtspFlvPlayerError>()
   let player: MediaPlayer | undefined
   let operationChain: Promise<void> = Promise.resolve()
@@ -52,8 +56,8 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     return typeof optionsSource === 'function' ? optionsSource() : optionsSource
   }
 
-  function emitStateChange(nextState: RtspFlvPlayerStatus) {
-    state.value = nextState
+  function setStatus(nextStatus: RtspFlvPlayerStatus) {
+    status.value = nextStatus
   }
 
   function attach(videoEl: HTMLVideoElement) {
@@ -81,7 +85,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     player = undefined
     currentPlayer?.destroy()
     player = undefined
-    emitStateChange('idle')
+    setStatus('idle')
     callbacks.onClosed?.(reason)
   }
 
@@ -98,11 +102,11 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   async function startInternal(): Promise<void> {
     const token = nextOperationToken()
     const options = resolveOptions()
-    if (state.value === 'starting' || state.value === 'running') {
+    if (status.value === 'starting' || status.value === 'running') {
       return
     }
 
-    emitStateChange('starting')
+    setStatus('starting')
     error.value = undefined
     let currentPlayer: MediaPlayer | undefined
     try {
@@ -121,7 +125,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
 
       const liveUrl = buildLiveUrl(options.baseUrl, streamId.value)
       currentPlayer = createPlayer(
-        { type: 'flv', isLive: true, url: liveUrl, hasAudio: false, hasVideo: true },
+        { type: 'flv', isLive: true, url: liveUrl, hasAudio: resolveHasAudio(options.sourceConfig), hasVideo: true },
         {
           ...defaultLivePlayerConfig,
           ...options.playerConfig,
@@ -134,7 +138,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
         }
         const normalizedError = toRtspFlvPlayerError(mediaPlayerError)
         error.value = normalizedError
-        emitStateChange('error')
+        setStatus('error')
         callbacks.onError?.(normalizedError)
       }
       currentPlayer.onMediaInfo = (mediaInfo) => {
@@ -161,7 +165,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
         currentPlayer.destroy()
         return
       }
-      emitStateChange('running')
+      setStatus('running')
     } catch (caughtError) {
       if (currentPlayer && player === currentPlayer) {
         player = undefined
@@ -170,7 +174,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       if (!isOperationCurrent(token)) {
         return
       }
-      emitStateChange('error')
+      setStatus('error')
       const clientError = caughtError instanceof ClientError ? caughtError : undefined
       error.value = {
         type: 'client',
@@ -235,6 +239,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   return {
     videoRef,
     streamId,
+    status,
     error,
     attach,
     detach,

@@ -77,6 +77,7 @@ export const RtspFlvPlayer = defineComponent({
 
     expose({
       streamId: controller.streamId,
+      status: controller.status,
       start: controller.start,
       stop: controller.stop,
       reload: controller.reload,

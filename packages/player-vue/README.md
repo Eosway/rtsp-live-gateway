@@ -94,9 +94,10 @@ async function stopPlayer() {
 </template>
 ```
 
-组件 `ref` 仅暴露命令式方法和 `streamId`：
+组件 `ref` 暴露命令式方法、`streamId` 和本地播放 `status`：
 
 - `streamId`
+- `status`
 - `start()`
 - `stop()`
 - `reload()`
@@ -123,13 +124,22 @@ async function stopPlayer() {
 - `stop()`
 - `detach()`
 
-返回值中不暴露 `state`，调用方应优先消费事件和错误回调。
+返回值会暴露本地播放 `status`，用于表达 player 侧生命周期：
+
+- `idle`
+- `starting`
+- `running`
+- `error`
 
 额外选项：
 
 - `playerConfig`
   - 会透传给 `mpegts.createPlayer`
   - 在内部默认 live 配置基础上做覆盖
+- `muted`
+  - 组件模式下继续作为原生 `<video>` 属性透传
+  - composable 模式下由调用方自行设置 `videoEl.muted`
+  - 不参与 stream 创建和 `hasAudio` 推导
 - 其余未声明为组件 props 的属性，会透传给内部 `<video>` 元素
   - 例如 `muted`、`playsinline`、`controls`、`poster`、`preload`、`class`、`style`
 - `cleanOnUnmount`
@@ -143,7 +153,7 @@ async function stopPlayer() {
 - 使用直播配置：
   - `type: "flv"`
   - `isLive: true`
-  - `hasAudio: false`
+  - `hasAudio` 由 `sourceConfig.audio.enabled` 推导
   - `hasVideo: true`
 - 默认监控直播配置：
   - `enableStashBuffer: true`
@@ -159,7 +169,7 @@ async function stopPlayer() {
 ## 7. 注意事项
 
 - 必须确保服务端 CORS 配置正确。
-- 浏览器自动播放策略可能要求视频元素静音后才允许自动播放，建议透传 `muted` 给内部 `<video>`。
+- 浏览器自动播放策略可能要求视频元素静音后才允许自动播放；组件模式建议直接透传 `muted`，composable 模式请由调用方设置 `videoEl.muted`。
 - `error` 事件统一透传 `{ type, code, message, requestId, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
 
 ## 8. 开发命令

@@ -34,6 +34,7 @@ export interface UseRtspFlvPlayerCallbacks {
 export interface UseRtspFlvPlayerReturn {
   videoRef: ShallowRef<HTMLVideoElement | undefined>
   streamId: Ref<string | undefined>
+  status: Ref<RtspFlvPlayerStatus>
   error: Ref<RtspFlvPlayerError | undefined>
   attach(videoEl: HTMLVideoElement): void
   detach(reason?: string): Promise<void>
