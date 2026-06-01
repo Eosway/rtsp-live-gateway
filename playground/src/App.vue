@@ -30,6 +30,17 @@
             <option value="h265">HEVC(libx265)</option>
           </select>
         </label>
+        <label class="checkbox">
+          <input v-model="form.audioEnabled" type="checkbox" />
+          <span>Enable Audio</span>
+        </label>
+        <label v-if="form.audioEnabled">
+          Audio Codec
+          <select v-model="form.audioCodec">
+            <option value="aac">AAC</option>
+            <option value="mp3">MP3</option>
+          </select>
+        </label>
       </div>
 
       <div class="actions">
@@ -37,11 +48,12 @@
         <button class="ghost" @click="closePlayer">关闭播放器</button>
       </div>
 
-      <p class="status">{{ status }}</p>
+      <p class="status">{{ statusMessage }}</p>
     </section>
 
     <section v-if="showPlayer" class="panel">
       <RtspFlvPlayer
+        ref="playerRef"
         :base-url="baseUrl"
         :source-config="sourceConfig"
         :auto-play="true"
@@ -53,6 +65,7 @@
         @error="onError"
         @closed="onClosed" />
       <p class="stream-id">当前 Stream ID: {{ currentStreamId || '-' }}</p>
+      <p class="stream-id">当前 Player Status: {{ playerStatus }}</p>
     </section>
   </main>
 </template>
@@ -60,17 +73,30 @@
 <script setup lang="ts">
 import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
 import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
-import { computed, reactive, ref } from 'vue'
+import type { RtspFlvPlayerStatus } from '@eosway/rtsp-live-gateway-player-vue'
+import { computed, reactive, ref, type Ref } from 'vue'
+
+type RtspFlvPlayerHandle = {
+  streamId: Readonly<Ref<string | undefined>>
+  status: Readonly<Ref<RtspFlvPlayerStatus>>
+  start(): Promise<void>
+  stop(reason?: string): Promise<void>
+  reload(reason?: string): Promise<void>
+}
 
 const baseUrl = ref('http://localhost:3000')
-const status = ref('等待创建流')
-const currentStreamId = ref('')
+const statusMessage = ref('等待创建流')
 const showPlayer = ref(false)
+const playerRef = ref<RtspFlvPlayerHandle>()
+const currentStreamId = computed(() => playerRef.value?.streamId.value ?? '')
+const playerStatus = computed<RtspFlvPlayerStatus>(() => playerRef.value?.status.value ?? 'idle')
 
 const form = reactive({
   url: '',
   transport: 'tcp' as StreamCreateRequest['transport'],
   videoCodec: 'h264' as NonNullable<NonNullable<StreamCreateRequest['video']>['codec']>,
+  audioEnabled: false,
+  audioCodec: 'aac' as 'aac' | 'mp3',
 })
 
 const sourceConfig = computed<StreamCreateRequest>(() => ({
@@ -80,37 +106,45 @@ const sourceConfig = computed<StreamCreateRequest>(() => ({
     mode: 'auto',
     codec: form.videoCodec,
   },
-  audio: {
-    enabled: false,
-  },
+  audio: form.audioEnabled
+    ? {
+        enabled: true,
+        mode: 'auto',
+        codec: form.audioCodec,
+      }
+    : {
+        enabled: false,
+      },
 }))
 
 function openPlayer() {
   showPlayer.value = true
-  status.value = '正在创建流并启动播放...'
+  statusMessage.value = '正在创建流并启动播放...'
 }
 
 function closePlayer() {
   showPlayer.value = false
-  currentStreamId.value = ''
-  status.value = '播放器已关闭'
+  statusMessage.value = '播放器已关闭'
 }
 
 function onCreated(streamId: string) {
-  currentStreamId.value = streamId
-  status.value = `已创建流: ${streamId}`
+  statusMessage.value = `已创建流: ${streamId}`
 }
 
 function onMediaInfo() {
-  status.value = '播放器已开始接收媒体信息'
+  statusMessage.value = '播放器已开始接收媒体信息'
 }
 
 function onError(payload: { code: string; message: string }) {
-  status.value = `错误(${payload.code}): ${payload.message}`
+  statusMessage.value = `错误(${payload.code}): ${payload.message}`
 }
 
 function onClosed(reason: string) {
-  status.value = `连接关闭: ${reason}`
+  if (!showPlayer.value && reason === 'unmount') {
+    statusMessage.value = '播放器已关闭'
+    return
+  }
+  statusMessage.value = `连接关闭: ${reason}`
 }
 </script>
 
@@ -149,7 +183,7 @@ label {
   font-size: 14px;
 }
 
-input,
+input:not([type='checkbox']),
 select {
   border: 1px solid #b8c8d6;
   border-radius: 8px;
@@ -161,6 +195,10 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.checkbox input {
+  margin: 0;
 }
 
 .actions {

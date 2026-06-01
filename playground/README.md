@@ -21,8 +21,9 @@ pnpm --filter @eosway/rtsp-live-gateway-playground dev
 
 - 编辑网关 `baseUrl`
 - 设置 RTSP URL 与 transport
+- 设置 video codec 与 audio 开关
 - 一键创建并播放
-- 展示播放器状态与当前 `streamId`
+- 展示联调消息、当前 `streamId` 与 player `status`
 
 ## 依赖关系
 
