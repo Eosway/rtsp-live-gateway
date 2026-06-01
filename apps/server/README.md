@@ -31,6 +31,25 @@ node apps/server/dist/index.js
 
 默认端口 `3000`。
 
+如需启用 TLS 或 HTTP/2，使用环境变量切换：
+
+```bash
+ENABLE_HTTPS=true \
+TLS_CERT_PATH=./certs/tls.crt \
+TLS_KEY_PATH=./certs/tls.key \
+node apps/server/dist/index.js
+```
+
+启用 HTTPS 后会同时启用 HTTP/2，使用同一监听端口：
+
+```bash
+ENABLE_HTTPS=true \
+TLS_CERT_PATH=./certs/tls.crt \
+TLS_KEY_PATH=./certs/tls.key \
+HTTP2_ALLOW_HTTP1=true \
+node apps/server/dist/index.js
+```
+
 ## 3. API
 
 ### 3.1 控制面
@@ -116,6 +135,10 @@ node apps/server/dist/index.js
 基础：
 
 - `PORT`（默认 `3000`）
+- `ENABLE_HTTPS`（默认 `false`；为 `true` 时启用 TLS，并同时启用 HTTP/2）
+- `TLS_CERT_PATH`（当 `ENABLE_HTTPS=true` 时必填）
+- `TLS_KEY_PATH`（当 `ENABLE_HTTPS=true` 时必填）
+- `HTTP2_ALLOW_HTTP1`（默认 `true`；仅 `ENABLE_HTTPS=true` 时生效）
 - `LOG_LEVEL`（默认 `info`）
 - `FFMPEG_PATH`
 - `FFPROBE_PATH`
@@ -180,3 +203,26 @@ RTSP 输入：
 pnpm --filter @eosway/rtsp-live-gateway-server tsc
 pnpm --filter @eosway/rtsp-live-gateway-server build
 ```
+
+## 9. Docker TLS / HTTP2
+
+镜像默认仍使用明文 HTTP。启用 TLS 或 HTTP/2 时，不要把证书打进镜像，改为运行时挂载：
+
+```yaml
+services:
+  server:
+    environment:
+      PORT: '3000'
+      ENABLE_HTTPS: 'true'
+      HTTP2_ALLOW_HTTP1: 'true'
+      TLS_CERT_PATH: '/run/certs/tls.crt'
+      TLS_KEY_PATH: '/run/certs/tls.key'
+    volumes:
+      - ./certs:/run/certs:ro
+```
+
+说明：
+
+- `ENABLE_HTTPS=true` 表示 TLS + HTTP/2，默认允许回退 HTTP/1.1
+- `HTTP2_ALLOW_HTTP1=false` 时，只接受 TLS 上的 HTTP/2
+- 若由外部网关终止 TLS，可继续保持 `ENABLE_HTTPS=false`

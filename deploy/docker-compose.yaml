@@ -7,6 +7,10 @@ services:
       - '3000:3000'
     environment:
       PORT: '3000'
+      ENABLE_HTTPS: 'false'
+      HTTP2_ALLOW_HTTP1: 'true'
+    #   TLS_CERT_PATH: '/run/certs/tls.crt'
+    #   TLS_KEY_PATH: '/run/certs/tls.key'
     #   LOG_LEVEL: 'info'
     #   FFMPEG_PATH: 'ffmpeg'
     #   FFPROBE_PATH: 'ffprobe'
@@ -22,6 +26,8 @@ services:
     #   SSRF_ALLOW_PRIVATE_IP: 'true'
     #   RTSP_HOST_DENYLIST: 'localhost,127.0.0.1,::1'
     #   RTSP_PORT_ALLOWLIST: '554,8554'
+    # volumes:
+    #   - ./certs:/run/certs:ro
     deploy:
       resources:
         reservations:
@@ -30,7 +36,13 @@ services:
               count: 1
               capabilities: [gpu]
     healthcheck:
-      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/v1/healthz').then((res) => { if (!res.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "const httpsEnabled=(process.env.ENABLE_HTTPS ?? 'false').toLowerCase() === 'true'; const port=Number(process.env.PORT ?? '3000'); if (httpsEnabled) { const { connect } = require('node:http2'); const client = connect(`https://127.0.0.1:${port}`, { rejectUnauthorized: false }); client.on('error', () => process.exit(1)); const req = client.request({ ':path': '/v1/healthz', ':method': 'GET' }); req.on('response', (headers) => { const status = Number(headers[':status'] ?? 500); client.close(); process.exit(status >= 200 && status < 300 ? 0 : 1) }); req.on('error', () => { client.close(); process.exit(1) }); req.setEncoding('utf8'); req.resume(); req.end(); } else { const protocol=require('node:http'); const req=protocol.request({ host:'127.0.0.1', port, path:'/v1/healthz', method:'GET' }, (res) => { process.exit((res.statusCode ?? 500) >= 200 && (res.statusCode ?? 500) < 300 ? 0 : 1) }); req.on('error', () => process.exit(1)); req.end(); }",
+        ]
       interval: 60s
       timeout: 5s
       retries: 3

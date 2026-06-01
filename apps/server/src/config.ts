@@ -2,6 +2,10 @@ import { createConsoleLogger, type Logger } from './util/logger.js'
 
 export interface ServerConfig {
   port: number
+  httpsEnabled: boolean
+  tlsCertPath?: string
+  tlsKeyPath?: string
+  http2AllowHttp1: boolean
   nodeEnv: string
   logLevel: 'debug' | 'info' | 'warn' | 'error'
   ioTimeoutMs: number
@@ -72,11 +76,26 @@ function parseHardwareVendor(value: string | undefined): ServerConfig['hardwareV
   return 'nvidia'
 }
 
+function validateTlsConfig(config: Pick<ServerConfig, 'httpsEnabled' | 'tlsCertPath' | 'tlsKeyPath'>): void {
+  if (!config.httpsEnabled) {
+    return
+  }
+  if (!config.tlsCertPath) {
+    throw new Error('TLS_CERT_PATH is required when ENABLE_HTTPS=true')
+  }
+  if (!config.tlsKeyPath) {
+    throw new Error('TLS_KEY_PATH is required when ENABLE_HTTPS=true')
+  }
+}
+
 export function loadServerConfig(): ServerConfig {
   const logLevel = (process.env.LOG_LEVEL as ServerConfig['logLevel'] | undefined) ?? 'info'
-
-  return {
+  const config: ServerConfig = {
     port: parseIntValue(process.env.PORT, 3000),
+    httpsEnabled: parseBoolValue(process.env.ENABLE_HTTPS, false),
+    tlsCertPath: process.env.TLS_CERT_PATH,
+    tlsKeyPath: process.env.TLS_KEY_PATH,
+    http2AllowHttp1: parseBoolValue(process.env.HTTP2_ALLOW_HTTP1, true),
     nodeEnv: process.env.NODE_ENV ?? 'development',
     logLevel,
     ioTimeoutMs: parseIntValue(process.env.RTSP_IO_TIMEOUT_MS, 5000),
@@ -96,4 +115,8 @@ export function loadServerConfig(): ServerConfig {
     corsAllowOrigin: process.env.CORS_ALLOW_ORIGIN ?? '*',
     logger: createConsoleLogger(),
   }
+
+  validateTlsConfig(config)
+
+  return config
 }
