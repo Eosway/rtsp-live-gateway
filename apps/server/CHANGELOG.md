@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.1.1...server@1.2.0) (2026-06-01)
+
+### Features
+
+- enable tls and http2 startup ([df353c3](https://github.com/Eosway/rtsp-live-gateway/commit/df353c3def5bc3bf0bc8594cf2c100ee5fd52419))
+
+### Documentation
+
+- clarify user-facing stream behavior ([207dd03](https://github.com/Eosway/rtsp-live-gateway/commit/207dd034b68cdb955bc3220860388d4a4fe52ed8))
+
+### Code Refactoring
+
+- refine stats semantics ([4d0272b](https://github.com/Eosway/rtsp-live-gateway/commit/4d0272b5e30f16ba97f2446ae79602b5ff5b19ea))
+- reorganize stream pipeline ([3850dd5](https://github.com/Eosway/rtsp-live-gateway/commit/3850dd58b006081fea906f23072dfa8d49dc8882))
+
+### Tests
+
+- migrate suites to vitest ([2e68daa](https://github.com/Eosway/rtsp-live-gateway/commit/2e68daa904ce7b761d21172a5234bd0e8498e1cb))
+
 ## [1.1.1](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.1.0...server@1.1.1) (2026-05-07)
 
 ### Bug Fixes
