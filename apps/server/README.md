@@ -5,7 +5,7 @@
 - 控制面 API（创建、查询、删除流）
 - 媒体面 HTTP-FLV 输出（`/v1/live/:streamId`）
 - FFmpeg 进程管理（懒启动、超时、退出处理）
-- 单源复用（`sourceKey`）
+- 相同输入配置的流复用
 - SSRF 防护与基础指标输出
 
 ## 1. 运行要求
@@ -59,8 +59,8 @@ node apps/server/dist/index.js
 
 ### 4.1 懒启动与复用
 
-1. `POST /v1/streams` 时计算 `sourceKey`。
-2. 已存在相同 `sourceKey` 则复用已有 `StreamSource`。
+1. `POST /v1/streams` 时基于归一化后的输入配置判断是否可复用。
+2. 已存在相同输入配置的流则复用已有流。
 3. 第一个观众访问 `/live/:streamId` 时才启动 FFmpeg。
 
 ### 4.2 观众与回收
@@ -85,8 +85,8 @@ node apps/server/dist/index.js
 
 - 输入：`rtsp://` 或 `rtsps://`
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
-- 默认禁音：`-an`
 - 首次启动尝试前会先用 `ffprobe` 探测输入视频 codec
+- `audio.enabled = false`：禁用音频输出（`-an`）
 - `audio.mode = auto`：会先探测输入音频 codec，若为 `aac` 或 `mp3` 则优先 `copy`，否则转码到目标 codec
 - `audio.mode = transcode`：始终转码到目标 codec
 - `video.mode = auto` 且输入 codec 与 `video.codec` 一致：首次启动尝试使用 `copy`
