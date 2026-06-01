@@ -20,6 +20,7 @@ export const RtspFlvPlayer = defineComponent({
   },
   emits: {
     created: (_streamId: string) => true,
+    ready: () => true,
     error: (_error: RtspFlvPlayerError) => true,
     mediaInfo: (_mediaInfo: MediaInfo) => true,
     metadataArrived: (_metadata: unknown) => true,
@@ -38,6 +39,9 @@ export const RtspFlvPlayer = defineComponent({
       {
         onCreated: (streamId) => {
           emit('created', streamId)
+        },
+        onReady: () => {
+          emit('ready')
         },
         onError: (error) => {
           emit('error', error)

@@ -25,6 +25,7 @@ export type UseRtspFlvPlayerOptions = RtspFlvPlayerProps
 
 export interface UseRtspFlvPlayerCallbacks {
   onCreated?: (streamId: string) => void
+  onReady?: () => void
   onError?: (error: RtspFlvPlayerError) => void
   onMediaInfo?: (mediaInfo: MediaInfo) => void
   onMetadataArrived?: (metadata: unknown) => void

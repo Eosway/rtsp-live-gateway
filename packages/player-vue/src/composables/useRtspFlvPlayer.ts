@@ -14,6 +14,9 @@ import type {
 
 type UseRtspFlvPlayerOptionsSource = UseRtspFlvPlayerOptions | (() => UseRtspFlvPlayerOptions)
 
+const STARTUP_ERROR_GRACE_MS = 2000
+const PLAYBACK_READY_EVENTS = ['loadedmetadata', 'canplay', 'playing'] as const
+
 const defaultLivePlayerConfig = {
   enableStashBuffer: true, // 保留输入缓冲，优先抗一般网络抖动而不是追求最低延迟。
   liveSync: true, // 通过温和提升 playbackRate 追赶延迟，避免频繁直接跳帧。
@@ -51,6 +54,10 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   let player: MediaPlayer | undefined
   let operationChain: Promise<void> = Promise.resolve()
   let operationToken = 0
+  let startupGraceTimer: ReturnType<typeof setTimeout> | undefined
+  let startupPendingError: RtspFlvPlayerError | undefined
+  let startupPlaybackConfirmed = false
+  let removePlaybackReadyListeners: (() => void) | undefined
 
   function resolveOptions(): UseRtspFlvPlayerOptions {
     return typeof optionsSource === 'function' ? optionsSource() : optionsSource
@@ -80,7 +87,73 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     return run
   }
 
+  function clearStartupGraceTimer() {
+    if (startupGraceTimer) {
+      clearTimeout(startupGraceTimer)
+      startupGraceTimer = undefined
+    }
+  }
+
+  function clearPlaybackReadyListeners() {
+    removePlaybackReadyListeners?.()
+    removePlaybackReadyListeners = undefined
+  }
+
+  function resetStartupGuard() {
+    clearStartupGraceTimer()
+    clearPlaybackReadyListeners()
+    startupPendingError = undefined
+    startupPlaybackConfirmed = false
+  }
+
+  function emitFinalError(nextError: RtspFlvPlayerError) {
+    resetStartupGuard()
+    error.value = nextError
+    setStatus('error')
+    callbacks.onError?.(nextError)
+  }
+
+  function finalizeStartupReady(token: number, currentPlayer: MediaPlayer) {
+    if (!isOperationCurrent(token) || player !== currentPlayer || startupPlaybackConfirmed) {
+      return
+    }
+    startupPlaybackConfirmed = true
+    startupPendingError = undefined
+    clearStartupGraceTimer()
+    clearPlaybackReadyListeners()
+    callbacks.onReady?.()
+  }
+
+  function scheduleStartupGraceWindow(token: number) {
+    if (startupGraceTimer) {
+      return
+    }
+    startupGraceTimer = setTimeout(() => {
+      startupGraceTimer = undefined
+      if (!isOperationCurrent(token) || startupPlaybackConfirmed || !startupPendingError) {
+        return
+      }
+      emitFinalError(startupPendingError)
+    }, STARTUP_ERROR_GRACE_MS)
+  }
+
+  function bindPlaybackReadySignals(videoEl: HTMLVideoElement, token: number, currentPlayer: MediaPlayer) {
+    clearPlaybackReadyListeners()
+    const handlePlaybackReady = () => {
+      finalizeStartupReady(token, currentPlayer)
+    }
+    for (const eventName of PLAYBACK_READY_EVENTS) {
+      videoEl.addEventListener(eventName, handlePlaybackReady)
+    }
+    removePlaybackReadyListeners = () => {
+      for (const eventName of PLAYBACK_READY_EVENTS) {
+        videoEl.removeEventListener(eventName, handlePlaybackReady)
+      }
+    }
+  }
+
   async function destroyPlayback(reason: string): Promise<void> {
+    resetStartupGuard()
     const currentPlayer = player
     player = undefined
     currentPlayer?.destroy()
@@ -100,14 +173,15 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   }
 
   async function startInternal(): Promise<void> {
-    const token = nextOperationToken()
-    const options = resolveOptions()
     if (status.value === 'starting' || status.value === 'running') {
       return
     }
 
+    const token = nextOperationToken()
+    const options = resolveOptions()
     setStatus('starting')
     error.value = undefined
+    resetStartupGuard()
     let currentPlayer: MediaPlayer | undefined
     try {
       if (!videoRef.value) {
@@ -131,15 +205,19 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
           ...options.playerConfig,
         }
       )
+      bindPlaybackReadySignals(videoRef.value, token, currentPlayer)
 
       currentPlayer.onError = (mediaPlayerError) => {
         if (!isOperationCurrent(token) || player !== currentPlayer) {
           return
         }
         const normalizedError = toRtspFlvPlayerError(mediaPlayerError)
-        error.value = normalizedError
-        setStatus('error')
-        callbacks.onError?.(normalizedError)
+        if (!startupPlaybackConfirmed) {
+          startupPendingError = normalizedError
+          scheduleStartupGraceWindow(token)
+          return
+        }
+        emitFinalError(normalizedError)
       }
       currentPlayer.onMediaInfo = (mediaInfo) => {
         if (!isOperationCurrent(token) || player !== currentPlayer) {
@@ -165,6 +243,9 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
         currentPlayer.destroy()
         return
       }
+      if (status.value === 'error') {
+        return
+      }
       setStatus('running')
     } catch (caughtError) {
       if (currentPlayer && player === currentPlayer) {
@@ -174,9 +255,9 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       if (!isOperationCurrent(token)) {
         return
       }
-      setStatus('error')
+      resetStartupGuard()
       const clientError = caughtError instanceof ClientError ? caughtError : undefined
-      error.value = {
+      const nextError: RtspFlvPlayerError = {
         type: 'client',
         code: clientError?.code ?? 'PLAYER_START_FAILED',
         message: caughtError instanceof Error ? caughtError.message : String(caughtError),
@@ -187,7 +268,9 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
         },
         cause: caughtError,
       }
-      callbacks.onError?.(error.value)
+      error.value = nextError
+      setStatus('error')
+      callbacks.onError?.(nextError)
     }
   }
 

@@ -47,6 +47,7 @@ pnpm --filter @eosway/rtsp-live-gateway-player-vue build
 | 事件              | 载荷                                                                                                                         | 说明                            |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | `created`         | `streamId: string`                                                                                                           | 成功创建 stream 并拿到 streamId |
+| `ready`           | -                                                                                                                            | 首次进入可播放态                |
 | `error`           | `{ type: 'client' \| 'media_player'; code: string; message: string; requestId?: string; detail?: unknown; cause?: unknown }` | 启动或播放失败                  |
 | `mediaInfo`       | `MediaInfo`                                                                                                                  | 已解析到媒体信息                |
 | `metadataArrived` | `unknown`                                                                                                                    | 已收到 mpegts metadata          |
@@ -73,7 +74,68 @@ import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
 </template>
 ```
 
-### 3.2 通过 ref 显式停止并删除后端 stream
+### 3.2 推荐的业务状态收敛方式
+
+业务侧建议只使用：
+
+- `ready` 结束 loading
+- `error` 展示最终错误
+- 页面级超时 兜底“长时间无画面”
+
+```vue
+<script setup lang="ts">
+import { onBeforeUnmount, ref } from 'vue'
+import type { RtspFlvPlayerError } from '@eosway/rtsp-live-gateway-player-vue'
+
+const loading = ref(true)
+const errorInfo = ref('')
+let startupTimeout: ReturnType<typeof setTimeout> | undefined
+
+function clearStartupTimeout() {
+  if (startupTimeout) {
+    clearTimeout(startupTimeout)
+    startupTimeout = undefined
+  }
+}
+
+function beginStartup() {
+  clearStartupTimeout()
+  loading.value = true
+  errorInfo.value = ''
+  startupTimeout = setTimeout(() => {
+    loading.value = false
+    errorInfo.value = '启动超时，请重试'
+  }, 10000)
+}
+
+function handleReady() {
+  clearStartupTimeout()
+  loading.value = false
+  errorInfo.value = ''
+}
+
+function handleError(error: RtspFlvPlayerError) {
+  clearStartupTimeout()
+  loading.value = false
+  errorInfo.value = error.code === 'NetworkError' ? '请检查网络' : '播放环境异常'
+}
+
+onBeforeUnmount(() => {
+  clearStartupTimeout()
+})
+</script>
+
+<template>
+  <RtspFlvPlayer
+    base-url="http://localhost:3000"
+    :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }"
+    @created="beginStartup"
+    @ready="handleReady"
+    @error="handleError" />
+</template>
+```
+
+### 3.3 通过 ref 显式停止并删除后端 stream
 
 ```vue
 <script setup lang="ts">
@@ -112,6 +174,8 @@ async function stopPlayer() {
 6. 调用 `ref.stop()` 时会显式调用 `deleteStream`
 7. 调用 `ref.reload()` 时会走完整重建流程：删除旧 stream，重新创建新 stream，再重新播放
 8. `baseUrl`、`sourceConfig`、`autoPlay`、`playerConfig` 变化时，组件会自动重载
+9. 在首次收到 `loadedmetadata`、`canplay` 或 `playing` 之前，组件会对首次瞬时 `media_player` 错误做短暂缓冲；若 2 秒内进入可播放态，该错误不会升级为最终 `error`
+10. 推荐业务侧只用 `ready`、`error` 和页面级超时来收敛用户可见状态，不直接拿 `mediaInfo` 或底层 video 事件判定成功
 
 ## 5. useRtspFlvPlayer
 
@@ -136,6 +200,9 @@ async function stopPlayer() {
 - `playerConfig`
   - 会透传给 `mpegts.createPlayer`
   - 在内部默认 live 配置基础上做覆盖
+- `onReady`
+  - 首次进入可播放态时触发一次
+  - 适合业务侧关闭 loading、结束启动期兜底超时
 - `muted`
   - 组件模式下继续作为原生 `<video>` 属性透传
   - composable 模式下由调用方自行设置 `videoEl.muted`
@@ -170,7 +237,9 @@ async function stopPlayer() {
 
 - 必须确保服务端 CORS 配置正确。
 - 浏览器自动播放策略可能要求视频元素静音后才允许自动播放；组件模式建议直接透传 `muted`，composable 模式请由调用方设置 `videoEl.muted`。
+- 业务侧推荐把 `loading` 收敛到 `ready` / `error` / 页面级总超时 三类信号，不直接把 `mediaInfo`、`metadataArrived` 当作播放成功。
 - `error` 事件统一透传 `{ type, code, message, requestId, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
+- 首个 `loadedmetadata`、`canplay` 或 `playing` 到达前，`media_player` 瞬时错误会先缓冲 2 秒；若期间进入可播放态则丢弃，否则再升级并对外发出。
 
 ## 8. 开发命令
 
