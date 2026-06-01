@@ -1,6 +1,16 @@
 {
   "name": "@eosway/rtsp-live-gateway-player-vue",
   "version": "1.0.1",
+  "homepage": "https://www.npmjs.com/package/@eosway/rtsp-live-gateway-player-vue",
+  "bugs": {
+    "url": "https://github.com/Eosway/rtsp-live-gateway/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eosway/rtsp-live-gateway.git",
+    "directory": "packages/player-vue"
+  },
+  "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

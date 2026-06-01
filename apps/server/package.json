@@ -2,6 +2,16 @@
   "name": "@eosway/rtsp-live-gateway-server",
   "version": "1.2.0",
   "private": true,
+  "homepage": "https://github.com/Eosway/rtsp-live-gateway/tree/main/apps/server",
+  "bugs": {
+    "url": "https://github.com/Eosway/rtsp-live-gateway/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eosway/rtsp-live-gateway.git",
+    "directory": "apps/server"
+  },
+  "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
   "files": [
