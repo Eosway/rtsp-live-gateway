@@ -45,7 +45,6 @@ export class FanoutPipeline {
 
       if (unit.kind === 'header') {
         this.bootstrapCache.observe(unit)
-        this.activatePendingSessions(closedSessionIds)
         continue
       }
 
@@ -53,6 +52,7 @@ export class FanoutPipeline {
       this.bootstrapCache.observe(unit)
       this.gopCache.observe(unit)
       this.fanout.publish(unit.bytes)
+      this.activatePendingSessions(closedSessionIds)
     }
 
     return {
@@ -73,6 +73,10 @@ export class FanoutPipeline {
     this.gopCache.reset()
   }
 
+  isReadyForPlayback(): boolean {
+    return this.bootstrapCache.hasVideoSequenceHeader() && Boolean(this.gopCache.snapshot())
+  }
+
   private activatePendingSessions(closedSessionIds: string[]): void {
     if (this.pendingSessions.size === 0) {
       return
@@ -82,7 +86,10 @@ export class FanoutPipeline {
       return
     }
 
-    const gop = this.gopCache.snapshot() ?? []
+    const gop = this.gopCache.snapshot()
+    if (!gop || gop.length === 0) {
+      return
+    }
     const preload = [...bootstrap, ...gop]
 
     for (const [sessionId, session] of this.pendingSessions) {

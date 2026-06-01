@@ -154,11 +154,13 @@ export class FlvBootstrapCache {
   }
 
   snapshot(): ByteArray[] | undefined {
-    if (!this.header) {
+    const header = this.header
+    if (!header || (!this.audioSequenceHeader && !this.videoSequenceHeader)) {
       return undefined
     }
+    const bootstrapHeader: ByteArray = header
 
-    const chunks: ByteArray[] = [copyUint8Array(this.header)]
+    const chunks: ByteArray[] = [copyUint8Array(bootstrapHeader)]
     if (this.metadataTag) {
       chunks.push(copyUint8Array(this.metadataTag))
     }
@@ -169,6 +171,18 @@ export class FlvBootstrapCache {
       chunks.push(copyUint8Array(this.videoSequenceHeader))
     }
     return chunks
+  }
+
+  hasBootstrap(): boolean {
+    return Boolean(this.header && (this.audioSequenceHeader || this.videoSequenceHeader))
+  }
+
+  hasAudioSequenceHeader(): boolean {
+    return Boolean(this.audioSequenceHeader)
+  }
+
+  hasVideoSequenceHeader(): boolean {
+    return Boolean(this.videoSequenceHeader)
   }
 
   reset(): void {

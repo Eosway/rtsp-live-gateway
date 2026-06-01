@@ -183,22 +183,27 @@ test('running source should bootstrap late viewer at next tag boundary', async (
   source.addViewer(firstViewer)
 
   const startPromise = source.ensureStarted('first_viewer')
+  const header = createFlvHeader()
+  const sequence = createVideoSequenceHeaderTag()
+  const keyframe = createVideoKeyframeTag()
   await nextTick()
-  fakeRunner.emitStdout(createFlvHeader())
-  fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  fakeRunner.emitStdout(header)
+  fakeRunner.emitStdout(sequence)
+  fakeRunner.emitStdout(keyframe)
   await startPromise
 
-  const firstChunks = await drainSession(firstViewer, 2)
-  expect(firstChunks).toEqual([createFlvHeader(), createVideoSequenceHeaderTag()])
+  const firstChunks = await drainSession(firstViewer, 3)
+  expect(firstChunks).toEqual([header, sequence, keyframe])
 
   const lateViewer = createSession('se_late')
   source.addViewer(lateViewer)
-  const lateDrainPromise = drainSession(lateViewer, 3)
+  const lateDrainPromise = drainSession(lateViewer, 4)
 
-  fakeRunner.emitStdout(createVideoInterFrameTag())
+  const interFrame = createVideoInterFrameTag()
+  fakeRunner.emitStdout(interFrame)
 
   const lateChunks = await lateDrainPromise
-  expect(lateChunks).toEqual([createFlvHeader(), createVideoSequenceHeaderTag(), createVideoInterFrameTag()])
+  expect(lateChunks).toEqual([header, sequence, keyframe, interFrame])
 })
 
 test('stream restart should rebuild bootstrap instead of reusing stale prefix', async () => {
@@ -211,9 +216,11 @@ test('stream restart should rebuild bootstrap instead of reusing stale prefix', 
   const firstStartPromise = source.ensureStarted('first_viewer')
   const firstHeader = createFlvHeader()
   const firstSequence = createVideoSequenceHeaderTag()
+  const firstKeyframe = createVideoKeyframeTag()
   await nextTick()
   firstRunner.emitStdout(firstHeader)
   firstRunner.emitStdout(firstSequence)
+  firstRunner.emitStdout(firstKeyframe)
   await firstStartPromise
   await source.stop('idle_timeout')
 
@@ -222,13 +229,15 @@ test('stream restart should rebuild bootstrap instead of reusing stale prefix', 
   const secondStartPromise = source.ensureStarted('first_viewer')
   const secondHeader = createFlvHeader()
   const secondSequence = createFlvTag(9, [0x17, 0x00, 0x00, 0x00, 0x00, 0x09])
+  const secondKeyframe = createVideoKeyframeTag(0x19)
   await nextTick()
   secondRunner.emitStdout(secondHeader)
   secondRunner.emitStdout(secondSequence)
+  secondRunner.emitStdout(secondKeyframe)
   await secondStartPromise
 
-  const secondChunks = await drainSession(secondViewer, 2)
-  expect(secondChunks).toEqual([secondHeader, secondSequence])
+  const secondChunks = await drainSession(secondViewer, 3)
+  expect(secondChunks).toEqual([secondHeader, secondSequence, secondKeyframe])
 })
 
 test('late viewer should receive latest gop before live tags', async () => {
@@ -285,7 +294,7 @@ test('gop cache overflow should wait for next keyframe before rebuilding cache',
 
   const lateViewerBeforeReset = createSession('se_overflow_before_reset')
   source.addViewer(lateViewerBeforeReset)
-  const beforeResetDrainPromise = drainSession(lateViewerBeforeReset, 2)
+  const beforeResetDrainPromise = drainSession(lateViewerBeforeReset, 3)
 
   const nextKeyframe = createVideoKeyframeTag(0x77)
   fakeRunner.emitStdout(nextKeyframe)
@@ -335,6 +344,7 @@ test('first start should copy when probed codec matches requested output codec',
   await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  fakeRunner.emitStdout(createVideoKeyframeTag())
   await startPromise
 
   const command = fakeRunner.command
@@ -375,6 +385,7 @@ test('first start should transcode when probed codec differs from requested outp
   await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  fakeRunner.emitStdout(createVideoKeyframeTag())
   await startPromise
 
   const command = fakeRunner.command
@@ -422,6 +433,7 @@ test('audio auto should copy when probed input audio codec is aac', async () => 
   await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  fakeRunner.emitStdout(createVideoKeyframeTag())
   await startPromise
 
   const command = fakeRunner.command
@@ -469,6 +481,7 @@ test('audio auto should transcode unknown input audio codec', async () => {
   await nextTick()
   fakeRunner.emitStdout(createFlvHeader())
   fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  fakeRunner.emitStdout(createVideoKeyframeTag())
   await startPromise
 
   const command = fakeRunner.command
@@ -488,15 +501,17 @@ test('snapshotStatus should expose cumulative and last-run stats with explicit s
   const firstStartPromise = source.ensureStarted('first_viewer')
   const firstHeader = createFlvHeader()
   const firstSequence = createVideoSequenceHeaderTag()
+  const firstKeyframe = createVideoKeyframeTag()
   await nextTick()
   firstRunner.emitStdout(firstHeader)
   firstRunner.emitStdout(firstSequence)
+  firstRunner.emitStdout(firstKeyframe)
   await firstStartPromise
 
   const runningStatus = source.snapshotStatus()
   expect(runningStatus.startedAt).toBeTruthy()
   expect(runningStatus.lastActiveAt).toBeTruthy()
-  expect(runningStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength)
+  expect(runningStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength + firstKeyframe.byteLength)
   expect(runningStatus.stats.startAttemptsTotal).toBe(1)
   expect(runningStatus.stats.currentFfmpegPid).toBe(1234)
   expect(runningStatus.stats.lastStartLatencyMs).toBeTypeOf('number')
@@ -504,7 +519,7 @@ test('snapshotStatus should expose cumulative and last-run stats with explicit s
   await source.stop('idle_timeout')
 
   const stoppedStatus = source.snapshotStatus()
-  expect(stoppedStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength)
+  expect(stoppedStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength + firstKeyframe.byteLength)
   expect(stoppedStatus.stats.startAttemptsTotal).toBe(1)
   expect(stoppedStatus.stats.currentFfmpegPid).toBeUndefined()
 
@@ -513,18 +528,49 @@ test('snapshotStatus should expose cumulative and last-run stats with explicit s
   const secondStartPromise = source.ensureStarted('first_viewer')
   const secondHeader = createFlvHeader()
   const secondSequence = createVideoSequenceHeaderTag()
+  const secondKeyframe = createVideoKeyframeTag(0x15)
   await nextTick()
   secondRunner.emitStdout(secondHeader)
   secondRunner.emitStdout(secondSequence)
+  secondRunner.emitStdout(secondKeyframe)
   await secondStartPromise
 
   const restartedStatus = source.snapshotStatus()
-  expect(restartedStatus.stats.bytesOutTotal).toBe(firstHeader.byteLength + firstSequence.byteLength + secondHeader.byteLength + secondSequence.byteLength)
+  expect(restartedStatus.stats.bytesOutTotal).toBe(
+    firstHeader.byteLength +
+      firstSequence.byteLength +
+      firstKeyframe.byteLength +
+      secondHeader.byteLength +
+      secondSequence.byteLength +
+      secondKeyframe.byteLength
+  )
   expect(restartedStatus.stats.startAttemptsTotal).toBe(2)
   expect(restartedStatus.stats.currentFfmpegPid).toBe(1234)
   expect(restartedStatus.stats.lastStartLatencyMs).toBeTypeOf('number')
   expect(restartedStatus.startedAt).toBeTruthy()
   expect(restartedStatus.lastActiveAt).toBeTruthy()
+})
+
+test('ensureStarted should wait for first keyframe before resolving', async () => {
+  const fakeRunner = new FakeRunner()
+  const source = createSource([fakeRunner])
+  const viewer = createSession('se_wait_keyframe')
+  source.addViewer(viewer)
+
+  let resolved = false
+  const startPromise = source.ensureStarted('first_viewer').then(() => {
+    resolved = true
+  })
+
+  await nextTick()
+  fakeRunner.emitStdout(createFlvHeader())
+  fakeRunner.emitStdout(createVideoSequenceHeaderTag())
+  await nextTick()
+  expect(resolved).toBe(false)
+
+  fakeRunner.emitStdout(createVideoKeyframeTag())
+  await startPromise
+  expect(resolved).toBe(true)
 })
 
 test('startup failure should surface structured upstream_not_found error instead of generic ffmpeg_exited', async () => {

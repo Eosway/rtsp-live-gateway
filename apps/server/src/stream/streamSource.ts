@@ -217,7 +217,7 @@ export class StreamSource {
             this.bytesOutTotal += result.bytesOutDelta
           }
 
-          return result.firstMediaSeen
+          return this.pipeline.isReadyForPlayback()
         },
         onDiagEvent: (event) => {
           this.applyDiagEvent(event)
