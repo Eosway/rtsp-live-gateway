@@ -1,6 +1,6 @@
 {
   "name": "@eosway/rtsp-live-gateway-player-vue",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "https://www.npmjs.com/package/@eosway/rtsp-live-gateway-player-vue",
   "bugs": {
     "url": "https://github.com/Eosway/rtsp-live-gateway/issues"

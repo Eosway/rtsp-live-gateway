@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.2](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.0.1...player-vue@1.0.2) (2026-06-01)
+
+### Bug Fixes
+
+- align audio and player status ([2be59cb](https://github.com/Eosway/rtsp-live-gateway/commit/2be59cbfdb1a5003724ebadf2add33725b9d57a9))
+
+### Miscellaneous Chores
+
+- add LICENSE and complete package.json ([1c1005d](https://github.com/Eosway/rtsp-live-gateway/commit/1c1005d8088596ac74bc9104d43379cf5c32bed4))
+
+### Tests
+
+- migrate suites to vitest ([2e68daa](https://github.com/Eosway/rtsp-live-gateway/commit/2e68daa904ce7b761d21172a5234bd0e8498e1cb))
+
 ## [1.0.1](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.0.0...player-vue@1.0.1) (2026-05-06)
 
 ### Bug Fixes
