@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.1](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.2.0...server@1.2.1) (2026-06-01)
+
+### Bug Fixes
+
+- activate pnpm v10 explicitly ([621637f](https://github.com/Eosway/rtsp-live-gateway/commit/621637f1523206c9126ea74972eb0cdb3049dc2c))
+- tighten flv startup readiness ([37bc26a](https://github.com/Eosway/rtsp-live-gateway/commit/37bc26a5376493eee9cbbadfd2980444a4d8abd0))
+
+### Miscellaneous Chores
+
+- add LICENSE and complete package.json ([1c1005d](https://github.com/Eosway/rtsp-live-gateway/commit/1c1005d8088596ac74bc9104d43379cf5c32bed4))
+
 ## [1.2.0](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.1.1...server@1.2.0) (2026-06-01)
 
 ### Features
