@@ -1,5 +1,5 @@
 import type { ProbedInputMedia, ResolvedAudioPlan, ResolvedStreamCreateRequest } from '../../types.js'
-import { maskRtspUrl } from '../../lib/index.js'
+import { maskRtspUrl } from '../../util/sanitize.js'
 
 export interface FFmpegCommand {
   cmd: string

@@ -1,5 +1,5 @@
 import type { ApiErrorCode, FfmpegFailureReason, FfmpegDiagnosticErrorDetail } from '@eosway/rtsp-live-gateway-protocol'
-import { maskRtspUrlsInText } from '../../lib/index.js'
+import { maskRtspUrlsInText } from '../../util/sanitize.js'
 
 export interface FFmpegDiagEvent {
   ts: number

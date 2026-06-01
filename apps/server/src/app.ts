@@ -1,36 +1,18 @@
-import type { HealthzResponse, StreamCreateResponse, StreamListResponse, StreamStatusResponse } from '@eosway/rtsp-live-gateway-protocol'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { stream } from 'hono/streaming'
 import { randomUUID } from 'node:crypto'
 import type { ServerConfig } from './config.js'
-import { resolveStreamCreateRequest } from './domain/normalize.js'
-import { PlaybackSession } from './domain/PlaybackSession.js'
-import { StreamRegistry } from './domain/StreamRegistry.js'
-import { ApiError, toApiError } from './errors.js'
-import { assertRtspTargetAllowed } from './security/ssrf.js'
+import { toApiError } from './errors.js'
+import { registerHealthRoute } from './routes/health.js'
+import { registerLiveRoute } from './routes/live.js'
+import { registerMetricsRoute } from './routes/metrics.js'
+import { registerStreamRoutes } from './routes/streams.js'
+import { StreamRegistry } from './stream/streamRegistry.js'
 
 interface CreateAppOptions {
   config: ServerConfig
   ffmpegPath: string
   ffprobePath?: string
-}
-
-function buildMetricsText(metrics: { sources: number; runningSources: number; viewers: number; bytesOutTotal: number }): string {
-  return [
-    '# HELP rtsp_gw_sources Number of current stream sources.',
-    '# TYPE rtsp_gw_sources gauge',
-    `rtsp_gw_sources ${metrics.sources}`,
-    '# HELP rtsp_gw_running_sources Number of currently running stream sources.',
-    '# TYPE rtsp_gw_running_sources gauge',
-    `rtsp_gw_running_sources ${metrics.runningSources}`,
-    '# HELP rtsp_gw_viewers Number of active playback sessions.',
-    '# TYPE rtsp_gw_viewers gauge',
-    `rtsp_gw_viewers ${metrics.viewers}`,
-    '# HELP rtsp_gw_bytes_out_total Total fanout bytes output.',
-    '# TYPE rtsp_gw_bytes_out_total counter',
-    `rtsp_gw_bytes_out_total ${metrics.bytesOutTotal}`,
-  ].join('\n')
 }
 
 export function createApp(options: CreateAppOptions) {
@@ -61,118 +43,15 @@ export function createApp(options: CreateAppOptions) {
     return c.json(apiError.toBody(requestId), apiError.status as 500)
   })
 
-  app.get('/v1/healthz', (c) => {
-    const response: HealthzResponse = {
-      status: 'ok',
-      ffmpegPath: options.ffmpegPath,
-      uptimeSec: Math.floor(process.uptime()),
-    }
-    return c.json(response)
+  registerHealthRoute(app, { ffmpegPath: options.ffmpegPath })
+  registerMetricsRoute(app, registry)
+  registerStreamRoutes(app, {
+    config: options.config,
+    registry,
   })
-
-  app.get('/v1/metrics', (c) => {
-    c.header('content-type', 'text/plain; version=0.0.4; charset=utf-8')
-    return c.body(`${buildMetricsText(registry.snapshotMetrics())}\n`)
-  })
-
-  app.post('/v1/streams', async (c) => {
-    const body = await c.req.json().catch(() => {
-      throw new ApiError('INVALID_ARGUMENT', 'Invalid JSON payload')
-    })
-    const req = resolveStreamCreateRequest(body)
-    await assertRtspTargetAllowed(req.url, {
-      allowPrivateIp: options.config.ssrfAllowPrivateIp,
-      allowlist: options.config.rtspHostAllowlist,
-      denylist: options.config.rtspHostDenylist,
-      portAllowlist: options.config.rtspPortAllowlist,
-      requestAllowPrivateIp: false,
-    })
-
-    const { source, reused } = registry.createOrReuse(req)
-    const response: StreamCreateResponse = {
-      streamId: source.streamId,
-      state: source.getState(),
-      reused,
-      createdAt: source.createdAt,
-    }
-    return c.json(response)
-  })
-
-  app.get('/v1/streams', (c) => {
-    const response: StreamListResponse = registry.list()
-    return c.json(response)
-  })
-
-  app.get('/v1/streams/:streamId', (c) => {
-    const streamId = c.req.param('streamId')
-    if (!streamId) {
-      throw new ApiError('INVALID_ARGUMENT', 'streamId is required')
-    }
-    const source = registry.get(streamId)
-    if (!source) {
-      throw new ApiError('STREAM_NOT_FOUND', 'Stream not found')
-    }
-    const response: StreamStatusResponse = source.snapshotStatus()
-    return c.json(response)
-  })
-
-  app.delete('/v1/streams/:streamId', async (c) => {
-    const streamId = c.req.param('streamId')
-    if (!streamId) {
-      throw new ApiError('INVALID_ARGUMENT', 'streamId is required')
-    }
-    await registry.remove(streamId)
-    return c.body(null, 204)
-  })
-
-  app.get('/v1/live/:streamId', async (c) => {
-    const streamId = c.req.param('streamId')
-    if (!streamId) {
-      throw new ApiError('INVALID_ARGUMENT', 'streamId is required')
-    }
-    const source = registry.get(streamId)
-    if (!source) {
-      throw new ApiError('STREAM_NOT_FOUND', 'Stream not found')
-    }
-
-    if (source.viewerCount() >= options.config.maxViewersPerSource) {
-      throw new ApiError('VIEWER_LIMIT_REACHED', 'Viewer limit reached', {
-        maxViewersPerSource: options.config.maxViewersPerSource,
-      })
-    }
-
-    const session = new PlaybackSession({
-      streamId,
-      remoteIp: c.req.header('x-forwarded-for'),
-      userAgent: c.req.header('user-agent'),
-      maxQueueBytes: options.config.maxQueueBytes,
-    })
-    source.addViewer(session)
-
-    try {
-      await source.ensureStarted('first_viewer')
-    } catch (error) {
-      source.removeViewer(session.sessionId, 'startup_failed')
-      throw error
-    }
-
-    c.header('content-type', 'video/x-flv')
-    c.header('cache-control', 'no-store, no-cache, must-revalidate')
-    c.header('x-content-type-options', 'nosniff')
-
-    return stream(c, async (output) => {
-      output.onAbort(() => {
-        source.removeViewer(session.sessionId, 'client_abort')
-      })
-
-      try {
-        await session.drain(async (chunk) => {
-          await output.write(chunk)
-        })
-      } finally {
-        source.removeViewer(session.sessionId, session.getCloseReason() ?? 'stream_closed')
-      }
-    })
+  registerLiveRoute(app, {
+    config: options.config,
+    registry,
   })
 
   return app

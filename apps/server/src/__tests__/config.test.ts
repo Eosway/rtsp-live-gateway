@@ -27,7 +27,7 @@ test('should load ffmpeg strategy defaults', () => {
   const config = loadServerConfig()
   expect(config.decoder).toBe('auto')
   expect(config.encoder).toBe('auto')
-  expect(config.hardwareTemplate).toBe('nvidia')
+  expect(config.hardwareVendor).toBe('nvidia')
 })
 
 test('should load explicit ffmpeg strategy overrides', () => {
@@ -38,5 +38,5 @@ test('should load explicit ffmpeg strategy overrides', () => {
   const config = loadServerConfig()
   expect(config.decoder).toBe('software')
   expect(config.encoder).toBe('hardware')
-  expect(config.hardwareTemplate).toBe('nvidia')
+  expect(config.hardwareVendor).toBe('nvidia')
 })

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { FFmpegStderrParser, summarizeStderrTail } from '../FFmpegStderrParser.js'
+import { FFmpegStderrParser, summarizeStderrTail } from '../stderr.js'
 
 test('should classify 404 not found as upstream_not_found with readable summary', () => {
   const parser = new FFmpegStderrParser()

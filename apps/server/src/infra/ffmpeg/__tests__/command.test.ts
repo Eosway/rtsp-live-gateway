@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { buildFfmpegCommand, resolveAudioPlan, resolveVideoPlan } from '../FFmpegCommandBuilder.js'
+import { buildFfmpegCommand, resolveAudioPlan, resolveVideoPlan } from '../command.js'
 import type { ResolvedAudioPlan, ResolvedStreamCreateRequest } from '../../../types.js'
 
 function createRequest(overrides: Partial<ResolvedStreamCreateRequest> = {}): ResolvedStreamCreateRequest {

@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process'
-import type { FFmpegCommand } from './FFmpegCommandBuilder.js'
+import type { FFmpegCommand } from './command.js'
 
 type StdoutListener = (chunk: Buffer) => void
 type StderrLineListener = (line: string) => void

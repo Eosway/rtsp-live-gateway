@@ -167,9 +167,9 @@ RTSP 输入：
 ## 7. 代码结构
 
 - `src/app.ts`：路由与请求处理
-- `src/domain/StreamRegistry.ts`：流注册和复用
-- `src/domain/StreamSource.ts`：单源生命周期与状态机
-- `src/domain/PlaybackSession.ts`：单观众队列与回压
+- `src/stream/streamRegistry.ts`：流注册和复用
+- `src/stream/streamSource.ts`：单源生命周期与状态机
+- `src/stream/playbackSession.ts`：单观众队列与回压
 - `src/infra/ffmpeg/*`：FFmpeg 构建、运行、诊断
 - `src/security/ssrf.ts`：URL/主机/IP/端口防护
 - `src/config.ts`：配置读取与默认值

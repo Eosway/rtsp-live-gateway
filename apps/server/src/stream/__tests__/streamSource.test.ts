@@ -1,9 +1,9 @@
 import { expect, test } from 'vitest'
-import { PlaybackSession } from '../PlaybackSession.js'
-import { StreamSource } from '../StreamSource.js'
-import type { Logger } from '../../lib/logger.js'
+import type { FFmpegCommand } from '../../infra/ffmpeg/command.js'
+import type { Logger } from '../../util/logger.js'
 import type { ResolvedStreamCreateRequest } from '../../types.js'
-import type { FFmpegCommand } from '../../infra/ffmpeg/FFmpegCommandBuilder.js'
+import { PlaybackSession } from '../playbackSession.js'
+import { StreamSource } from '../streamSource.js'
 
 class FakeRunner {
   private stdoutListeners: Array<(chunk: Uint8Array) => void> = []

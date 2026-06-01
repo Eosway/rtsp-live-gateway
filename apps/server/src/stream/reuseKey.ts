@@ -1,4 +1,4 @@
-import { sha256 } from '../lib/index.js'
+import { sha256 } from '../util/hash.js'
 import type { ResolvedStreamCreateRequest } from '../types.js'
 
 export function buildSourceKey(req: ResolvedStreamCreateRequest): string {

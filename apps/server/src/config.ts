@@ -1,4 +1,4 @@
-import { createConsoleLogger, type Logger } from './lib/index.js'
+import { createConsoleLogger, type Logger } from './util/logger.js'
 
 export interface ServerConfig {
   port: number
@@ -7,7 +7,7 @@ export interface ServerConfig {
   ioTimeoutMs: number
   decoder: 'auto' | 'software' | 'hardware'
   encoder: 'auto' | 'software' | 'hardware'
-  hardwareTemplate: 'nvidia'
+  hardwareVendor: 'nvidia'
   startupTimeoutMs: number
   idleGraceMs: number
   stopGraceMs: number
@@ -65,7 +65,7 @@ function parseStrategy(value: string | undefined, fallback: ServerConfig['decode
   return fallback
 }
 
-function parseHardwareTemplate(value: string | undefined): ServerConfig['hardwareTemplate'] {
+function parseHardwareVendor(value: string | undefined): ServerConfig['hardwareVendor'] {
   if (value === 'nvidia') {
     return 'nvidia'
   }
@@ -82,7 +82,7 @@ export function loadServerConfig(): ServerConfig {
     ioTimeoutMs: parseIntValue(process.env.RTSP_IO_TIMEOUT_MS, 5000),
     decoder: parseStrategy(process.env.FFMPEG_DECODER, 'auto'),
     encoder: parseStrategy(process.env.FFMPEG_ENCODER, 'auto'),
-    hardwareTemplate: parseHardwareTemplate(process.env.FFMPEG_HARDWARE_TEMPLATE),
+    hardwareVendor: parseHardwareVendor(process.env.FFMPEG_HARDWARE_TEMPLATE),
     startupTimeoutMs: parseIntValue(process.env.STREAM_STARTUP_TIMEOUT_MS, 8000),
     idleGraceMs: parseIntValue(process.env.STREAM_IDLE_GRACE_MS, 15000),
     stopGraceMs: parseIntValue(process.env.STOP_GRACE_MS, 1500),

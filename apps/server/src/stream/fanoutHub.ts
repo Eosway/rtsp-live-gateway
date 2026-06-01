@@ -1,4 +1,4 @@
-import { PlaybackSession } from './PlaybackSession.js'
+import { PlaybackSession } from './playbackSession.js'
 
 export class FanoutHub {
   private readonly sessions = new Map<string, PlaybackSession>()

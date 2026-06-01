@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { ApiError } from '../../errors.js'
-import { resolveStreamCreateRequest } from '../normalize.js'
+import { resolveStreamCreateRequest } from '../create.js'
 
 test('should reject unsupported video codec values', () => {
   let thrown: unknown

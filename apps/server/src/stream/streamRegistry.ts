@@ -3,8 +3,8 @@ import { randomUUID } from 'node:crypto'
 import type { ServerConfig } from '../config.js'
 import { ApiError } from '../errors.js'
 import type { ResolvedStreamCreateRequest } from '../types.js'
-import { buildSourceKey } from './sourceKey.js'
-import { StreamSource } from './StreamSource.js'
+import { buildSourceKey } from './reuseKey.js'
+import { StreamSource } from './streamSource.js'
 
 interface StreamRegistryOptions {
   config: ServerConfig
@@ -49,7 +49,7 @@ export class StreamRegistry {
       ffprobePath: this.ffprobePath,
       decoder: this.config.decoder,
       encoder: this.config.encoder,
-      hardwareVendor: this.config.hardwareTemplate,
+      hardwareVendor: this.config.hardwareVendor,
       startupTimeoutMs: this.config.startupTimeoutMs,
       idleGraceMs: this.config.idleGraceMs,
       stopGraceMs: this.config.stopGraceMs,
