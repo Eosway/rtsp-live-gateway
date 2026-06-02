@@ -1,9 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
     "lib": ["ES2022", "DOM"],
+    "types": [],
     "paths": {
       "@eosway/rtsp-live-gateway-protocol": ["../../packages/protocol/src/index.ts"]
     }

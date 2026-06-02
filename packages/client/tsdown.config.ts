@@ -8,5 +8,7 @@ export default defineConfig({
   clean: true,
   dts: true,
   fixedExtension: false,
-  external: ['@eosway/rtsp-live-gateway-protocol'],
+  deps: {
+    neverBundle: ['@eosway/rtsp-live-gateway-protocol'],
+  },
 })

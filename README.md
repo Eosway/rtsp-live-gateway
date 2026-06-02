@@ -21,12 +21,18 @@ pnpm run check
 
 Runtime baseline:
 
-- Node.js `24+`
+- Workspace build baseline: Node.js `22.18+` or `24+`
+- Server local runtime baseline: Node.js `24+`
 - Default container base: `node:24-alpine`
 - `ffmpeg`
   - 优先读取 `FFMPEG_PATH`
   - 其次使用系统 PATH 中的 `ffmpeg`
   - 非生产环境下可回退到 `@ffmpeg-installer/ffmpeg`
+
+Notes:
+
+- workspace 构建基线：Node `22.18+` 或 `24+`
+- server Docker / 推荐运行基线：Node `24`
 
 ## Common Scripts
 

@@ -5,10 +5,11 @@ export default defineConfig({
   format: 'esm',
   outDir: 'dist',
   target: 'node24',
-  platform: 'node',
   sourcemap: true,
   clean: true,
   dts: false,
   fixedExtension: false,
-  external: ['@hono/node-server', 'hono', '@ffmpeg-installer/ffmpeg', '@eosway/rtsp-live-gateway-protocol'],
+  deps: {
+    neverBundle: ['@hono/node-server', 'hono', '@ffmpeg-installer/ffmpeg', '@eosway/rtsp-live-gateway-protocol'],
+  },
 })
