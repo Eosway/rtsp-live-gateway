@@ -78,7 +78,7 @@ node apps/server/dist/index.js
 
 ### 4.1 懒启动与复用
 
-1. `POST /v1/streams` 时基于归一化后的输入配置判断是否可复用。
+1. `POST /v1/streams` 时基于生效后的输入配置判断是否可复用。
 2. 已存在相同输入配置的流则复用已有流。
 3. 第一个观众访问 `/live/:streamId` 时才启动 FFmpeg。
 
@@ -106,10 +106,12 @@ node apps/server/dist/index.js
 - 输出：`-f flv -flvflags no_duration_filesize pipe:1`
 - 首次启动尝试前会先用 `ffprobe` 探测输入视频 codec
 - `audio.enabled = false`：禁用音频输出（`-an`）
-- `audio.mode = auto`：会先探测输入音频 codec，若为 `aac` 或 `mp3` 则优先 `copy`，否则转码到目标 codec
+- `audio.mode = auto`：输入音频为 `aac` 或 `mp3` 时使用 `copy`；否则转码到目标 codec
 - `audio.mode = transcode`：始终转码到目标 codec
-- `video.mode = auto` 且输入 codec 与 `video.codec` 一致：首次启动尝试使用 `copy`
-- `video.mode = auto` 且输入 codec 与 `video.codec` 不一致：首次启动尝试使用转码
+- `video.mode = auto` 且未显式指定 `video.codec`：输入 codec 为已知 `h264` 或 `h265` 时，首次启动尝试使用 `copy`
+- `video.mode = auto` 且未显式指定 `video.codec`：输入 codec 未知时，首次启动尝试转码到 `video.fallbackCodec`
+- `video.mode = auto` 且显式指定 `video.codec`：输入 codec 与 `video.codec` 一致时，首次启动尝试使用 `copy`
+- `video.mode = auto` 且显式指定 `video.codec`：输入 codec 未知或与 `video.codec` 不一致时，首次启动尝试转码
 - `video.mode = transcode`：所有启动尝试都使用转码
 - 启动重试：强制转码
 - `video.codec = h264`：转码使用 `libx264`
@@ -154,6 +156,7 @@ FFmpeg 策略：
 
 - `video.mode: auto | transcode`
 - `video.codec: h264 | h265`
+- `video.fallbackCodec` 内置转码回退目标，默认值 `h264`
 
 部署侧负责解码/编码策略和模板：
 

@@ -66,18 +66,25 @@ export function resolveStreamCreateRequest(raw: unknown): ResolvedStreamCreateRe
     throw new ApiError('INVALID_ARGUMENT', 'Invalid video.mode', { field: 'video.mode' })
   }
 
-  const videoCodec = body.video?.codec ?? DEFAULT_VIDEO_CODEC
-  if (!['h264', 'h265'].includes(videoCodec)) {
+  const videoCodec = body.video?.codec
+  if (videoCodec !== undefined && !['h264', 'h265'].includes(videoCodec)) {
     throw new ApiError('INVALID_ARGUMENT', 'Invalid video.codec', { field: 'video.codec' })
   }
 
   return {
     url: body.url,
     transport,
-    video: {
-      mode: videoMode,
-      codec: videoCodec,
-    },
+    video:
+      videoMode === 'transcode'
+        ? {
+            mode: 'transcode',
+            codec: videoCodec ?? DEFAULT_VIDEO_CODEC,
+          }
+        : {
+            mode: 'auto',
+            codec: videoCodec,
+            fallbackCodec: DEFAULT_VIDEO_CODEC,
+          },
     audio: resolveAudioOptions(body.audio),
   }
 }

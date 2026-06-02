@@ -27,10 +27,7 @@ export function toStreamStatusResponse(input: StreamSnapshotInput): StreamStatus
     lastActiveAt: input.lastActiveAt,
     resolvedConfig: {
       transport: input.req.transport,
-      video: {
-        mode: input.req.video.mode,
-        codec: input.req.video.codec,
-      },
+      video: input.req.video,
       audio: input.req.audio,
     },
     stats: {

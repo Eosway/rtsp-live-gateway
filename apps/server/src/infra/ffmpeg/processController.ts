@@ -71,7 +71,7 @@ export class ProcessController {
     this.lastDiagEvent = undefined
 
     const inputMedia = input.inputMedia
-    const videoPlan = resolveVideoPlan(input.attempt, input.req.video.mode, input.req.video.codec, inputMedia.video)
+    const videoPlan = resolveVideoPlan(input.attempt, input.req.video, inputMedia.video)
     const audioPlan = resolveAudioPlan(input.req, inputMedia.audio)
     const command = buildFfmpegCommand(this.ffmpegPath, input.req, videoPlan, audioPlan, inputMedia.video, {
       ioTimeoutMs: this.ioTimeoutMs,

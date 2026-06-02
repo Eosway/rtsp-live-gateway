@@ -39,6 +39,33 @@ test('should accept supported video codec values', () => {
   expect(resolved.video.codec).toBe('h265')
 })
 
+test('should resolve auto video without explicit codec to fallback-only shape', () => {
+  const resolved = resolveStreamCreateRequest({
+    url: 'rtsp://example.com/live',
+  })
+
+  expect(resolved.video).toEqual({
+    mode: 'auto',
+    fallbackCodec: 'h264',
+  })
+})
+
+test('should resolve auto video with explicit codec to explicit target plus fallback shape', () => {
+  const resolved = resolveStreamCreateRequest({
+    url: 'rtsp://example.com/live',
+    video: {
+      mode: 'auto',
+      codec: 'h265',
+    },
+  })
+
+  expect(resolved.video).toEqual({
+    mode: 'auto',
+    codec: 'h265',
+    fallbackCodec: 'h264',
+  })
+})
+
 test('should resolve disabled audio to an empty disabled shape', () => {
   const resolved = resolveStreamCreateRequest({
     url: 'rtsp://example.com/live',

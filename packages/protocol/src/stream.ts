@@ -51,12 +51,21 @@ export interface StreamCreateResponse {
   createdAt: string
 }
 
-export interface ResolvedVideoOptions {
-  /** 归一化后的视频模式 */
-  mode: NonNullable<VideoOptions['mode']>
-  /** 归一化后的视频 codec */
-  codec: NonNullable<VideoOptions['codec']>
-}
+export type ResolvedVideoOptions =
+  | {
+      /** 归一化后的视频模式 */
+      mode: 'auto'
+      /** 显式指定的目标视频 codec；省略表示已知输入优先直通 */
+      codec?: VideoCodec
+      /** auto 模式下需要转码时的回退目标 codec */
+      fallbackCodec: VideoCodec
+    }
+  | {
+      /** 归一化后的视频模式 */
+      mode: 'transcode'
+      /** 强制转码目标 codec */
+      codec: VideoCodec
+    }
 
 export type ResolvedAudioOptions =
   | {

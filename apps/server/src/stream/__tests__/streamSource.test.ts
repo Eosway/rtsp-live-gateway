@@ -76,7 +76,7 @@ function createRequest(): ResolvedStreamCreateRequest {
     transport: 'tcp',
     video: {
       mode: 'auto',
-      codec: 'h264',
+      fallbackCodec: 'h264',
     },
     audio: {
       enabled: false,
@@ -359,7 +359,14 @@ test('first start should transcode when probed codec differs from requested outp
   const source = new StreamSource({
     streamId: 'st_auto_transcode',
     sourceKey: 'src_auto_transcode',
-    req: createRequest(),
+    req: {
+      ...createRequest(),
+      video: {
+        mode: 'auto',
+        codec: 'h264',
+        fallbackCodec: 'h264',
+      },
+    },
     ffmpegPath: '/usr/bin/ffmpeg',
     ioTimeoutMs: 5000,
     ffprobePath: '/usr/bin/ffprobe',

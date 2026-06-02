@@ -8,7 +8,7 @@ function createRequest(overrides: Partial<ResolvedStreamCreateRequest> = {}): Re
     transport: 'tcp',
     video: {
       mode: 'auto',
-      codec: 'h264',
+      fallbackCodec: 'h264',
     },
     audio: {
       enabled: false,
@@ -18,16 +18,17 @@ function createRequest(overrides: Partial<ResolvedStreamCreateRequest> = {}): Re
 }
 
 test('auto mode should choose copy only for first attempt when probed codec matches', () => {
-  expect(resolveVideoPlan(1, 'auto', 'h264', 'h264')).toBe('copy')
-  expect(resolveVideoPlan(1, 'auto', 'h265', 'h265')).toBe('copy')
-  expect(resolveVideoPlan(1, 'auto', 'h264', 'h265')).toBe('transcode')
-  expect(resolveVideoPlan(1, 'auto', 'h264', 'unknown')).toBe('transcode')
-  expect(resolveVideoPlan(2, 'auto', 'h264', 'h264')).toBe('transcode')
+  expect(resolveVideoPlan(1, { mode: 'auto', codec: 'h264', fallbackCodec: 'h264' }, 'h264')).toBe('copy')
+  expect(resolveVideoPlan(1, { mode: 'auto', codec: 'h265', fallbackCodec: 'h264' }, 'h265')).toBe('copy')
+  expect(resolveVideoPlan(1, { mode: 'auto', codec: 'h264', fallbackCodec: 'h264' }, 'h265')).toBe('transcode')
+  expect(resolveVideoPlan(1, { mode: 'auto', fallbackCodec: 'h264' }, 'h265')).toBe('copy')
+  expect(resolveVideoPlan(1, { mode: 'auto', fallbackCodec: 'h264' }, 'unknown')).toBe('transcode')
+  expect(resolveVideoPlan(2, { mode: 'auto', fallbackCodec: 'h264' }, 'h264')).toBe('transcode')
 })
 
 test('transcode mode should never downgrade to copy even if input codec matches', () => {
-  expect(resolveVideoPlan(1, 'transcode', 'h264', 'h264')).toBe('transcode')
-  expect(resolveVideoPlan(1, 'transcode', 'h265', 'h265')).toBe('transcode')
+  expect(resolveVideoPlan(1, { mode: 'transcode', codec: 'h264' }, 'h264')).toBe('transcode')
+  expect(resolveVideoPlan(1, { mode: 'transcode', codec: 'h265' }, 'h265')).toBe('transcode')
 })
 
 test('copy mode should preserve video bitstream copy', () => {
@@ -37,6 +38,7 @@ test('copy mode should preserve video bitstream copy', () => {
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'copy',
@@ -222,6 +224,7 @@ test('transcode mode should map h264 or h265 to libx264 or libx265', () => {
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'transcode',
@@ -255,6 +258,7 @@ test('hardware encoder should map output codec to nvenc encoder', () => {
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'transcode',
@@ -285,6 +289,7 @@ test('software encoder should map h264 or h265 to libx264 or libx265', () => {
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'transcode',
@@ -315,6 +320,7 @@ test('auto encoder should currently fall back to software templates', () => {
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'transcode',
@@ -345,6 +351,7 @@ test('template group should resolve by codec family first', () => {
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'transcode',
@@ -391,6 +398,7 @@ test('hardware decoder should inject cuda and cuvid args for h265 transcode', ()
       video: {
         mode: 'auto',
         codec: 'h265',
+        fallbackCodec: 'h264',
       },
     }),
     'transcode',

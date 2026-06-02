@@ -21,7 +21,7 @@ export interface FFmpegStrategyOptions {
 }
 
 function resolveVideoCodec(req: ResolvedStreamCreateRequest): 'h264' | 'h265' {
-  return req.video.codec
+  return req.video.mode === 'transcode' ? req.video.codec : (req.video.codec ?? req.video.fallbackCodec)
 }
 
 function resolveCodecFamily(codec: 'h264' | 'h265'): CodecFamily {
@@ -155,19 +155,20 @@ export function buildFfmpegCommand(
   }
 }
 
-export function resolveVideoPlan(
-  attempt: number,
-  requestedMode: RequestedVideoMode,
-  requestedCodec: RequestedVideoCodec,
-  inputCodec: InputVideoCodec
-): VideoPlan {
-  if (requestedMode === 'transcode') {
+export function resolveVideoPlan(attempt: number, video: ResolvedStreamCreateRequest['video'], inputCodec: InputVideoCodec): VideoPlan {
+  if (video.mode === 'transcode') {
     return 'transcode'
   }
   if (attempt > 1) {
     return 'transcode'
   }
-  if (inputCodec === requestedCodec) {
+  if (inputCodec === 'unknown') {
+    return 'transcode'
+  }
+  if (video.codec === undefined) {
+    return 'copy'
+  }
+  if (inputCodec === video.codec) {
     return 'copy'
   }
   return 'transcode'

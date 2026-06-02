@@ -19,7 +19,7 @@ export interface ProbedInputMedia {
   audio: AudioCodec | 'unknown'
 }
 
-export interface ResolvedStreamCreateRequest extends StreamCreateRequest {
+export interface ResolvedStreamCreateRequest extends Omit<StreamCreateRequest, 'video'> {
   transport: RtspTransport
   video: ResolvedVideoOptions
   audio: ResolvedAudioOptions
