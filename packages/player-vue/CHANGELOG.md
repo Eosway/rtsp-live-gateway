@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.0.2...player-vue@1.1.0) (2026-06-02)
+
+### Features
+
+- add startup ready contract ([a9edd24](https://github.com/Eosway/rtsp-live-gateway/commit/a9edd24e544895c8eb593a75f2723ee2a46c8530))
+
 ## [1.0.2](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.0.1...player-vue@1.0.2) (2026-06-01)
 
 ### Bug Fixes
