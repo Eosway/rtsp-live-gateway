@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.2.1...server@1.3.0) (2026-06-02)
+
+### Features
+
+- refine default video auto copy behavior ([8581643](https://github.com/Eosway/rtsp-live-gateway/commit/858164388f5b0712d8dae4c646f411e41d8d69ec))
+
 ## [1.2.1](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.2.0...server@1.2.1) (2026-06-01)
 
 ### Bug Fixes

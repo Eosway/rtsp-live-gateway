@@ -1,6 +1,6 @@
 {
   "name": "@eosway/rtsp-live-gateway-server",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "private": true,
   "homepage": "https://github.com/Eosway/rtsp-live-gateway/tree/main/apps/server",
   "bugs": {
