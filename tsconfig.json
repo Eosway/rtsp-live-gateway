@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
+    /* Language and environment */
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022"],
+
+    /* Module resolution */
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "allowJs": true,
@@ -10,6 +13,7 @@
     "jsxImportSource": "vue",
 
     /* Bundler mode */
+    "allowImportingTsExtensions": false,
     "moduleDetection": "force",
     "resolveJsonModule": true,
     "skipLibCheck": true,
@@ -24,5 +28,9 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["node"]
   },
+
+  /* Workspace package graph */
+  "files": [],
+  "references": [{ "path": "./packages/protocol" }, { "path": "./packages/client" }, { "path": "./packages/player-vue" }, { "path": "./apps/server" }],
   "exclude": ["**/dist", "**/node_modules"]
 }

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "tsc": "vue-tsc --noEmit",
+    "tsc": "vue-tsc -b",
     "clean": "rimraf dist"
   },
   "dependencies": {

@@ -2,11 +2,14 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
-    "paths": {
-      "@eosway/rtsp-live-gateway-client": ["../../packages/client/src/index.ts"],
-      "@eosway/rtsp-live-gateway-protocol": ["../../packages/protocol/src/index.ts"]
-    }
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo"
   },
+  "references": [{ "path": "../client" }],
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }

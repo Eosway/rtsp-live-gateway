@@ -10,8 +10,6 @@ export default defineConfig({
       entryRoot: 'src',
       insertTypesEntry: true,
       rollupTypes: true,
-      bundledPackages: ['@eosway/rtsp-live-gateway-protocol'],
-      tsconfigPath: resolve(__dirname, 'tsconfig.json'),
     }),
   ],
   build: {

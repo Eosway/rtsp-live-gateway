@@ -2,12 +2,15 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
-    "paths": {
-      "@eosway/rtsp-live-gateway-client": ["../packages/client/src/index.ts"],
-      "@eosway/rtsp-live-gateway-player-vue": ["../packages/player-vue/src/index.ts"],
-      "@eosway/rtsp-live-gateway-protocol": ["../packages/protocol/src/index.ts"]
-    }
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"]
+  "references": [{ "path": "../packages/client" }, { "path": "../packages/player-vue" }],
+  "include": ["src/**/*.ts", "src/**/*.vue"]
 }

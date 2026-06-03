@@ -16,9 +16,9 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "tsc": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "tsc": "tsc -b",
     "clean": "rimraf dist"
   },
   "dependencies": {

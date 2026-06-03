@@ -25,9 +25,9 @@
   ],
   "scripts": {
     "build": "vite build",
-    "tsc": "vue-tsc --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "tsc": "tsc -b",
     "clean": "rimraf dist",
     "release": "commit-and-tag-version --path . -t player-vue@"
   },

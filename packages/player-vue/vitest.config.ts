@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   resolve: {
-    conditions: ['source', 'module', 'node', 'development|production'],
+    conditions: ['source', 'module', 'browser', 'development|production'],
   },
   test: {
     environment: 'node',

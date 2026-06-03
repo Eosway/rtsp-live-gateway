@@ -13,8 +13,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "tsc": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -b",
+    "tsc": "tsc -b",
     "clean": "rimraf dist"
   }
 }
