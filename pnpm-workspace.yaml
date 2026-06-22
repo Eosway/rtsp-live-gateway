@@ -9,13 +9,13 @@ allowBuilds:
 allowUnusedPatches: true
 
 catalog:
-  '@types/node': ^24.12.2
+  '@types/node': ^24.14.2
   '@vitejs/plugin-vue': ^6.0.7
-  '@vitest/coverage-v8': ^4.1.7
-  'tsdown': ^0.22.1
-  'vite': ^8.0.15
-  'vitest': ^4.1.7
-  'vue': ^3.5.35
-  'vue-tsc': ^3.3.3
+  '@vitest/coverage-v8': ^4.1.9
+  'tsdown': ^0.22.3
+  'vite': ^8.0.16
+  'vitest': ^4.1.9
+  'vue': ^3.5.38
+  'vue-tsc': ^3.3.5
 patchedDependencies:
   mpegts.js@1.8.0: patches/mpegts.js@1.8.0.patch
