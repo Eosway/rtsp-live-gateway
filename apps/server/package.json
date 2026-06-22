@@ -28,12 +28,12 @@
     "release": "commit-and-tag-version --path . -t server@"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.14",
-    "hono": "^4.12.15"
+    "@hono/node-server": "^2.0.5",
+    "hono": "^4.12.26"
   },
   "devDependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@eosway/rtsp-live-gateway-protocol": "workspace:*",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",

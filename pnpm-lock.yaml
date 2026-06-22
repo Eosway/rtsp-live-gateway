@@ -98,11 +98,11 @@ importers:
   apps/server:
     dependencies:
       '@hono/node-server':
-        specifier: ^1.19.14
-        version: 1.19.14(hono@4.12.15)
+        specifier: ^2.0.5
+        version: 2.0.5(hono@4.12.26)
       hono:
-        specifier: ^4.12.15
-        version: 4.12.15
+        specifier: ^4.12.26
+        version: 4.12.26
     devDependencies:
       '@eosway/rtsp-live-gateway-protocol':
         specifier: workspace:*
@@ -419,9 +419,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@hono/node-server@1.19.14':
-    resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
-    engines: {node: '>=18.14.1'}
+  '@hono/node-server@2.0.5':
+    resolution: {integrity: sha512-yQFvDmyDo3y6rEOJZDUYPJ49DIKTPpIk4kGvm40xx4Ejne0Pu9a1+exxPN+C1UppWK/WGZX9F++/Xs231tE86g==}
+    engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
 
@@ -1846,8 +1846,8 @@ packages:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
-  hono@4.12.15:
-    resolution: {integrity: sha512-qM0jDhFEaCBb4TxoW7f53Qrpv9RBiayUHo0S52JudprkhvpjIrGoU1mnnr29Fvd1U335ZFPZQY1wlkqgfGXyLg==}
+  hono@4.12.26:
+    resolution: {integrity: sha512-uyZtpnYxM9CmQ7QsQknM4zN8EftNqhON1qYeIKM0Se67CCEe2c44xyGURwB0axX2fBDu1dqHrHAc1hmNT8ITkw==}
     engines: {node: '>=16.9.0'}
 
   hookable@6.1.1:
@@ -3298,9 +3298,9 @@ snapshots:
   '@ffmpeg-installer/win32-x64@4.1.0':
     optional: true
 
-  '@hono/node-server@1.19.14(hono@4.12.15)':
+  '@hono/node-server@2.0.5(hono@4.12.26)':
     dependencies:
-      hono: 4.12.15
+      hono: 4.12.26
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -4628,7 +4628,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hono@4.12.15: {}
+  hono@4.12.26: {}
 
   hookable@6.1.1: {}
 
