@@ -19,7 +19,7 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "tsc": "tsc -b",
-    "clean": "rimraf dist"
+    "clear": "rimraf dist"
   },
   "dependencies": {
     "@eosway/rtsp-live-gateway-protocol": "workspace:*"

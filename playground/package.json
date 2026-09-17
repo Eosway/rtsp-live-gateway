@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "tsc": "vue-tsc -b",
-    "clean": "rimraf dist"
+    "clear": "rimraf dist"
   },
   "dependencies": {
     "@eosway/rtsp-live-gateway-client": "workspace:*",

@@ -45,7 +45,7 @@ Notes:
 | `pnpm run build:server`     | 构建 `protocol` 与 `server`。             |
 | `pnpm run build:playground` | 仅构建 `playground`。                     |
 | `pnpm run test`             | 运行 workspace 内可用的测试。             |
-| `pnpm run clean`            | 清理各包构建产物。                        |
+| `pnpm run clear`            | 清理各包构建产物。                        |
 | `pnpm run lint`             | 对仓库执行 ESLint 自动修复。              |
 | `pnpm run format`           | 对仓库执行 Prettier 格式化。              |
 | `pnpm run dev:server`       | 以 watch 模式启动服务端开发流程。         |
