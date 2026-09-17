@@ -59,7 +59,7 @@ jobs:
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
       - name: Build player package
-        run: pnpm --filter ./packages/player-vue... run build
+        run: pnpm run build:packages
 
       - name: Publish player package
         run: pnpm --filter ./packages/player-vue publish --access public --no-git-checks --provenance
