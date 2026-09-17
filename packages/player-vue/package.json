@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@eosway/rtsp-live-gateway-client": "workspace:*",
+    "@microsoft/api-extractor": "^7.59.1",
     "@vitejs/plugin-vue": "catalog:",
     "mpegts.js": "^1.8.2",
     "vite": "catalog:",
