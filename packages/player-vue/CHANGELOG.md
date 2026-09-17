@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.1.0...player-vue@1.1.1) (2026-09-17)
+
+### Bug Fixes
+
+- warning about vite and dts ([6fab4d9](https://github.com/Eosway/rtsp-live-gateway/commit/6fab4d90aa9e94b8dbcb5684025bd4aea5a3bdd3))
+
+### Miscellaneous Chores
+
+- migrate to pnpm v12 ([9da160e](https://github.com/Eosway/rtsp-live-gateway/commit/9da160e950a5f6ce8c50ae15044e30e65cd28bb2))
+- update and re-patch mpegts.js ([f9fc061](https://github.com/Eosway/rtsp-live-gateway/commit/f9fc061e8e0e44b1ec25509091e6a47518e6a257))
+- update non-major dependencies ([abfaeb0](https://github.com/Eosway/rtsp-live-gateway/commit/abfaeb0a70c383ed8f47c89775032e71df006d7f))
+
 ## [1.1.0](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.0.2...player-vue@1.1.0) (2026-06-02)
 
 ### Features
