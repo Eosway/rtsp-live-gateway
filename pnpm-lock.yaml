@@ -190,9 +190,7 @@ catalogs:
       version: 3.3.11
 
 patchedDependencies:
-  mpegts.js@1.8.0:
-    hash: e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c
-    path: patches/mpegts.js@1.8.0.patch
+  mpegts.js@1.8.2: f6809ce4d13f796e05d510e5f58d5c150bc221bd36d26eb2d6c02ad4528a818d
 
 importers:
 
@@ -306,8 +304,8 @@ importers:
         specifier: 'catalog:'
         version: 6.0.9(vite@8.3.0(@types/node@24.13.5)(jiti@2.6.1)(yaml@2.9.0))(vue@3.5.42(typescript@6.0.3))
       mpegts.js:
-        specifier: ^1.8.0
-        version: 1.8.0(patch_hash=e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c)
+        specifier: ^1.8.2
+        version: 1.8.2(patch_hash=f6809ce4d13f796e05d510e5f58d5c150bc221bd36d26eb2d6c02ad4528a818d)
       vite:
         specifier: 'catalog:'
         version: 8.3.0(@types/node@24.13.5)(jiti@2.6.1)(yaml@2.9.0)
@@ -1964,6 +1962,10 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
+  events@3.3.0:
+    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
+    engines: {node: '>=0.8.x'}
+
   expect-type@1.3.0:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
@@ -2474,8 +2476,9 @@ packages:
     resolution: {integrity: sha512-xV2bxeN6F7oYjZWTe/YPAy6MN2M+sL4u/Rlm2AHCIVGfo2p1yGmBHQ6vHehl4bRTZBdHu3TSkWdYgkwpYzAGSw==}
     engines: {node: '>=0.10.0'}
 
-  mpegts.js@1.8.0:
-    resolution: {integrity: sha512-ZtujqtmTjWgcDDkoOnLvrOKUTO/MKgLHM432zGDI8oPaJ0S+ebPxg1nEpDpLw6I7KmV/GZgUIrfbWi3qqEircg==}
+  mpegts.js@1.8.2:
+    resolution: {integrity: sha512-cZYMa5muASH55wrS6JK5IGkUqnCA96c0f+WdnW91jIK9s/N6NzjmTQDJNYg9A5u/G2Q5nj2b3w1Zwzze/9guxA==}
+    engines: {node: '>=20.9.0'}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -3199,10 +3202,6 @@ packages:
 
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
-
-  webworkify-webpack@https://codeload.github.com/xqq/webworkify-webpack/tar.gz/24d1e719b4a6cac37a518b2bb10fe124527ef4ef:
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/xqq/webworkify-webpack/tar.gz/24d1e719b4a6cac37a518b2bb10fe124527ef4ef}
-    version: 2.1.5
 
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
@@ -4788,6 +4787,8 @@ snapshots:
 
   esutils@2.0.3: {}
 
+  events@3.3.0: {}
+
   expect-type@1.3.0: {}
 
   exsolve@1.0.8: {}
@@ -5240,10 +5241,10 @@ snapshots:
 
   modify-values@1.0.1: {}
 
-  mpegts.js@1.8.0(patch_hash=e53ee7c173c66cf6d75f4281e3d47a74d686d2ad01d1d0058ffa395c41daa69c):
+  mpegts.js@1.8.2(patch_hash=f6809ce4d13f796e05d510e5f58d5c150bc221bd36d26eb2d6c02ad4528a818d):
     dependencies:
       es6-promise: 4.2.8
-      webworkify-webpack: https://codeload.github.com/xqq/webworkify-webpack/tar.gz/24d1e719b4a6cac37a518b2bb10fe124527ef4ef
+      events: 3.3.0
 
   ms@2.1.3: {}
 
@@ -5943,8 +5944,6 @@ snapshots:
       typescript: 6.0.3
 
   webpack-virtual-modules@0.6.2: {}
-
-  webworkify-webpack@https://codeload.github.com/xqq/webworkify-webpack/tar.gz/24d1e719b4a6cac37a518b2bb10fe124527ef4ef: {}
 
   which@2.0.2:
     dependencies:

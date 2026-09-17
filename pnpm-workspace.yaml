@@ -18,4 +18,4 @@ catalog:
   'vue': ^3.5.42
   'vue-tsc': ^3.3.11
 patchedDependencies:
-  mpegts.js@1.8.0: patches/mpegts.js@1.8.0.patch
+  mpegts.js@1.8.2: patches/mpegts.js@1.8.2.patch

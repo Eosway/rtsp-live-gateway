@@ -37,7 +37,7 @@
   "devDependencies": {
     "@eosway/rtsp-live-gateway-client": "workspace:*",
     "@vitejs/plugin-vue": "catalog:",
-    "mpegts.js": "^1.8.0",
+    "mpegts.js": "^1.8.2",
     "vite": "catalog:",
     "vite-plugin-dts": "^5.1.0",
     "vitest": "catalog:",
