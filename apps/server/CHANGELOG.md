@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.3.0...server@1.3.1) (2026-09-17)
+
+### Miscellaneous Chores
+
+- align tsconfig and build settings ([b6bc894](https://github.com/Eosway/rtsp-live-gateway/commit/b6bc89495294f271155c0feb011b90f5baaee096))
+- update runtime and adapter ([1216cd0](https://github.com/Eosway/rtsp-live-gateway/commit/1216cd05f0222d0f427b73e85a10f8ceeec8c4d4))
+
 ## [1.3.0](https://github.com/Eosway/rtsp-live-gateway/compare/server@1.2.1...server@1.3.0) (2026-06-02)
 
 ### Features
