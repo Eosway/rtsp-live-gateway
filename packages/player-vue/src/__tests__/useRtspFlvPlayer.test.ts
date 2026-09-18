@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MediaPlayer } from '../types.js'
 import { useRtspFlvPlayer } from '../composables/useRtspFlvPlayer.js'
-import { createPlayer } from '../player/mpeg2ts.js'
+import { createPlayer } from '../player/index.js'
 import { createStream, deleteStream } from '@eosway/rtsp-live-gateway-client'
 
-vi.mock('../player/mpeg2ts.js', () => ({
+vi.mock('../player/index.js', () => ({
   createPlayer: vi.fn(),
+  isPlayerSupported: vi.fn(() => true),
 }))
 
 vi.mock('@eosway/rtsp-live-gateway-client', () => {
@@ -36,20 +37,16 @@ function createFakePlayer(): MediaPlayer {
   return {
     onError: undefined,
     onMediaInfo: undefined,
-    onMetadataArrived: undefined,
-    attachMediaElement: vi.fn(),
-    detachMediaElement: vi.fn(),
-    load: vi.fn(),
-    unload: vi.fn(),
-    play: vi.fn(async () => undefined),
-    pause: vi.fn(),
-    destroy: vi.fn(),
+    attach: vi.fn(async () => undefined),
+    start: vi.fn(async () => undefined),
+    destroy: vi.fn(async () => undefined),
   }
 }
 
 function createFakeVideoElement(): HTMLVideoElement {
   const listeners = new Map<string, Set<EventListener>>()
   return {
+    muted: false,
     addEventListener: vi.fn((type: string, listener: EventListener) => {
       let bucket = listeners.get(type)
       if (!bucket) {
@@ -80,7 +77,61 @@ afterEach(() => {
 })
 
 describe('useRtspFlvPlayer', () => {
-  test('should derive hasAudio from sourceConfig.audio.enabled', async () => {
+  test('should pass rivmux options to the player factory', async () => {
+    const player = createFakePlayer()
+    vi.mocked(createPlayer).mockReturnValue(player)
+    vi.mocked(createStream).mockResolvedValue({
+      streamId: 'st_rivmux',
+      state: 'idle',
+      reused: false,
+      createdAt: '2026-06-01T00:00:00.000Z',
+    })
+
+    const playerOptions = { latency: { target: 1, max: 2 } }
+    const controller = useRtspFlvPlayer({
+      baseUrl: 'http://localhost:3000',
+      sourceConfig: { url: 'rtsp://camera/live' },
+      playerOptions,
+    })
+
+    controller.attach(createFakeVideoElement())
+    await controller.start()
+
+    expect(createPlayer).toHaveBeenCalledWith('http://localhost:3000/v1/live/st_rivmux', true, false, playerOptions)
+  })
+
+  test('should surface terminal player errors immediately during startup', async () => {
+    const player = createFakePlayer()
+    const onError = vi.fn()
+    vi.mocked(createPlayer).mockReturnValue(player)
+    vi.mocked(createStream).mockResolvedValue({
+      streamId: 'st_terminal_error',
+      state: 'idle',
+      reused: false,
+      createdAt: '2026-06-01T00:00:00.000Z',
+    })
+
+    const controller = useRtspFlvPlayer(
+      {
+        baseUrl: 'http://localhost:3000',
+        sourceConfig: { url: 'rtsp://camera/live' },
+      },
+      { onError }
+    )
+
+    controller.attach(createFakeVideoElement())
+    await controller.start()
+    player.onError?.({
+      code: 'RIVMUX_HTTP_STATUS',
+      message: 'HTTP request failed.',
+      terminal: true,
+    })
+
+    expect(controller.status.value).toBe('error')
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ code: 'RIVMUX_HTTP_STATUS' }))
+  })
+
+  test('should start an audio-enabled source with rivmux', async () => {
     const player = createFakePlayer()
     vi.mocked(createPlayer).mockReturnValue(player)
     vi.mocked(createStream).mockResolvedValue({
@@ -108,16 +159,7 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
 
     expect(controller.status.value).toBe('running')
-    expect(createPlayer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'flv',
-        isLive: true,
-        url: 'http://localhost:3000/v1/live/st_audio',
-        hasAudio: true,
-        hasVideo: true,
-      }),
-      expect.any(Object)
-    )
+    expect(createPlayer).toHaveBeenCalledWith('http://localhost:3000/v1/live/st_audio', false, false, undefined)
   })
 
   test('should expose status and reset to idle after stop', async () => {
@@ -149,7 +191,7 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
 
     expect(controller.status.value).toBe('running')
-    expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({ hasAudio: false }), expect.any(Object))
+    expect(createPlayer).toHaveBeenCalledWith('http://localhost:3000/v1/live/st_video_only', false, false, undefined)
 
     await controller.stop('manual')
 
@@ -189,9 +231,9 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
 
     player.onError?.({
-      type: 'MediaError',
-      detail: 'MediaMSEError',
-      info: { code: 11 },
+      code: 'MediaError',
+      message: 'MediaMSEError',
+      detail: { code: 11 },
     })
 
     expect(controller.status.value).toBe('running')
@@ -247,9 +289,9 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
 
     player.onError?.({
-      type: 'MediaError',
-      detail: 'MediaMSEError',
-      info: { code: 11 },
+      code: 'MediaError',
+      message: 'MediaMSEError',
+      detail: { code: 11 },
     })
     expect(controller.status.value).toBe('running')
 
@@ -340,9 +382,9 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
 
     player.onError?.({
-      type: 'NetworkError',
-      detail: 'HttpStatusCodeInvalid',
-      info: { code: 404 },
+      code: 'NetworkError',
+      message: 'HttpStatusCodeInvalid',
+      detail: { code: 404 },
     })
 
     expect(controller.status.value).toBe('error')

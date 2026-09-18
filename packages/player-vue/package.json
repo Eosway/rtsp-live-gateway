@@ -34,11 +34,13 @@
   "peerDependencies": {
     "vue": ">=3.4.0"
   },
+  "dependencies": {
+    "rivmux": "^1.0.1"
+  },
   "devDependencies": {
     "@eosway/rtsp-live-gateway-client": "workspace:*",
     "@microsoft/api-extractor": "^7.59.1",
     "@vitejs/plugin-vue": "catalog:",
-    "mpegts.js": "^1.8.2",
     "vite": "catalog:",
     "vite-plugin-dts": "^5.1.0",
     "vitest": "catalog:",

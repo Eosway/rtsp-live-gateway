@@ -1,61 +1,33 @@
 # @eosway/rtsp-live-gateway-player-vue
 
-`@eosway/rtsp-live-gateway-player-vue` 提供 Vue 3 播放组件与播放辅助逻辑，封装了：
+`@eosway/rtsp-live-gateway-player-vue` 提供 Vue 3 HTTP-FLV 播放组件和 composable，使用 rivmux 管理浏览器端播放生命周期，并负责网关 stream 的创建与删除。
 
-- `@eosway/rtsp-live-gateway-client` 的流创建/删除能力
-- `mpegts.js` 的 HTTP-FLV 播放生命周期
-
-适用于浏览器端播放 `/v1/live/:streamId`。
-
-## 1. 安装与导出
-
-工作区内依赖：
-
-```bash
-pnpm --filter @eosway/rtsp-live-gateway-player-vue build
-```
-
-导出：
+## 1. 导出
 
 - `RtspFlvPlayer`
 - `useRtspFlvPlayer`
-- 类型：`RtspFlvPlayerProps`、`RtspFlvPlayerError`、`UseRtspFlvPlayerOptions`（与 `RtspFlvPlayerProps` 等价）
+- `RtspFlvPlayerProps`
+- `RtspFlvPlayerError`
+- `RivmuxPlayerOptions`
+- `MediaInfo`
 
-## 2. 组件能力
+## 2. Props
 
-### 2.1 创建并播放单路流
+| Prop             | 类型                  | 必填 | 默认值          | 说明                                                   |
+| ---------------- | --------------------- | ---- | --------------- | ------------------------------------------------------ |
+| `baseUrl`        | `string`              | 是   | -               | 网关服务地址                                           |
+| `sourceConfig`   | `StreamCreateRequest` | 是   | -               | 用于创建 stream 的播放源配置                           |
+| `autoPlay`       | `boolean`             | 否   | `true`          | 是否自动播放                                           |
+| `playerOptions`  | `RivmuxPlayerOptions` | 否   | rivmux 默认配置 | rivmux 播放器配置；`autoPlay` 和静音策略由组件统一收口 |
+| `cleanOnUnmount` | `boolean`             | 否   | `false`         | 卸载时是否删除后端 stream                              |
 
-- 组件只支持传入 `sourceConfig`
-- 创建后会播放 `/v1/live/:streamId`
-- 以事件驱动为主，不暴露状态 ref
-- 默认情况下，组件卸载只销毁前端播放器实例，不会自动删除后端 stream
-- 如果传入 `cleanOnUnmount=true`，组件卸载时会显式删除后端 stream
-- 如果需要显式删除后端 stream，调用组件实例的 `stop()`
+`autoPlay` prop 优先于 `playerOptions.playback.autoPlay`。未显式设置 `playerOptions.playback.muted` 时，播放器使用 video 元素的 `muted` 属性。
 
-### 2.2 Props
+稳定播放路径是 HTTP-FLV + H.264/AVC 或 HEVC/H.265 + AAC-LC。HEVC 需要浏览器支持准确的 `hvc1` MIME；服务端和 rivmux 均按 FFmpeg 采纳的 Enhanced FLV 最终标准实现，不使用非标准的 `id12` packet type。其他 codec 组合不构成稳定承诺。
 
-| Prop             | 类型                  | 必填 | 默认值  | 说明                                           |
-| ---------------- | --------------------- | ---- | ------- | ---------------------------------------------- |
-| `baseUrl`        | `string`              | 是   | -       | 网关服务地址，例如 `http://localhost:3000`     |
-| `sourceConfig`   | `StreamCreateRequest` | 是   | -       | 播放源配置，会用于创建 stream                  |
-| `autoPlay`       | `boolean`             | 否   | `true`  | 自动播放                                       |
-| `playerConfig`   | `MediaPlayerConfig`   | 否   | -       | 传给 mpegts 的播放器配置，会覆盖默认 live 配置 |
-| `cleanOnUnmount` | `boolean`             | 否   | `false` | 组件卸载时是否显式删除后端 stream              |
+## 3. 使用方式
 
-### 2.3 Events
-
-| 事件              | 载荷                                                                                                                         | 说明                            |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `created`         | `streamId: string`                                                                                                           | 成功创建 stream 并拿到 streamId |
-| `ready`           | -                                                                                                                            | 首次进入可播放态                |
-| `error`           | `{ type: 'client' \| 'media_player'; code: string; message: string; requestId?: string; detail?: unknown; cause?: unknown }` | 启动或播放失败                  |
-| `mediaInfo`       | `MediaInfo`                                                                                                                  | 已解析到媒体信息                |
-| `metadataArrived` | `unknown`                                                                                                                    | 已收到 mpegts metadata          |
-| `closed`          | `reason: string`                                                                                                             | 组件主动停止或卸载关闭          |
-
-## 3. 使用示例
-
-### 3.1 组件内部创建流（推荐）
+### 3.1 默认播放
 
 ```vue
 <script setup lang="ts">
@@ -63,187 +35,71 @@ import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
 </script>
 
 <template>
-  <RtspFlvPlayer
-    base-url="http://localhost:3000"
-    :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }"
-    :auto-play="true"
-    :player-config="{ liveSyncMaxLatency: 3, liveSyncTargetLatency: 1.5 }"
-    muted
-    playsinline
-    :clean-on-unmount="false" />
+  <RtspFlvPlayer base-url="http://localhost:3000" :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }" muted playsinline />
 </template>
 ```
 
-### 3.2 推荐的业务状态收敛方式
-
-业务侧建议只使用：
-
-- `ready` 结束 loading
-- `error` 展示最终错误
-- 页面级超时 兜底“长时间无画面”
+### 3.2 配置 rivmux
 
 ```vue
-<script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
-import type { RtspFlvPlayerError } from '@eosway/rtsp-live-gateway-player-vue'
-
-const loading = ref(true)
-const errorInfo = ref('')
-let startupTimeout: ReturnType<typeof setTimeout> | undefined
-
-function clearStartupTimeout() {
-  if (startupTimeout) {
-    clearTimeout(startupTimeout)
-    startupTimeout = undefined
-  }
-}
-
-function beginStartup() {
-  clearStartupTimeout()
-  loading.value = true
-  errorInfo.value = ''
-  startupTimeout = setTimeout(() => {
-    loading.value = false
-    errorInfo.value = '启动超时，请重试'
-  }, 10000)
-}
-
-function handleReady() {
-  clearStartupTimeout()
-  loading.value = false
-  errorInfo.value = ''
-}
-
-function handleError(error: RtspFlvPlayerError) {
-  clearStartupTimeout()
-  loading.value = false
-  errorInfo.value = error.code === 'NetworkError' ? '请检查网络' : '播放环境异常'
-}
-
-onBeforeUnmount(() => {
-  clearStartupTimeout()
-})
-</script>
-
-<template>
-  <RtspFlvPlayer
-    base-url="http://localhost:3000"
-    :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }"
-    @created="beginStartup"
-    @ready="handleReady"
-    @error="handleError" />
-</template>
+<RtspFlvPlayer
+  base-url="http://localhost:3000"
+  :source-config="sourceConfig"
+  :player-options="{
+    playback: { muted: true },
+    latency: { startupBuffer: 0.5, target: 1.5, max: 3 },
+  }" />
 ```
 
-### 3.3 通过 ref 显式停止并删除后端 stream
+只有在固定公共路径或 CDN 部署 Worker/WASM 时才需要设置 rivmux 的 `runtime.workerUrl` 和 `runtime.wasmUrl`。覆盖时必须提供同一版本的资产对，并满足目标环境的 CORS 与 CSP 要求。
 
-```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
+## 4. Events
 
-const playerRef = ref<InstanceType<typeof RtspFlvPlayer>>()
+| 事件        | 载荷                 | 说明                           |
+| ----------- | -------------------- | ------------------------------ |
+| `created`   | `streamId: string`   | 已创建后端 stream              |
+| `ready`     | -                    | video 首次进入可播放态         |
+| `error`     | `RtspFlvPlayerError` | 网关客户端或 rivmux 播放器错误 |
+| `mediaInfo` | `MediaInfo`          | rivmux 已识别的媒体信息        |
+| `closed`    | `reason: string`     | 主动停止、重载或卸载关闭       |
 
-async function stopPlayer() {
-  await playerRef.value?.stop('manual_stop')
-}
-</script>
+播放器错误保留 rivmux 的 `code`、`message`、`terminal` 等信息于 `detail` 和 `cause` 中。终止错误会立即进入 `error` 状态；启动阶段的非终止错误保留 2 秒宽限窗口，期间 video 进入可播放态则忽略。
 
-<template>
-  <button @click="stopPlayer">停止并删除流</button>
+## 5. 生命周期
 
-  <RtspFlvPlayer ref="playerRef" base-url="http://localhost:3000" :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }" />
-</template>
+1. 检查当前浏览器是否满足 rivmux 基础运行条件。
+2. 创建后端 stream 并组装 `/v1/live/:streamId`。
+3. 依次等待 `attach(video)` 和 `start()`。
+4. `stop()` 删除播放器和后端 stream。
+5. `reload()` 删除旧 stream 后完整重建。
+6. `detach()` 默认只销毁播放器；`cleanOnUnmount=true` 时同时删除 stream。
+7. `baseUrl`、`sourceConfig`、`autoPlay` 或 `playerOptions` 变化时，组件自动重载。
+
+组件 ref 暴露 `streamId`、`status`、`start()`、`stop()` 和 `reload()`。
+
+## 6. 从旧 playerConfig 迁移
+
+本次为破坏性替换，不保留兼容别名：
+
+```diff
+- :player-config="{ liveSyncMaxLatency: 3, liveSyncTargetLatency: 1.5 }"
++ :player-options="{ latency: { target: 1.5, max: 3 } }"
 ```
 
-组件 `ref` 暴露命令式方法、`streamId` 和本地播放 `status`：
-
-- `streamId`
-- `status`
-- `start()`
-- `stop()`
-- `reload()`
-
-## 4. 生命周期说明
-
-1. 组件挂载后自动创建 stream
-2. 使用 `streamId` 组装 `/v1/live/:streamId`
-3. `mpegts.createPlayer` -> `attachMediaElement` -> `load` -> `play`
-4. 组件卸载时默认只销毁前端播放器实例
-5. 若 `cleanOnUnmount=true`，组件卸载时会显式调用 `deleteStream`
-6. 调用 `ref.stop()` 时会显式调用 `deleteStream`
-7. 调用 `ref.reload()` 时会走完整重建流程：删除旧 stream，重新创建新 stream，再重新播放
-8. `baseUrl`、`sourceConfig`、`autoPlay`、`playerConfig` 变化时，组件会自动重载
-9. 在首次收到 `loadedmetadata`、`canplay` 或 `playing` 之前，组件会对首次瞬时 `media_player` 错误做短暂缓冲；若 2 秒内进入可播放态，该错误不会升级为最终 `error`
-10. 推荐业务侧只用 `ready`、`error` 和页面级超时来收敛用户可见状态，不直接拿 `mediaInfo` 或底层 video 事件判定成功
-
-## 5. useRtspFlvPlayer
-
-`useRtspFlvPlayer` 是高级模式，统一只接收 `sourceConfig`，由 composable 内部创建 stream。
-它不会自动接管生命周期，调用方需要自己：
-
-- `attach(videoEl)`
-- `start()`
-- `reload()`
-- `stop()`
-- `detach()`
-
-返回值会暴露本地播放 `status`，用于表达 player 侧生命周期：
-
-- `idle`
-- `starting`
-- `running`
-- `error`
-
-额外选项：
-
-- `playerConfig`
-  - 会透传给 `mpegts.createPlayer`
-  - 在内部默认 live 配置基础上做覆盖
-- `onReady`
-  - 首次进入可播放态时触发一次
-  - 适合业务侧关闭 loading、结束启动期兜底超时
-- `muted`
-  - 组件模式下继续作为原生 `<video>` 属性透传
-  - composable 模式下由调用方自行设置 `videoEl.muted`
-  - 不参与 stream 创建和 `hasAudio` 推导
-- 其余未声明为组件 props 的属性，会透传给内部 `<video>` 元素
-  - 例如 `muted`、`playsinline`、`controls`、`poster`、`preload`、`class`、`style`
-- `cleanOnUnmount`
-  - 默认 `false`
-  - `detach()` 时是否执行删除后端 stream 的清理语义
-  - 会显式删除当前后端 stream
-
-## 6. mpegts.js 相关行为
-
-- 检查 `mpegts.isSupported()`，不支持时直接报错
-- 使用直播配置：
-  - `type: "flv"`
-  - `isLive: true`
-  - `hasAudio` 由 `sourceConfig.audio.enabled` 推导
-  - `hasVideo: true`
-- 默认监控直播配置：
-  - `enableStashBuffer: true`
-  - `liveSync: true`
-  - `liveSyncMaxLatency: 4`
-  - `liveSyncTargetLatency: 2`
-  - `liveSyncPlaybackRate: 1.2`
-  - `autoCleanupSourceBuffer: true`
-  - `autoCleanupMaxBackwardDuration: 30`
-  - `autoCleanupMinBackwardDuration: 15`
-- 传入 `playerConfig` 时，会在以上默认值基础上覆盖
+旧的 mpegts.js 配置不能直接传给 rivmux；请按 rivmux 的 `RivmuxPlayerOptions` 重新配置。mpegts.js 的 `metadataArrived` 事件也不再提供。
 
 ## 7. 注意事项
 
-- 必须确保服务端 CORS 配置正确。
-- 浏览器自动播放策略可能要求视频元素静音后才允许自动播放；组件模式建议直接透传 `muted`，composable 模式请由调用方设置 `videoEl.muted`。
-- 业务侧推荐把 `loading` 收敛到 `ready` / `error` / 页面级总超时 三类信号，不直接把 `mediaInfo`、`metadataArrived` 当作播放成功。
-- `error` 事件统一透传 `{ type, code, message, requestId, detail, cause }`，其中 `type` 用于区分 `client` 与 `media_player`。
-- 首个 `loadedmetadata`、`canplay` 或 `playing` 到达前，`media_player` 瞬时错误会先缓冲 2 秒；若期间进入可播放态则丢弃，否则再升级并对外发出。
+- 组件会在创建后端 stream 前检查 `rivmux.isSupported()`；不满足 Worker MSE、流式 Fetch、ReadableStream 或 WebAssembly 条件时不会创建 stream。
+- 浏览器自动播放通常要求静音；组件模式可透传 `muted`，或设置 `playerOptions.playback.muted`。
+- 网关的 MP3 音频输出不属于 rivmux 稳定输入范围；建议服务端转为 AAC-LC。
+- H.265/HEVC 播放取决于浏览器解码能力和准确的 `hvc1` MIME；服务端输出与 rivmux 输入使用 FFmpeg 采纳的 Enhanced FLV 最终标准。
+- 业务状态建议只依赖 `ready`、`error` 和页面级启动超时，不把 `mediaInfo` 视为播放成功。
 
-## 8. 开发命令
+## 8. 验证命令
 
 ```bash
 pnpm --filter @eosway/rtsp-live-gateway-player-vue tsc
+pnpm --filter @eosway/rtsp-live-gateway-player-vue test
 pnpm --filter @eosway/rtsp-live-gateway-player-vue build
 ```

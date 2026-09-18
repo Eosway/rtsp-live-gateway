@@ -38,7 +38,6 @@
           Audio Codec
           <select v-model="form.audioCodec">
             <option value="aac">AAC</option>
-            <option value="mp3">MP3</option>
           </select>
         </label>
       </div>
@@ -96,7 +95,7 @@ const form = reactive({
   transport: 'tcp' as StreamCreateRequest['transport'],
   videoCodec: 'h264' as NonNullable<NonNullable<StreamCreateRequest['video']>['codec']>,
   audioEnabled: false,
-  audioCodec: 'aac' as 'aac' | 'mp3',
+  audioCodec: 'aac' as const,
 })
 
 const sourceConfig = computed<StreamCreateRequest>(() => ({

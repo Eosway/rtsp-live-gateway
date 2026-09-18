@@ -1,7 +1,7 @@
 import { ClientError, buildLiveUrl, createStream, deleteStream } from '@eosway/rtsp-live-gateway-client'
 import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
 import { ref, shallowRef } from 'vue'
-import { createPlayer } from '../player/mpeg2ts.js'
+import { createPlayer, isPlayerSupported } from '../player/index.js'
 import type {
   MediaPlayer,
   MediaPlayerError,
@@ -17,17 +17,6 @@ type UseRtspFlvPlayerOptionsSource = UseRtspFlvPlayerOptions | (() => UseRtspFlv
 const STARTUP_ERROR_GRACE_MS = 2000
 const PLAYBACK_READY_EVENTS = ['loadedmetadata', 'canplay', 'playing'] as const
 
-const defaultLivePlayerConfig = {
-  enableStashBuffer: true, // 保留输入缓冲，优先抗一般网络抖动而不是追求最低延迟。
-  liveSync: true, // 通过温和提升 playbackRate 追赶延迟，避免频繁直接跳帧。
-  liveSyncMaxLatency: 4, // 延迟超过 4 秒后开始主动追赶，限制多宫格长期漂移。
-  liveSyncTargetLatency: 2, // 将稳态延迟收敛到约 2 秒，兼顾监控实时性与连续性。
-  liveSyncPlaybackRate: 1.2, // 追赶时最多 1.2 倍速，降低音视频突兀变化和抖动风险。
-  autoCleanupSourceBuffer: true, // 长时播放时主动清理旧缓冲，控制多宫格内存增长。
-  autoCleanupMaxBackwardDuration: 30, // 旧缓冲超过 30 秒就触发清理，避免无意义堆积。
-  autoCleanupMinBackwardDuration: 15, // 清理后仍保留 15 秒回退缓冲，兼顾短时抖动恢复。
-} as const
-
 async function createManagedStream(baseUrl: string, sourceConfig: StreamCreateRequest): Promise<string> {
   const response = await createStream(baseUrl, sourceConfig)
   return response.streamId
@@ -40,10 +29,6 @@ async function deleteManagedStream(baseUrl: string, streamId: string): Promise<v
     // 显式停止时删除失败也不抛出，避免中断组件控制流。
     void error
   }
-}
-
-function resolveHasAudio(sourceConfig: StreamCreateRequest): boolean {
-  return sourceConfig.audio?.enabled === true
 }
 
 export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, callbacks: UseRtspFlvPlayerCallbacks = {}): UseRtspFlvPlayerReturn {
@@ -69,7 +54,6 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
 
   function attach(videoEl: HTMLVideoElement) {
     videoRef.value = videoEl
-    player?.attachMediaElement(videoEl)
   }
 
   function nextOperationToken(): number {
@@ -156,7 +140,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
     resetStartupGuard()
     const currentPlayer = player
     player = undefined
-    currentPlayer?.destroy()
+    await currentPlayer?.destroy()
     player = undefined
     setStatus('idle')
     callbacks.onClosed?.(reason)
@@ -165,9 +149,9 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
   function toRtspFlvPlayerError(mediaPlayerError: MediaPlayerError): RtspFlvPlayerError {
     return {
       type: 'media_player',
-      code: mediaPlayerError.type,
-      message: mediaPlayerError.detail,
-      detail: mediaPlayerError.info,
+      code: mediaPlayerError.code,
+      message: mediaPlayerError.message,
+      detail: mediaPlayerError.detail,
       cause: mediaPlayerError,
     }
   }
@@ -187,6 +171,9 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       if (!videoRef.value) {
         throw new Error('Video element is not attached')
       }
+      if (!isPlayerSupported()) {
+        throw new Error('Rivmux is not supported in this browser')
+      }
       if (!streamId.value) {
         const nextStreamId = await createManagedStream(options.baseUrl, options.sourceConfig)
         if (!isOperationCurrent(token)) {
@@ -198,13 +185,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       }
 
       const liveUrl = buildLiveUrl(options.baseUrl, streamId.value)
-      currentPlayer = createPlayer(
-        { type: 'flv', isLive: true, url: liveUrl, hasAudio: resolveHasAudio(options.sourceConfig), hasVideo: true },
-        {
-          ...defaultLivePlayerConfig,
-          ...options.playerConfig,
-        }
-      )
+      currentPlayer = createPlayer(liveUrl, options.autoPlay ?? true, videoRef.value.muted, options.playerOptions)
       bindPlaybackReadySignals(videoRef.value, token, currentPlayer)
 
       currentPlayer.onError = (mediaPlayerError) => {
@@ -212,7 +193,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
           return
         }
         const normalizedError = toRtspFlvPlayerError(mediaPlayerError)
-        if (!startupPlaybackConfirmed) {
+        if (!startupPlaybackConfirmed && mediaPlayerError.terminal !== true) {
           startupPendingError = normalizedError
           scheduleStartupGraceWindow(token)
           return
@@ -225,22 +206,14 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
         }
         callbacks.onMediaInfo?.(mediaInfo)
       }
-      currentPlayer.onMetadataArrived = (metadata) => {
-        if (!isOperationCurrent(token) || player !== currentPlayer) {
-          return
-        }
-        callbacks.onMetadataArrived?.(metadata)
-      }
-
-      player?.destroy()
+      const previousPlayer = player
+      player = undefined
+      await previousPlayer?.destroy()
       player = currentPlayer
-      currentPlayer.attachMediaElement(videoRef.value)
-      currentPlayer.load()
-      if (options.autoPlay ?? true) {
-        await currentPlayer.play()
-      }
+      await currentPlayer.attach(videoRef.value)
+      await currentPlayer.start()
       if (!isOperationCurrent(token) || player !== currentPlayer) {
-        currentPlayer.destroy()
+        await currentPlayer.destroy()
         return
       }
       if (status.value === 'error') {
@@ -251,23 +224,33 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       if (currentPlayer && player === currentPlayer) {
         player = undefined
       }
-      currentPlayer?.destroy()
+      await currentPlayer?.destroy()
       if (!isOperationCurrent(token)) {
         return
       }
       resetStartupGuard()
-      const clientError = caughtError instanceof ClientError ? caughtError : undefined
-      const nextError: RtspFlvPlayerError = {
-        type: 'client',
-        code: clientError?.code ?? 'PLAYER_START_FAILED',
-        message: caughtError instanceof Error ? caughtError.message : String(caughtError),
-        requestId: clientError?.requestId,
-        detail: {
-          status: clientError?.status,
-          detail: clientError?.detail,
-        },
-        cause: caughtError,
+      if (status.value === 'error') {
+        return
       }
+      const clientError = caughtError instanceof ClientError ? caughtError : undefined
+      const nextError: RtspFlvPlayerError = clientError
+        ? {
+            type: 'client',
+            code: clientError.code ?? 'STREAM_CREATE_FAILED',
+            message: clientError.message,
+            requestId: clientError.requestId,
+            detail: {
+              status: clientError.status,
+              detail: clientError.detail,
+            },
+            cause: caughtError,
+          }
+        : {
+            type: 'media_player',
+            code: caughtError instanceof Error && caughtError.name !== 'Error' ? caughtError.name : 'PLAYER_START_FAILED',
+            message: caughtError instanceof Error ? caughtError.message : String(caughtError),
+            cause: caughtError,
+          }
       error.value = nextError
       setStatus('error')
       callbacks.onError?.(nextError)

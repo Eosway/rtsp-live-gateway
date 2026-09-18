@@ -7,7 +7,7 @@ Monorepo implementation of RTSP -> HTTP-FLV gateway:
 | 包名                                   | 介绍                                                                                             | 目录                  |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------- |
 | `@eosway/rtsp-live-gateway-server`     | RTSP Live Gateway 服务端，负责控制面 API、HTTP-FLV 输出、FFmpeg 进程管理、单源复用与 SSRF 防护。 | `apps/server`         |
-| `@eosway/rtsp-live-gateway-player-vue` | Vue 3 播放组件与播放辅助逻辑，封装流创建/删除和 `mpegts.js` 的 HTTP-FLV 播放生命周期。           | `packages/player-vue` |
+| `@eosway/rtsp-live-gateway-player-vue` | Vue 3 播放组件与播放辅助逻辑，封装流创建/删除和 rivmux 的 HTTP-FLV 播放生命周期。                | `packages/player-vue` |
 | `@eosway/rtsp-live-gateway-client`     | 控制面 API 的轻量客户端封装，提供创建流、查询流、删除流与播放地址构造能力。                      | `packages/client`     |
 | `@eosway/rtsp-live-gateway-protocol`   | 跨包共享的控制面协议、类型契约与错误码定义。                                                     | `packages/protocol`   |
 | `@eosway/rtsp-live-gateway-playground` | 基于 Vue 3 + Vite 的联调页面，用于快速验证 RTSP 参数输入、创建流与浏览器播放。                   | `playground`          |

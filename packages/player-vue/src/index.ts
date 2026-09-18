@@ -1,7 +1,7 @@
 export { RtspFlvPlayer } from './components/RtspFlvPlayer.js'
 export { useRtspFlvPlayer } from './composables/useRtspFlvPlayer.js'
 export type {
-  MediaPlayerConfig,
+  MediaInfo,
   RtspFlvPlayerStatus,
   UseRtspFlvPlayerCallbacks,
   UseRtspFlvPlayerOptions,
@@ -9,3 +9,5 @@ export type {
   RtspFlvPlayerError,
   RtspFlvPlayerProps,
 } from './types.js'
+export type { RivmuxPlayerOptions } from 'rivmux'
+export { getCapabilities, isSupported } from 'rivmux'

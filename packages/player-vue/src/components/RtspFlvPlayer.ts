@@ -1,6 +1,7 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, type PropType, type VNodeRef, useAttrs, watch } from 'vue'
 import { useRtspFlvPlayer } from '../composables/useRtspFlvPlayer.js'
-import type { MediaInfo, MediaPlayerConfig, RtspFlvPlayerError, RtspFlvPlayerProps, UseRtspFlvPlayerReturn } from '../types.js'
+import type { MediaInfo, RtspFlvPlayerError, RtspFlvPlayerProps, UseRtspFlvPlayerReturn } from '../types.js'
+import type { RivmuxPlayerOptions } from 'rivmux'
 
 export const RtspFlvPlayer = defineComponent({
   name: 'RtspFlvPlayer',
@@ -12,8 +13,8 @@ export const RtspFlvPlayer = defineComponent({
       required: true,
     },
     autoPlay: { type: Boolean, default: true },
-    playerConfig: {
-      type: Object as PropType<MediaPlayerConfig>,
+    playerOptions: {
+      type: Object as PropType<RivmuxPlayerOptions>,
       default: undefined,
     },
     cleanOnUnmount: { type: Boolean, default: false },
@@ -23,7 +24,6 @@ export const RtspFlvPlayer = defineComponent({
     ready: () => true,
     error: (_error: RtspFlvPlayerError) => true,
     mediaInfo: (_mediaInfo: MediaInfo) => true,
-    metadataArrived: (_metadata: unknown) => true,
     closed: (_reason: string) => true,
   },
   setup(props, { emit, expose }) {
@@ -33,7 +33,7 @@ export const RtspFlvPlayer = defineComponent({
         baseUrl: props.baseUrl,
         sourceConfig: props.sourceConfig,
         autoPlay: props.autoPlay,
-        playerConfig: props.playerConfig,
+        playerOptions: props.playerOptions,
         cleanOnUnmount: props.cleanOnUnmount,
       }),
       {
@@ -48,9 +48,6 @@ export const RtspFlvPlayer = defineComponent({
         },
         onMediaInfo: (mediaInfo) => {
           emit('mediaInfo', mediaInfo)
-        },
-        onMetadataArrived: (metadata) => {
-          emit('metadataArrived', metadata)
         },
         onClosed: (reason) => {
           emit('closed', reason)
@@ -68,7 +65,7 @@ export const RtspFlvPlayer = defineComponent({
     })
 
     watch(
-      () => [props.baseUrl, props.sourceConfig, props.autoPlay, props.playerConfig] as const,
+      () => [props.baseUrl, props.sourceConfig, props.autoPlay, props.playerOptions] as const,
       () => {
         void controller.reload('props_changed')
       },

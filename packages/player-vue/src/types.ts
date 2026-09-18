@@ -1,14 +1,15 @@
-import MpegTs from 'mpegts.js'
 import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
+import type { MediaInfo as RivmuxMediaInfo, RivmuxPlayerOptions } from 'rivmux'
 import type { Ref, ShallowRef } from 'vue'
 
 export type RtspFlvPlayerStatus = 'idle' | 'starting' | 'running' | 'error'
+export type MediaInfo = RivmuxMediaInfo
 
 export interface RtspFlvPlayerProps {
   baseUrl: string
   sourceConfig: StreamCreateRequest
   autoPlay?: boolean
-  playerConfig?: MediaPlayerConfig
+  playerOptions?: RivmuxPlayerOptions
   cleanOnUnmount?: boolean
 }
 
@@ -28,7 +29,6 @@ export interface UseRtspFlvPlayerCallbacks {
   onReady?: () => void
   onError?: (error: RtspFlvPlayerError) => void
   onMediaInfo?: (mediaInfo: MediaInfo) => void
-  onMetadataArrived?: (metadata: unknown) => void
   onClosed?: (reason: string) => void
 }
 
@@ -44,28 +44,18 @@ export interface UseRtspFlvPlayerReturn {
   reload(reason?: string): Promise<void>
 }
 
-export type MediaPlayerSource = MpegTs.MediaDataSource
-
-export type MediaPlayerConfig = Partial<MpegTs.Config>
-
 export interface MediaPlayerError {
-  type: string
-  detail: string
-  info: unknown
+  code: string
+  message: string
+  detail?: unknown
+  terminal?: boolean
 }
-
-export type MediaInfo = MpegTs.NativePlayerMediaInfo | MpegTs.MSEPlayerMediaInfo
 
 export interface MediaPlayer {
   onError?: (error: MediaPlayerError) => void
   onMediaInfo?: (mediaInfo: MediaInfo) => void
-  onMetadataArrived?: (metadata: unknown) => void
 
-  attachMediaElement(mediaElement: HTMLVideoElement): void
-  detachMediaElement(): void
-  load(): void
-  unload(): void
-  play(): Promise<void>
-  pause(): void
-  destroy(): void
+  attach(mediaElement: HTMLVideoElement): Promise<void>
+  start(): Promise<void>
+  destroy(): Promise<void>
 }

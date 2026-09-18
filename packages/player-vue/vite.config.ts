@@ -19,18 +19,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rolldownOptions: {
-      external: ['vue'],
-      output: {
-        chunkFileNames: '[name].js',
-        codeSplitting: {
-          groups: [
-            {
-              name: 'mpeg2ts',
-              test: /mpegts\.js/,
-            },
-          ],
-        },
-      },
+      external: ['vue', 'rivmux'],
     },
   },
 })
