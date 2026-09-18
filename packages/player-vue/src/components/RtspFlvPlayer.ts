@@ -7,7 +7,7 @@ export const RtspFlvPlayer = defineComponent({
   name: 'RtspFlvPlayer',
   inheritAttrs: false,
   props: {
-    baseUrl: { type: String, required: true },
+    serverUrl: { type: String, required: true },
     sourceConfig: {
       type: Object as PropType<RtspFlvPlayerProps['sourceConfig']>,
       required: true,
@@ -30,7 +30,7 @@ export const RtspFlvPlayer = defineComponent({
     const attrs = useAttrs()
     const controller: UseRtspFlvPlayerReturn = useRtspFlvPlayer(
       () => ({
-        baseUrl: props.baseUrl,
+        serverUrl: props.serverUrl,
         sourceConfig: props.sourceConfig,
         autoPlay: props.autoPlay,
         playerOptions: props.playerOptions,
@@ -65,7 +65,7 @@ export const RtspFlvPlayer = defineComponent({
     })
 
     watch(
-      () => [props.baseUrl, props.sourceConfig, props.autoPlay, props.playerOptions] as const,
+      () => [props.serverUrl, props.sourceConfig, props.autoPlay, props.playerOptions] as const,
       () => {
         void controller.reload('props_changed')
       },

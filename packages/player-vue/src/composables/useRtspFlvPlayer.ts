@@ -17,14 +17,14 @@ type UseRtspFlvPlayerOptionsSource = UseRtspFlvPlayerOptions | (() => UseRtspFlv
 const STARTUP_ERROR_GRACE_MS = 2000
 const PLAYBACK_READY_EVENTS = ['loadedmetadata', 'canplay', 'playing'] as const
 
-async function createManagedStream(baseUrl: string, sourceConfig: StreamCreateRequest): Promise<string> {
-  const response = await createStream(baseUrl, sourceConfig)
+async function createManagedStream(serverUrl: string, sourceConfig: StreamCreateRequest): Promise<string> {
+  const response = await createStream(serverUrl, sourceConfig)
   return response.streamId
 }
 
-async function deleteManagedStream(baseUrl: string, streamId: string): Promise<void> {
+async function deleteManagedStream(serverUrl: string, streamId: string): Promise<void> {
   try {
-    await deleteStream(baseUrl, streamId)
+    await deleteStream(serverUrl, streamId)
   } catch (error) {
     // 显式停止时删除失败也不抛出，避免中断组件控制流。
     void error
@@ -175,16 +175,16 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
         throw new Error('Rivmux is not supported in this browser')
       }
       if (!streamId.value) {
-        const nextStreamId = await createManagedStream(options.baseUrl, options.sourceConfig)
+        const nextStreamId = await createManagedStream(options.serverUrl, options.sourceConfig)
         if (!isOperationCurrent(token)) {
-          await deleteManagedStream(options.baseUrl, nextStreamId)
+          await deleteManagedStream(options.serverUrl, nextStreamId)
           return
         }
         streamId.value = nextStreamId
         callbacks.onCreated?.(nextStreamId)
       }
 
-      const liveUrl = buildLiveUrl(options.baseUrl, streamId.value)
+      const liveUrl = buildLiveUrl(options.serverUrl, streamId.value)
       currentPlayer = createPlayer(liveUrl, options.autoPlay ?? true, videoRef.value.muted, options.playerOptions)
       bindPlaybackReadySignals(videoRef.value, token, currentPlayer)
 
@@ -269,7 +269,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       await destroyPlayback(reason)
       streamId.value = undefined
       if (currentStreamId) {
-        await deleteManagedStream(options.baseUrl, currentStreamId)
+        await deleteManagedStream(options.serverUrl, currentStreamId)
       }
     })
   }
@@ -282,7 +282,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       await destroyPlayback(reason)
       streamId.value = undefined
       if (currentStreamId) {
-        await deleteManagedStream(options.baseUrl, currentStreamId)
+        await deleteManagedStream(options.serverUrl, currentStreamId)
       }
       await startInternal()
     })
@@ -297,7 +297,7 @@ export function useRtspFlvPlayer(optionsSource: UseRtspFlvPlayerOptionsSource, c
       videoRef.value = undefined
       if (options.cleanOnUnmount && currentStreamId) {
         streamId.value = undefined
-        await deleteManagedStream(options.baseUrl, currentStreamId)
+        await deleteManagedStream(options.serverUrl, currentStreamId)
       }
     })
   }

@@ -15,7 +15,7 @@
 
 | Prop             | 类型                  | 必填 | 默认值          | 说明                                                   |
 | ---------------- | --------------------- | ---- | --------------- | ------------------------------------------------------ |
-| `baseUrl`        | `string`              | 是   | -               | 网关服务地址                                           |
+| `serverUrl`      | `string`              | 是   | -               | 网关服务地址                                           |
 | `sourceConfig`   | `StreamCreateRequest` | 是   | -               | 用于创建 stream 的播放源配置                           |
 | `autoPlay`       | `boolean`             | 否   | `true`          | 是否自动播放                                           |
 | `playerOptions`  | `RivmuxPlayerOptions` | 否   | rivmux 默认配置 | rivmux 播放器配置；`autoPlay` 和静音策略由组件统一收口 |
@@ -35,7 +35,7 @@ import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
 </script>
 
 <template>
-  <RtspFlvPlayer base-url="http://localhost:3000" :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }" muted playsinline />
+  <RtspFlvPlayer server-url="http://localhost:3000" :source-config="{ url: 'rtsp://camera/live', transport: 'tcp' }" muted playsinline />
 </template>
 ```
 
@@ -43,7 +43,7 @@ import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
 
 ```vue
 <RtspFlvPlayer
-  base-url="http://localhost:3000"
+  server-url="http://localhost:3000"
   :source-config="sourceConfig"
   :player-options="{
     playback: { muted: true },
@@ -73,7 +73,7 @@ import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
 4. `stop()` 删除播放器和后端 stream。
 5. `reload()` 删除旧 stream 后完整重建。
 6. `detach()` 默认只销毁播放器；`cleanOnUnmount=true` 时同时删除 stream。
-7. `baseUrl`、`sourceConfig`、`autoPlay` 或 `playerOptions` 变化时，组件自动重载。
+7. `serverUrl`、`sourceConfig`、`autoPlay` 或 `playerOptions` 变化时，组件自动重载。
 
 组件 ref 暴露 `streamId`、`status`、`start()`、`stop()` 和 `reload()`。
 

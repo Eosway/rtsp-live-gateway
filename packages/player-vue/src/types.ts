@@ -6,7 +6,7 @@ export type RtspFlvPlayerStatus = 'idle' | 'starting' | 'running' | 'error'
 export type MediaInfo = RivmuxMediaInfo
 
 export interface RtspFlvPlayerProps {
-  baseUrl: string
+  serverUrl: string
   sourceConfig: StreamCreateRequest
   autoPlay?: boolean
   playerOptions?: RivmuxPlayerOptions

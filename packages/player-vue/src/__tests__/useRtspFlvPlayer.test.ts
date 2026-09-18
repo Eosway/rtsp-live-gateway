@@ -27,7 +27,7 @@ vi.mock('@eosway/rtsp-live-gateway-client', () => {
 
   return {
     ClientError: MockClientError,
-    buildLiveUrl: vi.fn((baseUrl: string, streamId: string) => `${baseUrl}/v1/live/${streamId}`),
+    buildLiveUrl: vi.fn((clientBaseUrl: string, streamId: string) => `${clientBaseUrl}/v1/live/${streamId}`),
     createStream: vi.fn(),
     deleteStream: vi.fn(),
   }
@@ -89,7 +89,7 @@ describe('useRtspFlvPlayer', () => {
 
     const playerOptions = { latency: { target: 1, max: 2 } }
     const controller = useRtspFlvPlayer({
-      baseUrl: 'http://localhost:3000',
+      serverUrl: 'http://localhost:3000',
       sourceConfig: { url: 'rtsp://camera/live' },
       playerOptions,
     })
@@ -113,7 +113,7 @@ describe('useRtspFlvPlayer', () => {
 
     const controller = useRtspFlvPlayer(
       {
-        baseUrl: 'http://localhost:3000',
+        serverUrl: 'http://localhost:3000',
         sourceConfig: { url: 'rtsp://camera/live' },
       },
       { onError }
@@ -142,7 +142,7 @@ describe('useRtspFlvPlayer', () => {
     })
 
     const controller = useRtspFlvPlayer({
-      baseUrl: 'http://localhost:3000',
+      serverUrl: 'http://localhost:3000',
       sourceConfig: {
         url: 'rtsp://camera/live',
         audio: {
@@ -174,7 +174,7 @@ describe('useRtspFlvPlayer', () => {
     vi.mocked(deleteStream).mockResolvedValue(undefined)
 
     const controller = useRtspFlvPlayer({
-      baseUrl: 'http://localhost:3000',
+      serverUrl: 'http://localhost:3000',
       sourceConfig: {
         url: 'rtsp://camera/live',
         audio: {
@@ -212,7 +212,7 @@ describe('useRtspFlvPlayer', () => {
 
     const controller = useRtspFlvPlayer(
       {
-        baseUrl: 'http://localhost:3000',
+        serverUrl: 'http://localhost:3000',
         sourceConfig: {
           url: 'rtsp://camera/live',
           audio: {
@@ -269,7 +269,7 @@ describe('useRtspFlvPlayer', () => {
 
     const controller = useRtspFlvPlayer(
       {
-        baseUrl: 'http://localhost:3000',
+        serverUrl: 'http://localhost:3000',
         sourceConfig: {
           url: 'rtsp://camera/live',
           audio: {
@@ -319,7 +319,7 @@ describe('useRtspFlvPlayer', () => {
 
     const controller = useRtspFlvPlayer(
       {
-        baseUrl: 'http://localhost:3000',
+        serverUrl: 'http://localhost:3000',
         sourceConfig: {
           url: 'rtsp://camera/live',
           audio: {
@@ -360,7 +360,7 @@ describe('useRtspFlvPlayer', () => {
 
     const controller = useRtspFlvPlayer(
       {
-        baseUrl: 'http://localhost:3000',
+        serverUrl: 'http://localhost:3000',
         sourceConfig: {
           url: 'rtsp://camera/live',
           audio: {

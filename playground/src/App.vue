@@ -6,8 +6,8 @@
 
       <div class="grid">
         <label>
-          Gateway Base URL
-          <input v-model="baseUrl" placeholder="http://localhost:3000" />
+          Gateway Server URL
+          <input v-model="serverUrl" placeholder="http://localhost:3000" />
         </label>
         <label>
           RTSP URL
@@ -53,7 +53,7 @@
     <section v-if="showPlayer" class="panel">
       <RtspFlvPlayer
         ref="playerRef"
-        :base-url="baseUrl"
+        :server-url="serverUrl"
         :source-config="sourceConfig"
         :auto-play="true"
         muted
@@ -83,7 +83,7 @@ type RtspFlvPlayerHandle = {
   reload(reason?: string): Promise<void>
 }
 
-const baseUrl = ref('http://localhost:3000')
+const serverUrl = ref('http://localhost:3000')
 const statusMessage = ref('等待创建流')
 const showPlayer = ref(false)
 const playerRef = ref<RtspFlvPlayerHandle>()

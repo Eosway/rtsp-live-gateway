@@ -19,7 +19,7 @@ pnpm --filter @eosway/rtsp-live-gateway-playground dev
 
 ## 页面能力
 
-- 编辑网关 `baseUrl`
+- 编辑网关服务地址 `serverUrl`
 - 设置 RTSP URL 与 transport
 - 设置 video codec 与 audio 开关
 - 一键创建并播放
