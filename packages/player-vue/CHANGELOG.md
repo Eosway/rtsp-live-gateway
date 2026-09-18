@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.1.1...player-vue@1.2.0) (2026-09-18)
+
+### Features
+
+- replace mpegts.js with rivmux ([8b5354c](https://github.com/Eosway/rtsp-live-gateway/commit/8b5354cdc68fa7d722ea53786dcc03910c4ec759))
+
+### Code Refactoring
+
+- rename base URL prop ([7f816aa](https://github.com/Eosway/rtsp-live-gateway/commit/7f816aa54e18593039139e86013cfef3413e6b9e))
+
 ## [1.1.1](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.1.0...player-vue@1.1.1) (2026-09-17)
 
 ### Bug Fixes
