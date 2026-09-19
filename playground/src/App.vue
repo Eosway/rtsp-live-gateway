@@ -55,16 +55,16 @@
         ref="playerRef"
         :server-url="serverUrl"
         :source-config="sourceConfig"
-        :auto-play="true"
-        muted
+        :player-options="{ playback: { autoPlay: true, muted: true } }"
         playsinline
-        :clean-on-unmount="true"
-        @created="onCreated"
+        @started="onStarted"
+        @stopped="onStopped"
+        @destroyed="onDestroyed"
         @media-info="onMediaInfo"
-        @error="onError"
-        @closed="onClosed" />
-      <p class="stream-id">当前 Stream ID: {{ currentStreamId || '-' }}</p>
+        @error="onError" />
       <p class="stream-id">当前 Player Status: {{ playerStatus }}</p>
+      <p class="stream-id">当前 Stream ID: {{ currentStream?.streamId ?? '-' }}</p>
+      <p class="stream-id">当前 Stream State: {{ currentStream?.state ?? '-' }}</p>
     </section>
   </main>
 </template>
@@ -72,23 +72,24 @@
 <script setup lang="ts">
 import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
 import { RtspFlvPlayer } from '@eosway/rtsp-live-gateway-player-vue'
-import type { RtspFlvPlayerStatus } from '@eosway/rtsp-live-gateway-player-vue'
-import { computed, reactive, ref, type Ref } from 'vue'
+import type { RtspFlvPlayerController, RtspFlvPlayerError, RtspFlvPlayerStatus, RtspFlvPlayerStream } from '@eosway/rtsp-live-gateway-player-vue'
+import { computed, reactive, ref } from 'vue'
 
 type RtspFlvPlayerHandle = {
-  streamId: Readonly<Ref<string | undefined>>
-  status: Readonly<Ref<RtspFlvPlayerStatus>>
-  start(): Promise<void>
-  stop(reason?: string): Promise<void>
-  reload(reason?: string): Promise<void>
+  readonly stream: RtspFlvPlayerStream | undefined
+  readonly status: RtspFlvPlayerStatus
+  start: RtspFlvPlayerController['start']
+  stop: RtspFlvPlayerController['stop']
+  restart: RtspFlvPlayerController['restart']
+  destroy: RtspFlvPlayerController['destroy']
 }
 
 const serverUrl = ref('http://localhost:3000')
 const statusMessage = ref('等待创建流')
 const showPlayer = ref(false)
 const playerRef = ref<RtspFlvPlayerHandle>()
-const currentStreamId = computed(() => playerRef.value?.streamId.value ?? '')
-const playerStatus = computed<RtspFlvPlayerStatus>(() => playerRef.value?.status.value ?? 'idle')
+const currentStream = computed(() => playerRef.value?.stream)
+const playerStatus = computed<RtspFlvPlayerStatus>(() => playerRef.value?.status ?? 'idle')
 
 const form = reactive({
   url: '',
@@ -126,24 +127,24 @@ function closePlayer() {
   statusMessage.value = '播放器已关闭'
 }
 
-function onCreated(streamId: string) {
-  statusMessage.value = `已创建流: ${streamId}`
+function onStarted() {
+  statusMessage.value = '播放器已启动'
 }
 
 function onMediaInfo() {
   statusMessage.value = '播放器已开始接收媒体信息'
 }
 
-function onError(payload: { code: string; message: string }) {
+function onError(payload: RtspFlvPlayerError) {
   statusMessage.value = `错误(${payload.code}): ${payload.message}`
 }
 
-function onClosed(reason: string) {
-  if (!showPlayer.value && reason === 'unmount') {
-    statusMessage.value = '播放器已关闭'
-    return
-  }
-  statusMessage.value = `连接关闭: ${reason}`
+function onStopped() {
+  statusMessage.value = '播放器已停止'
+}
+
+function onDestroyed() {
+  statusMessage.value = showPlayer.value ? '播放器已销毁' : '播放器已关闭'
 }
 </script>
 
