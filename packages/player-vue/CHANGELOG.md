@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.0](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.2.0...player-vue@1.3.0) (2026-09-19)
+
+### Miscellaneous Chores
+
+- update rivmux ([989ab87](https://github.com/Eosway/rtsp-live-gateway/commit/989ab87b7e188b33b4656876a60161b32e183f9b))
+
+### Code Refactoring
+
+- align rivmux lifecycle API ([d9233fa](https://github.com/Eosway/rtsp-live-gateway/commit/d9233fab7e49f3ceff2583b439ac51d1731a0d38))
+- expose stream state type ([318b945](https://github.com/Eosway/rtsp-live-gateway/commit/318b945a84c7180f239c58cdf639ee8fada60c2d))
+
 ## [1.2.0](https://github.com/Eosway/rtsp-live-gateway/compare/player-vue@1.1.1...player-vue@1.2.0) (2026-09-18)
 
 ### Features
