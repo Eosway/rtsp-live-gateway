@@ -9,7 +9,7 @@ import type {
   RecoveryInfo,
   RivmuxPlayerOptions,
 } from 'rivmux'
-import type { StreamCreateRequest } from '@eosway/rtsp-live-gateway-client'
+import type { StreamCreateRequest, StreamCreateResponse as RtspFlvPlayerStream } from '@eosway/rtsp-live-gateway-client'
 import type { ShallowRef } from 'vue'
 
 export type RtspFlvPlayerStatus = 'idle' | 'starting' | 'started' | 'stopped' | 'error' | 'destroyed'
@@ -41,6 +41,7 @@ export interface RtspFlvPlayerCallbacks {
 }
 
 export interface RtspFlvPlayerController {
+  readonly stream: Readonly<ShallowRef<RtspFlvPlayerStream | undefined>>
   readonly status: Readonly<ShallowRef<RtspFlvPlayerStatus>>
   readonly error: Readonly<ShallowRef<RtspFlvPlayerError | undefined>>
   attach(video: HTMLVideoElement): void
@@ -59,4 +60,4 @@ export interface PlayerHandle {
   off<T extends RivmuxPlayerEventType>(type: T, listener: PlayerEventListener<T>): void
 }
 
-export type { MediaInfo, PlayerError, PlayerStats, PlayerWarning, ReconnectInfo, RecoveryInfo, RivmuxPlayerOptions }
+export type { MediaInfo, PlayerError, PlayerStats, PlayerWarning, ReconnectInfo, RecoveryInfo, RivmuxPlayerOptions, RtspFlvPlayerStream }

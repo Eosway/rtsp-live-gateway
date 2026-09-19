@@ -47,6 +47,7 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
 
     expect(controller.status.value).toBe('started')
+    expect(controller.stream.value).toEqual({ streamId: 'st_test', state: 'idle', reused: false, createdAt: '2026-09-19T00:00:00.000Z' })
     expect(onStarted).toHaveBeenCalledOnce()
     expect(createPlayer).toHaveBeenCalledWith('http://localhost:3000/v1/live/st_test', undefined)
   })
@@ -60,6 +61,7 @@ describe('useRtspFlvPlayer', () => {
     await controller.start()
     await controller.stop()
     expect(player.stop).toHaveBeenCalledOnce()
+    expect(controller.stream.value?.streamId).toBe('st_test')
     await controller.destroy()
     expect(controller.status.value).toBe('destroyed')
   })

@@ -9,15 +9,16 @@ import type {
   RtspFlvPlayerError,
   RtspFlvPlayerOptions,
   RtspFlvPlayerStatus,
+  RtspFlvPlayerStream,
 } from '../types.js'
 
 type OptionsSource = RtspFlvPlayerOptions | (() => RtspFlvPlayerOptions)
 
 export function useRtspFlvPlayer(optionsSource: OptionsSource, callbacks: RtspFlvPlayerCallbacks = {}): RtspFlvPlayerController {
+  const stream = shallowRef<RtspFlvPlayerStream>()
   const status = shallowRef<RtspFlvPlayerStatus>('idle')
   const error = shallowRef<RtspFlvPlayerError>()
   let video: HTMLVideoElement | undefined
-  let streamId: string | undefined
   let player: PlayerHandle | undefined
   let operation: Promise<void> = Promise.resolve()
   let generation = 0
@@ -104,9 +105,10 @@ export function useRtspFlvPlayer(optionsSource: OptionsSource, callbacks: RtspFl
     try {
       if (!video) throw new Error('Video element is not attached')
       if (!isSupported()) throw new Error('Rivmux is not supported in this browser')
-      if (!streamId) streamId = (await createStream(options.serverUrl, options.sourceConfig)).streamId
+      if (!stream.value) stream.value = await createStream(options.serverUrl, options.sourceConfig)
       if (!isCurrent(token)) return
-      current = createPlayer(buildLiveUrl(options.serverUrl, streamId), options.playerOptions)
+      const currentStream = stream.value
+      current = createPlayer(buildLiveUrl(options.serverUrl, currentStream.streamId), options.playerOptions)
       bindPlayerEvents(current, token)
       await player?.destroy()
       player = current
@@ -140,7 +142,7 @@ export function useRtspFlvPlayer(optionsSource: OptionsSource, callbacks: RtspFl
       ++generation
       await player?.destroy()
       player = undefined
-      streamId = undefined
+      stream.value = undefined
       status.value = 'idle'
       await startInternal()
     })
@@ -157,5 +159,5 @@ export function useRtspFlvPlayer(optionsSource: OptionsSource, callbacks: RtspFl
     })
   }
 
-  return { status, error, attach, start, stop, restart, destroy }
+  return { stream, status, error, attach, start, stop, restart, destroy }
 }

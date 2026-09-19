@@ -9,6 +9,7 @@ export type {
   ReconnectInfo,
   RecoveryInfo,
   RivmuxPlayerOptions,
+  RtspFlvPlayerStream,
   RtspFlvPlayerStatus,
   RtspFlvPlayerOptions,
   RtspFlvPlayerController,

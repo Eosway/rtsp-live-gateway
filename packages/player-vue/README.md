@@ -18,6 +18,7 @@ pnpm add @eosway/rtsp-live-gateway-player-vue
 - `useRtspFlvPlayer`：用于自定义承载场景的 composable。
 - `RtspFlvPlayerOptions`：组件和 composable 输入类型。
 - `RtspFlvPlayerController`：composable 与组件 ref 的控制器类型。
+- `RtspFlvPlayerStream`：网关创建或复用 stream 返回值的包内类型别名。
 - `RtspFlvPlayerStatus`：播放器状态类型。
 - `RtspFlvPlayerError`：网关或播放器错误类型。
 - `MediaInfo`、`PlayerError`、`PlayerStats`、`PlayerWarning`、`ReconnectInfo`、`RecoveryInfo`、`RivmuxPlayerOptions`：rivmux 公开类型。
@@ -86,6 +87,7 @@ Vue 模板中使用 kebab-case 监听事件，例如 `@media-info`、`@reconnect
 
 ```ts
 interface RtspFlvPlayerController {
+  readonly stream: Readonly<ShallowRef<RtspFlvPlayerStream | undefined>>
   readonly status: Readonly<Ref<RtspFlvPlayerStatus>>
   readonly error: Readonly<Ref<RtspFlvPlayerError | undefined>>
   start(): Promise<void>
@@ -95,7 +97,7 @@ interface RtspFlvPlayerController {
 }
 ```
 
-`stop()` 只停止浏览器播放器，不删除网关 stream；`restart()` 销毁当前 rivmux 实例、丢弃本地 stream 标识，并按当前 options 重新请求或复用 stream；`destroy()` 销毁播放器实例，销毁后不应继续调用控制方法。
+`stream` 保存最近一次网关创建或复用请求返回的完整 `RtspFlvPlayerStream`（对应网关的 `StreamCreateResponse`），包括 `streamId`、`state`、`reused` 和 `createdAt`。`stop()` 只停止浏览器播放器并保留该状态；`restart()` 销毁当前 rivmux 实例、清空旧 stream 状态，并按当前 options 重新请求或复用 stream；`destroy()` 销毁播放器实例但保留最后的 stream 状态，销毁后不应继续调用控制方法。
 
 ## Composable 用法
 

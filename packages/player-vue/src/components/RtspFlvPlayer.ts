@@ -93,6 +93,7 @@ export const RtspFlvPlayer = defineComponent({
     })
 
     expose({
+      stream: controller.stream,
       status: controller.status,
       start: controller.start,
       stop: controller.stop,
