@@ -1,23 +1,26 @@
-import { isSupported } from 'rivmux'
+import { getCapabilities, isSupported, RivmuxPlayer } from 'rivmux'
 import type { RivmuxPlayerOptions } from 'rivmux'
-import type { MediaPlayer } from '../types.js'
-import { createRivmuxPlayer } from './rivmux.js'
+import type { PlayerHandle } from '../types.js'
 
-export function isPlayerSupported(): boolean {
-  return isSupported()
+export { getCapabilities, isSupported }
+
+export function createPlayer(url: string, options?: RivmuxPlayerOptions): PlayerHandle {
+  return createRivmuxPlayer(url, options)
 }
 
-export function createPlayer(url: string, autoPlay: boolean, muted: boolean, options?: RivmuxPlayerOptions): MediaPlayer {
-  if (!isPlayerSupported()) {
-    throw new Error('Rivmux is not supported in this browser')
-  }
+export function createRivmuxPlayer(url: string, config: RivmuxPlayerOptions = {}): PlayerHandle {
+  const player = new RivmuxPlayer(url, config)
 
-  return createRivmuxPlayer(url, {
-    ...options,
-    playback: {
-      ...options?.playback,
-      autoPlay,
-      muted: options?.playback?.muted ?? muted,
+  return {
+    attach: (video) => player.attach(video),
+    start: () => player.start(),
+    stop: () => player.stop(),
+    destroy: () => player.destroy(),
+    on(type, listener) {
+      player.on(type, listener as never)
     },
-  })
+    off(type, listener) {
+      player.off(type, listener as never)
+    },
+  }
 }
