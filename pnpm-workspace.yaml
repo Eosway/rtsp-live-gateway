@@ -15,3 +15,7 @@ catalog:
   'vitest': ^5.0.1
   'vue': ^3.5.42
   'vue-tsc': ^3.3.11
+
+minimumReleaseAgeExclude:
+  - '@rivmux/*'
+  - rivmux

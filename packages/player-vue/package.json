@@ -35,7 +35,7 @@
     "vue": ">=3.4.0"
   },
   "dependencies": {
-    "rivmux": "^1.0.1"
+    "rivmux": "^1.0.2"
   },
   "devDependencies": {
     "@eosway/rtsp-live-gateway-client": "workspace:*",

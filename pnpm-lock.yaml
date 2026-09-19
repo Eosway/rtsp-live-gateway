@@ -295,8 +295,8 @@ importers:
   packages/player-vue:
     dependencies:
       rivmux:
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.0.2
+        version: 1.0.2
     devDependencies:
       '@eosway/rtsp-live-gateway-client':
         specifier: workspace:*
@@ -660,11 +660,11 @@ packages:
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
 
-  '@rivmux/protocol@1.0.1':
-    resolution: {integrity: sha512-lDvn250NzI4PJL89c6qLK5Wu49AlyLTikx6J/4RLq1o5yTdFNEwN5NJDG0QlXgvvHEh11PDy7EahqZ2xdnq9ug==}
+  '@rivmux/protocol@1.0.2':
+    resolution: {integrity: sha512-EPMWSA1Mbd6BEl8CyKZEJ250Gqk4JEuYhyQRA1yP1OX4ys50MKqFmJHgy4KgGAT+q+tJKCO93x/82W7VkBZ+Jw==}
 
-  '@rivmux/runtime-worker@1.0.1':
-    resolution: {integrity: sha512-izCMsGCLED2nuU6lhssuk+G4IOCURvYt4lXLW1Z0ODxDxDIF3LFMM1nJhLC1k9n6KNBK7jmBXlWg7BIofJGETw==}
+  '@rivmux/runtime-worker@1.0.2':
+    resolution: {integrity: sha512-Sok8gNWiRCgLEJCBLhg+ETLX19MHQMhwAA6hZTqu9fDolrZ+fH8yKIKYECKSumfhSV9tsWOnDuKBGmWZ+gLjwQ==}
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     resolution: {integrity: sha512-tN5aztYkKCte4i5SIrrz5yK/HMjEuCqCSCJa418jOV8tZ1cBY3YF2otxB1ktPxzsLA1BeTqwapK0bfjxNvHJVw==}
@@ -2681,8 +2681,8 @@ packages:
     engines: {node: 20 || >=22}
     hasBin: true
 
-  rivmux@1.0.1:
-    resolution: {integrity: sha512-ZQOmoijrUhpuC1kYh4Ytv2ccAaFFyITQX7IfuBdpQXHVKBhHvDkKRb2+pTUkPLso2l61m67+jjD71/UWKA+TgA==}
+  rivmux@1.0.2:
+    resolution: {integrity: sha512-Vk4aE0515oyV6kWZMs8Sc1G0QVtPqpRz5XVcQvDWSCc8eQX36SQEVQG0bR6WfFQmaUPsVaINfbf6hr41mjo1IQ==}
 
   rolldown-plugin-dts@0.28.6:
     resolution: {integrity: sha512-qKrFtBfRfR2hP233m7Ic9zf3wv6MSYdZghWKMdEO6dRYZGlNfINJAa1P5ZVvyHh3mrcd7IJQvIY8L9vnm+v5rQ==}
@@ -3616,11 +3616,11 @@ snapshots:
     dependencies:
       quansync: 1.0.0
 
-  '@rivmux/protocol@1.0.1': {}
+  '@rivmux/protocol@1.0.2': {}
 
-  '@rivmux/runtime-worker@1.0.1':
+  '@rivmux/runtime-worker@1.0.2':
     dependencies:
-      '@rivmux/protocol': 1.0.1
+      '@rivmux/protocol': 1.0.2
 
   '@rolldown/binding-android-arm-eabi@1.2.8':
     optional: true
@@ -5359,10 +5359,10 @@ snapshots:
       glob: 13.0.6
       package-json-from-dist: 1.0.1
 
-  rivmux@1.0.1:
+  rivmux@1.0.2:
     dependencies:
-      '@rivmux/protocol': 1.0.1
-      '@rivmux/runtime-worker': 1.0.1
+      '@rivmux/protocol': 1.0.2
+      '@rivmux/runtime-worker': 1.0.2
 
   rolldown-plugin-dts@0.28.6(@volar/typescript@2.4.28(typescript@6.0.3))(@vue/language-core@3.3.11)(rolldown@1.2.8)(typescript@6.0.3)(vue-tsc@3.3.11(typescript@6.0.3)):
     dependencies:
